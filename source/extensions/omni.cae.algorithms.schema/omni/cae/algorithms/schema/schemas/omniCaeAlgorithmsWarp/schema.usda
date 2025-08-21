@@ -1,0 +1,122 @@
+#usda 1.0
+(
+    """
+        Schema for CAE algorithms. These are provided as an example and not
+        intended to be official schemas for visualization operations / algorithms.
+    """
+    subLayers = [
+        @usd/schema.usda@,
+    ]
+)
+
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+over "GLOBAL" (
+    customData = {
+        string libraryName = "omniCaeAlgorithmsWarp"
+        string libraryPath = "."
+        string libraryPrefix = "OmniCaeAlgorithmsWarp"
+        bool skipCodeGeneration = true
+    }
+)
+{
+}
+
+class "CaeAlgorithmsWarpStreamlinesAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "StreamlinesAPI"
+    }
+    doc = "Applies to a BasisCurves prim to generate streamlines."
+)
+{
+    rel omni:cae:warp:streamlines:dataset (
+        displayName = "Dataset"
+        displayGroup = "Data"
+        doc = "Specifies the CaeDataSet prim."
+        customData = {
+            string apiName = "dataset"
+        }
+    )
+
+    rel omni:cae:warp:streamlines:seeds (
+        doc = "Specifies a UsdGeomPointBased subtype prim that can be used as seed point sources."
+        displayGroup = "Data"
+        displayName = "Seeds"
+        customData = {
+            string apiName = "seeds"
+        }
+    )
+
+    rel omni:cae:warp:streamlines:velocity (
+        doc = "Specifies the name of the field to use as velocity field."
+        displayGroup = "Data"
+        displayName = "Velocity"
+        customData = {
+            string apiName = "velocity"
+        }
+    )
+
+    # rel omni:cae:warp:streamlines:colors (
+    #     doc = "Specifies the field to use for coloring."
+    #     displayGroup = "Data"
+    #     displayName = "Colors"
+    #     customData = {
+    #         string apiName = "color"
+    #     }
+    # )
+
+    float omni:cae:warp:streamlines:dX  = 0.5 (
+        doc = "Specifies the stepping distance as a fraction of the voxel size"
+        displayName = "dX"
+        displayGroup = "Advection"
+        customData = {
+            string apiName = "dx"
+        }
+    )
+
+    int omni:cae:warp:streamlines:maxLength  = 1000 (
+        doc = "Specifies maximum length for a streamline."
+        displayName = "Max Length"
+        displayGroup = "Advection"
+        customData = {
+            string apiName = "maxLength"
+        }
+    )
+
+    rel omni:cae:warp:streamlines:roi (
+        doc = "Specifies the prim whose bounds should be used as the region of interest (ROI) to target for processing."
+        displayName = "Region-of-interest (ROI)"
+        displayGroup = "Voxelization"
+        customData = {
+            string apiName = "roi"
+        }
+    )
+
+    uniform int omni:cae:warp:streamlines:maxResolution = 128 (
+        doc = "Specifies the maximum resolution in any direction for the voxel grid"
+        displayName = "Max Resolution"
+        displayGroup = "Voxelization"
+        customData = {
+            string apiName = "maxResolution"
+        }
+    )
+
+    uniform float omni:cae:warp:streamlines:width = 0.025 (
+        doc = "Specifies the streamline width"
+        displayName = "Width"
+        displayGroup = "Appearance"
+        customData = {
+            string apiName = "width"
+        }
+    )
+}

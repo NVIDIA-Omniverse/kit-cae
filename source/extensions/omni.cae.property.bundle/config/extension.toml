@@ -1,0 +1,45 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+[package]
+version = "1.0.0"
+title = "CAE Property Widget Bundle"
+description="Property widget customizations for CAE"
+category = "internal"
+keywords = ["cae", "ui"]
+
+# URL of the extension source repository.
+# repository=""
+changelog="docs/CHANGELOG.md"
+readme  = "docs/README.md"
+icon = "data/icon.png"
+preview_image = "data/preview.png"
+
+[dependencies]
+"omni.kit.window.property" = {}
+"omni.kit.property.usd" = {}
+"omni.kit.property.bundle" = {}
+"omni.kit.window.content_browser" = {}
+
+"omni.cae.schema" = {}
+"omni.cae.algorithms.core" = {}
+"omni.cae.index" = { optional = true }
+"omni.cae.flow" = { optional = true }
+"omni.cae.algorithms.warp" = { optional=true }
+
+# Main python module this extension provides, it will be publicly available as "import omni.example.hello".
+[[python.module]]
+name = "omni.cae.property.bundle"
+
+[documentation]
+pages = [
+    "docs/Overview.md",
+    "docs/CHANGELOG.md",
+]

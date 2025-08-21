@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+[package]
+title = "CAE PIP API Setup"
+version = "1.0.0"
+description = "Initialize omni.kit.pipapi to ensure offline packages are used, if available."
+category = "internal"  # How to categorize this in the Extension Manager
+changelog = "docs/CHANGELOG.md"
+icon = "data/icon.png"
+keywords = ["kit", "cae"]
+
+[dependencies]
+"omni.kit.pipapi" = {}
+
+[[python.module]]  # Main python module this extension provides, it will be publicly available as "import omni.cae.pipapi"
+name = "omni.cae.pipapi"

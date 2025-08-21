@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+[package]
+title = "Omni CAE CGNS Libs"
+version = "4.5.0" # version matches CGNS library version
+description = "CGNS libraries for CAE extensions"
+category = "Internal"
+changelog = "docs/CHANGELOG.md"
+icon = "data/icon.png"
+keywords = ["kit", "cae", "cgns", "library"]
+readme  = "docs/README.md"
+repository = "https://github.com/NVIDIA-Omniverse/kit-cae"
+
+[core]
+reloadable = false
+# Load early to make libraries available to other extensions
+order = -200
+
+[dependencies]
+"omni.cae.hdf5_libs" = {}
+
+[[native.library]]
+"filter:platform"."linux-x86_64"."path" = "lib/libcgns.so"
+"filter:platform"."windows-x86_64"."path" = "bin/cgnsdll.dll"
+
+[documentation]
+pages = [
+    "docs/Overview.md",
+    "docs/CHANGELOG.md",
+]

@@ -1,0 +1,86 @@
+#usda 1.0
+(
+    """
+        Schema for Flow viz pipelines. This is provided as an example and not intended
+        to be official schemas.
+    """
+    subLayers = [
+        @usd/schema.usda@,
+    ]
+)
+
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+over "GLOBAL" (
+    customData = {
+        string libraryName = "omniCaeFlow"
+        string libraryPath = "."
+        string libraryPrefix = "OmniCaeFlow"
+        bool skipCodeGeneration = true
+    }
+)
+{
+}
+
+class "CaeFlowDataSetEmitterAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "DataSetEmitterAPI"
+    }
+    doc = """Applies to a FlowEmitterMesh prim connect it to a CaeDataSet."""
+)
+{
+    rel omni:cae:flow:emitter:dataset (
+        doc = "Specifies the CaeDataSet prim"
+        displayName = "Dataset"
+        displayGroup = "Data"
+        customData = {
+            string apiName = "dataset"
+        }
+    )
+
+    rel omni:cae:flow:emitter:velocity (
+        doc = "Specifies the field to use as velocities."
+        displayName = "Velocity"
+        displayGroup = "Data"
+        customData = {
+            string apiName = "velocity"
+        }
+    )
+
+    rel omni:cae:flow:emitter:colors (
+        doc = "Specifies the field to use for coloring."
+        displayName = "Colors"
+        displayGroup = "Data"
+        customData = {
+            string apiName = "colors"
+        }
+    )
+
+    uniform int omni:cae:flow:emitter:maxResolution = 128 (
+        doc = "Specifies the maximum resolution in any direction for the voxel grid"
+        displayName = "Max Resolution"
+        displayGroup = "Voxelization"
+        customData = {
+            string apiName = "maxResolution"
+        }
+    )
+
+    rel omni:cae:flow:emitter:roi (
+        doc = "Specifies the prim whose bounds should be used as the region of interest (ROI)."
+        displayName = "Region-of-interest (ROI)"
+        displayGroup = "Voxelization"
+        customData = {
+            string apiName = "roi"
+        }
+    )
+}

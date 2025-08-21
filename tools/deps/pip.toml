@@ -1,0 +1,12 @@
+# [[dependency]]
+# python = "../../_build/target-deps/python"
+# packages = [
+#     "vtk==9.4",
+#     "h5py==3.13"
+# ]
+# target = "../../_build/${platform}/${config}/pip3-archives"
+# platforms = ["*"]
+# download_only = true
+# append_to_install_folder = false
+# install_dependencies = false
+# # gather_licenses_path = "../../_build/PACKAGE-LICENSES/PIP-prebundled-LICENSES.txt"

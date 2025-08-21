@@ -1,0 +1,120 @@
+/***************************************************************************************************
+ * Copyright 2021 NVIDIA Corporation. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *  * Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *  * Neither the name of NVIDIA CORPORATION nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ **************************************************************************************************/
+mdl 1.7;
+
+import ::base::*;
+import ::df::*;
+import ::state::*;
+import ::scene::*;
+import ::math::*;
+import ::tex::*;
+import ::anno::*;
+import ::nvidia::core_definitions::*;
+
+float streak_profile(float t, uniform float peak_t = 0.1f, uniform float B = 10.0f) {
+	// f(t) = A*t^k*exp(-Bx)
+	uniform float k = peak_t*B;
+	t = math::frac(t);
+
+	return math::pow((t*B)/k, k)*math::exp(-B*t+k);
+}
+
+export material AnimatedStreaks(
+    uniform float emission_intensity = 1000.0f,
+    uniform float2 domain = float2(0.0f, 1.0f),
+    uniform texture_2d lut = texture_2d("colormaps/gist_rainbow.png"),
+	uniform float animation_speed = 1.0f,
+	uniform float freq = 1.0f,
+	uniform float streaks_k = 0.1f,
+	uniform float streaks_B = 10.0f,
+	uniform float streaks_tip_intensity = 10.0f,
+	uniform float streaks_tip_k = 0.01f,
+	uniform float streaks_tip_B = 20.0f,
+	uniform color tail_color = color(0.1f)
+)
+ =
+    let {
+	  float animation_time = state::animation_time();
+	  float rnd = scene::data_lookup_float("rnd", 0.0f);
+	  float time_lookup = scene::data_lookup_float("time", 0.0f);
+	  float time = time_lookup - animation_time*animation_speed/freq + rnd/freq;// + max_time
+	  float local_time = math::frac(time*freq);
+
+	  // float3 field = scene::data_lookup_float3("field", float3());
+	  // float field_mag = math::length(field);
+	  float field = scene::data_lookup_float("scalar", 0.0f);
+	  float field_normalized = (field - domain.x) / (domain.y - domain.x);
+	  float emission_from_field = 1;//math::exp(-5.0f*(1.0f-math::clamp(field_mag/max_mag, 0.0f, 1.0f)));
+
+	  float streaks = streak_profile(1.0f-local_time, streaks_k, streaks_B);
+	  float streaks_tip = streak_profile(1.0f-local_time, streaks_tip_k, streaks_tip_B);
+	  color final_color = tex::lookup_color(lut, float2(field_normalized, 0.0f), tex::wrap_clamp, tex::wrap_clamp);
+
+      float3 emission_color = final_color*emission_from_field*(streaks + streaks_tip_intensity*streaks_tip);
+
+      material_emission emission(
+              emission: df::diffuse_edf(), intensity: color(emission_intensity*emission_color));
+
+      material_surface surface(
+              scattering: df::weighted_layer(
+				weight: streaks,
+				layer: df::diffuse_reflection_bsdf(tint:final_color),
+				base: df::specular_bsdf(tint:tail_color, mode:df::scatter_reflect)),
+              emission: emission);
+
+} in material
+(
+	surface: surface,
+    ior: color(1.0f),
+    thin_walled: false
+);
+
+
+export material ScalarColor(
+    uniform float2 domain = float2(0.0f, -1.0f),
+    uniform texture_2d lut = texture_2d("colormaps/gist_rainbow.png"),
+	uniform bool enable_coloring = true
+)
+ =
+    let {
+	  bool use_coloring = (domain.x < domain.y) && enable_coloring;
+	  float field = scene::data_lookup_float("scalar", 0.0f);
+	  float field_normalized = use_coloring ? (field - domain.x) / (domain.y - domain.x) : 1.0f;
+
+	  color final_color = tex::texture_isvalid(lut) && use_coloring ?
+		tex::lookup_color(lut, float2(field_normalized, 0.0f), tex::wrap_clamp, tex::wrap_clamp) : color(field_normalized);
+
+	  material_surface surface(
+		scattering: df::diffuse_reflection_bsdf(tint:final_color, roughness:0.1));
+
+} in material
+(
+	surface: surface,
+    ior: color(1.0f),
+    thin_walled: false
+);

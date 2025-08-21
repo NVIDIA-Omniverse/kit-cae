@@ -1,0 +1,80 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+[core]
+reloadable = false
+# Load at the start, load all schemas with order -100 (with order -1000 the USD libs are loaded)
+order = -100
+
+[package]
+title = "Omni CAE Schema"
+version = "1.0.0"  # Semantic Versionning is used: https://semver.org/
+description = "Core USD schemas that define CAE data types, field arrays, and datasets for Omniverse."
+category = "internal"  # How to categorize this in the Extension Manager
+changelog = "docs/CHANGELOG.md"
+icon = "data/icon.png"  # Icon to show in the Extension Manager
+keywords = ["cae", "schema"]  # Search keywords for the Extension Manager
+readme  = "docs/README.md"  # Path (relative to the root) or content of readme markdown file for UI
+
+
+[dependencies]
+"omni.cae.algorithms.schema" = {}
+"omni.usd.libs" = {}
+
+
+[[python.module]]  # Main python module this extension provides, it will be publicly available as "import omni.cae.schema"
+name = "omni.cae.schema"
+
+[[python.module]]
+name = "OmniCae"
+
+[[python.module]]
+name = "OmniCaeSids"
+
+[[python.module]]
+name = "OmniCaeVtk"
+
+[[python.module]]
+name = "OmniCaeEnSight"
+
+[[python.module]]
+
+[[native.library]]
+"filter:platform"."linux-x86_64"."path" = "lib/${lib_prefix}omniCae${lib_ext}"
+"filter:platform"."windows-x86_64"."path" = "bin/${lib_prefix}omniCae${lib_ext}"
+
+[[native.library]]
+"filter:platform"."linux-x86_64"."path" = "lib/${lib_prefix}omniCaeSids${lib_ext}"
+"filter:platform"."windows-x86_64"."path" = "bin/${lib_prefix}omniCaeSids${lib_ext}"
+
+[[native.library]]
+"filter:platform"."linux-x86_64"."path" = "lib/${lib_prefix}omniCaeVtk${lib_ext}"
+"filter:platform"."windows-x86_64"."path" = "bin/${lib_prefix}omniCaeVtk${lib_ext}"
+
+[[native.library]]
+"filter:platform"."linux-x86_64"."path" = "lib/${lib_prefix}omniCaeEnSight${lib_ext}"
+"filter:platform"."windows-x86_64"."path" = "bin/${lib_prefix}omniCaeEnSight${lib_ext}"
+
+
+[documentation]
+pages = [
+    "docs/Overview.md",
+    "docs/CHANGELOG.md",
+]
+
+
+[[test]]
+dependencies = [
+    "omni.usd"
+]
+
+
+args = [
+]

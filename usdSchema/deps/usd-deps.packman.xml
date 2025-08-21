@@ -1,0 +1,13 @@
+<project toolsVersion="5.6">
+
+  <dependency name="nv-usd" linkPath="../_build/usd-deps/nv-usd/${config}">
+    <package name="usd.py311.${platform}.stock.release" version="0.24.05.kit.6-gl.14415+d9efdd65" />
+  </dependency>
+
+  <dependency name="python" linkPath="../_build/usd-deps/python" >
+    <package name="python" version="3.11.13+nv1-linux-x86_64" platforms="manylinux_2_35_x86_64" />
+    <package name="python" version="3.11.13+nv1-linux-aarch64" platforms="manylinux_2_35_aarch64" />
+    <package name="python" version="3.11.13+nv1-${platform}" platforms="windows-x86_64" />
+  </dependency>
+
+</project>

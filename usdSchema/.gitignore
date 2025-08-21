@@ -1,0 +1,61 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# temporary files
+*.swp
+
+/.vs/
+/.vscode/
+/build/
+/install/
+/output/
+/package-links/
+/_*/
+
+# Python temp files
+**/__pycache__/*.pyc
+**/__pycache__/*.pyo
+
+PACKAGE-DEPS.yaml
+
+# local licensing artifacts
+src/**/_*
+
+# repo_test output file
+results.xml
+
+# generated schema files
+src/*/generated
+
+# generated PACKAGE-DEPS.yaml file
+PACKAGE-DEPS.yaml

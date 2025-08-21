@@ -1,0 +1,103 @@
+#usda 1.0
+(
+    """
+        Schema for VTK data.
+    """
+    subLayers = [
+        # This is mainly needed for definition of UsdTyped.
+        @../omniCae/schema.usda@
+    ]
+)
+
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+over "GLOBAL" (
+    customData = {
+        string libraryName = "omniCaeVtk"
+        string libraryPath = "omniCaeVtk"
+        string libraryPrefix = "OmniCaeVtk"
+        bool useLiteralIdentifier = true
+    }
+)
+{
+}
+
+class CaeVtkFieldArray "CaeVtkFieldArray" (
+    inherits = </CaeFieldArray>
+    doc = "Defines a VTK data array"
+    customData = {
+        string className = "FieldArray"
+    }
+)
+{
+    string arrayName = "" (
+        doc = "Specifies the name for the array in the Vtk file."
+        displayName = "Array Name"
+    )
+
+    uniform token special = "none" (
+        allowedTokens = [
+            "none",
+            "points",
+            "connectivity_offsets",
+            "connectivity_array",
+            "cell_types",
+        ]
+        doc = "Specifies if the array is special array."
+    )
+}
+
+
+class "CaeVtkUnstructuredGridAPI" (
+    inherits = </APISchemaBase>
+    doc = """Defines a dataset that follows vtkUnstructuredGrid data model."""
+    customData = {
+        string className = "UnstructuredGridAPI"
+        token apiSchemaType = "singleApply"
+    }
+)
+{
+    rel cae:vtk:points (
+        doc = "Specifies the CaeFieldArray that must be treated as points."
+        displayName = "Points"
+        displayGroup = "Relationships"
+        customData = {
+            string apiName = "points"
+        }
+    )
+
+    rel cae:vtk:connectivityOffsets (
+        doc = "Specifies the CaeFieldArray that must be treated as connectivity offsets."
+        displayName = "Connectivity Offsets"
+        displayGroup = "Relationships"
+        customData = {
+            string apiName = "connectivityOffsets"
+        }
+    )
+
+    rel cae:vtk:connectivityArray (
+        doc = "Specifies the CaeFieldArray that must be treated as connectivity array."
+        displayName = "Connectivity Array"
+        displayGroup = "Relationships"
+        customData = {
+            string apiName = "connectivityArray"
+        }
+    )
+
+    rel cae:vtk:cellTypes (
+        doc = "Specifies the CaeFieldArray that must be treated as cell types."
+        displayName = "Cell Types"
+        displayGroup = "Relationships"
+        customData = {
+            string apiName = "cellTypes"
+        }
+    )
+}

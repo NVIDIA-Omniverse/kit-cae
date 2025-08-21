@@ -1,0 +1,212 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+[package]
+title = "Omni CAE Editor"
+version = "1.0.0"
+description = "Kit-CAE Sample Application"
+keywords = ["app"]  # That makes it browsable in UI with "app" filter
+template_name = "kit_base_editor"
+
+
+[dependencies]
+"omni.activity.profiler" = {} # For showing RTX loading progress
+"omni.activity.pump" = {} # For showing RTX loading progress
+"omni.anim.curve.core" = {} # Runtime support for animcurves
+"omni.graph.action" = {} # Action graph runtime
+"omni.graph.core" = {} # Omni Graph runtime
+"omni.graph.nodes" = {} # Action graph nodes
+"omni.graph.scriptnode" = {} # Scriptnode support
+"omni.graph.ui_nodes" = {} # Action graph ui nodes
+"omni.hydra.engine.stats" = {}  # Load the stats HUD (resolution, fps, etc..)
+"omni.hydra.rtx" = {}  # Viewport renderer
+"omni.kit.mainwindow" = {}  # Main uiapp
+"omni.kit.manipulator.camera" = {}  # Load the camera-manipulator (navigation)
+"omni.kit.manipulator.prim" = {}  # Load the prim-manipulator (translate, rotate, scale)
+"omni.kit.manipulator.selection" = {}  # Load the selection-manipulator (selectable prims)
+"omni.kit.material.library" = {} # Create and assign materials.
+"omni.kit.menu.common" = { order = 1000 } # Common menu library. Loads last so omni.kit.activity.ui can be available.
+"omni.kit.menu.create" = {} # Create menu
+"omni.kit.menu.edit" = {}  # Edit menu
+"omni.kit.menu.file" = {}  # File menu
+"omni.kit.property.bundle" = {} # all the property editors
+"omni.kit.raycast.query" = {} # RTX Raycast Query
+"omni.kit.stage_template.core" = {}  # For creating new empty stages
+"omni.kit.telemetry" = {} # Telemetry
+"omni.kit.tool.asset_importer" = {} # Add Asset Importer functionality.
+"omni.kit.tool.collect" = {} # USD Collect tool
+"omni.kit.viewport.legacy_gizmos" = {}  # Load the legacy grid and gizmo drawing for now
+"omni.kit.viewport.menubar.camera" = {}  # Load the view-from-camera menu
+"omni.kit.viewport.menubar.display" = {}  # Load the display type menu
+"omni.kit.viewport.menubar.lighting" = {}  # Load the viewport settings menu
+"omni.kit.viewport.menubar.render" = {}  # Load the renderer selection menu
+"omni.kit.viewport.menubar.settings" = {}  # Load the viewport settings menu
+"omni.kit.viewport.ready" = {} # Show RTX loading information during startup
+"omni.kit.viewport.scene_camera_model" = {} # Sync camera to scene UI
+"omni.kit.viewport.window" = {}  # Load the actual ViewportWindow extension
+"omni.kit.window.console" = {}  # Console/log
+"omni.kit.window.content_browser" = {} # Add content browser to UI
+"omni.kit.window.property" = {} # Property editor window
+"omni.kit.window.stage" = {}  # Stage tree
+"omni.kit.window.status_bar" = {}  # Status Bar
+"omni.kit.window.toolbar" = {}  # Manipular Toolbar
+"omni.physx.stageupdate" = {} # Physics runtime support - will pull in physx dependencies.
+"omni.rtx.settings.core" = {} # RTX Settings
+"omni.uiaudio" = {} # for audio playback.
+"omni.usd.metrics.assembler.ui" = {}
+"omni.usd.schema.metrics.assembler" = {}
+"omni.warp.core" = {} # Warp support
+"omni.flowusd.bundle" = {}
+
+"omni.kit.widget.layers" = {}
+"omni.kit.window.extensions" = {}
+
+# Omni CAE extensions
+"omni.cae.schema" = {order = -100} # all USD schemas should be loaded with order = -100
+"omni.cae.data" = {}
+"omni.cae.file_format.cgns" = {}
+"omni.cae.hdf5" = {}
+"omni.cae.cgns" = {}
+"omni.cae.npz" = {}
+"omni.cae.ensight" = {}
+"omni.cae.asset_importer.cgns" = {}
+"omni.cae.asset_importer.npz" = {}
+"omni.cae.asset_importer.ensight" = {}
+
+# CAE Algorithms
+"omni.cae.algorithms.core" = {}
+"omni.cae.index" = {}
+"omni.cae.flow" = {}
+"omni.cae.algorithms.warp" = {}
+
+# Omni CAE SIDS data model
+"omni.cae.sids" = {}
+
+# UI
+"omni.cae.context_menu" = {}
+"omni.cae.property.bundle" = {}
+"omni.cae.widget.stage_icons" = {}
+
+# Misc helpful extensions
+"omni.anim.window.timeline" = {}  		# timeline widget
+"omni.kit.window.script_editor" = {}	# script editor
+"omni.kit.window.usd_paths" = {}		# USD paths editor
+
+[settings]
+# This is necessary for usdrt-based algorithms in `omni.cae.algorithms.*`
+rtx.hydra.readTransformsFromFabricInRenderDelegate = true
+
+# FLOW specific settings: these are critial.
+exts."omni.flowusd".voxelize_velocity_vec4 = false
+exts."omni.flowusd".voxelize_velocity_float = true
+
+exts."omni.kit.material.library".ui_show_list = ["OmniPBR", "OmniGlass", "OmniSurface", "USD Preview Surface", "Add MDL File"]
+exts."omni.rtx.window.settings".window_menu = "Window" # Where to put the render settings menuitem
+exts."omni.kit.viewport.menubar.lighting".defaultRigIgnorePattern = "" # Allows auto light rig with anon layers
+exts."omni.kit.viewport.window".windowMenu.entryCount = 1
+exts."omni.kit.viewport.window".windowMenu.label="" # Put Viewport menuitem under Window menu
+renderer.gpuEnumeration.glInterop.enabled = false # Improves startup speed.
+renderer.asyncInit = true # Don't block while renderer inits
+rtx.ecoMode.enabled = true
+rtx.hydra.mdlMaterialWarmup = true # start loading the MDL shaders needed before any delegate is actually created.
+
+# Necessary for IndeX
+rtx.index.overrideSubdivisionMode = "kd_tree"
+rtx.index.overrideSubdivisionPartCount = 1
+rtx.index.compositeEnabled = 1
+
+[settings.app]
+content.emptyStageOnStart = true
+font.file = "${fonts}/OpenSans-SemiBold.ttf"
+font.size = 16
+hangDetector.enabled = true
+hangDetector.timeout = 120
+renderer.skipWhileMinimized = true
+window.title = "Omni CAE Editor"
+
+# enable FSD (needed for USDRT)
+useFabricSceneDelegate = true
+
+[settings.app.exts]
+folders.'++' = [  # Search paths for extensions.
+	"${app}/../exts",
+	"${app}/../extscache/"
+]
+
+
+[settings.app.viewport.defaults]
+fillViewport = true  # default to fill viewport
+
+
+[settings.telemetry]
+# Anonymous Kit application usage telemetry
+enableAnonymousData = true
+enableAnonymousAppName = true
+
+[settings.log]
+file = "logs/omni.kit.cae.log"
+fileLogLevel = "info" # more verbose logging
+enableStandardStreamOutput = true
+outputStreamLevel = "warning"
+
+[[test]]
+args = [
+	"--/app/file/ignoreUnsavedOnExit=true"
+]
+
+[template]
+type = "ApplicationTemplate" # Repo Template Metadata
+
+
+########################################################################################################################
+# BEGIN GENERATED PART (Remove from 'BEGIN' to 'END' to regenerate)
+########################################################################################################################
+
+# Kit SDK Version: 107.3.0+feature.199947.b0a86421.gl
+
+# Version lock for all dependencies:
+[settings.app.exts]
+enabled = [
+	"omni.anim.curve.core-1.3.1",
+	"omni.anim.window.timeline-106.5.0",
+	"omni.convexdecomposition-107.3.9",
+	"omni.flowusd-107.1.7",
+	"omni.flowusd.bundle-1.1.2",
+	"omni.flowusd.ui-107.1.2",
+	"omni.graph.action-1.130.0",
+	"omni.graph.action_nodes-1.50.4",
+	"omni.graph.nodes-1.170.10",
+	"omni.graph.scriptnode-1.50.0",
+	"omni.graph.ui_nodes-1.50.5",
+	"omni.kit.asset_converter-4.1.1",
+	"omni.kit.browser.core-2.3.13",
+	"omni.kit.browser.folder.core-1.10.9",
+	"omni.kit.tool.asset_importer-4.3.0",
+	"omni.kit.viewport.menubar.lighting-107.3.1",
+	"omni.kit.widget.zoombar-1.0.6",
+	"omni.kvdb-107.3.9",
+	"omni.localcache-107.3.9",
+	"omni.physx-107.3.9",
+	"omni.physx.cooking-107.3.9",
+	"omni.physx.foundation-107.3.9",
+	"omni.physx.stageupdate-107.3.9",
+	"omni.usd.metrics.assembler-107.3.1",
+	"omni.usd.metrics.assembler.ui-107.3.1",
+	"omni.usd.schema.flow-107.1.1",
+	"omni.usd.schema.metrics.assembler-107.3.1",
+	"omni.usd.schema.physx-107.3.9",
+	"omni.usdphysics-107.3.9",
+	"omni.vdb_timesample_editor-0.2.0",
+	"omni.warp.core-1.8.1",
+]
+
+########################################################################################################################
+# END GENERATED PART
+########################################################################################################################

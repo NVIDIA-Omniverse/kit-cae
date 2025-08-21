@@ -1,0 +1,46 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+[package]
+version = "1.0.0"
+title = "CAE CGNS Data"
+description = "Extension that provides CGNS data delegate for reading CGNS field arrays."
+category = "CAE"
+readme  = "docs/README.md"
+keywords = ["kit", "cae", "cgns"]
+changelog = "docs/CHANGELOG.md"
+icon = "data/icon.png"
+
+[dependencies]
+"omni.cae.data" = {}
+"omni.cae.file_format.cgns" = {}
+"omni.cae.hdf5_libs" = {}
+"omni.cae.cgns_libs" = {}
+
+[settings]
+# enable/disable downsampling of floating point arrays
+exts."omni.cae.cgns".convertDoubleToFloats = true
+# enable/disable downsampling of ElementConnectivity arrays
+exts."omni.cae.cgns".convertElementConnectivityToInt32 = true
+
+[[native.plugin]]
+path = "bin/*.plugin"
+recursive = false
+
+[documentation]
+pages = [
+    "docs/Overview.md",
+    "docs/CHANGELOG.md",
+]
+
+[[test]]
+dependencies = [
+    "omni.cae.testing",
+]

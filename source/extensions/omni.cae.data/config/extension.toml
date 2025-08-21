@@ -1,0 +1,99 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+[package]
+title = "Omni CAE Data"
+version = "1.0.0"  # Semantic Versioning is used: https://semver.org/
+description = "Core extension that provides the CAE data delegate API and infrastructure for reading CAE field arrays."
+category = "internal"  # How to categorize this in the Extension Manager
+changelog = "docs/CHANGELOG.md"
+icon = "data/icon.png"  # Icon to show in the Extension Manager
+keywords = ["kit", "example", "extension"]  # Search keywords for the Extension Manager
+readme = "docs/README.md" # Path (relative to the root) or content of readme markdown file for UI
+repository = "https://github.com/NVIDIA-Omniverse/kit-cae"  # URL of the extension source repository
+
+
+[dependencies]
+"omni.cae.schema" = {}
+"omni.usd.core" = {}
+"omni.usd.libs" = {}
+"omni.warp.core" = {}
+"usdrt.scenegraph" = {}
+"omni.flowusd" = {}
+"omni.kit.pip_archive" = {}
+"omni.client" = {}
+"omni.client.lib" = {}
+
+[settings]
+# enable/disable caching; when enabled, all field array read in from
+# data delegates are cached for future use
+persistent.exts."omni.cae.data".enableCache = true
+
+# enable/disable intermediate caching; when enabled, intermediate
+# results are cached.
+persistent.exts."omni.cae.data".enableIntermediateCache = true
+
+# Default voxel grid resolution to use when creating new prims that will use voxelization.
+persistent.exts."omni.cae.data".defaultMaxVoxelGridResolution = 128
+
+# choose which voxelization implemenetation to use
+# options are "GaussianWarp", or "Flow"
+persistent.exts."omni.cae.data".voxelizationImpl = "GaussianWarp"
+
+# maximum number of points to attempt to voxelize in on batch
+# if number of points is more, than multiple batches are used
+persistent.exts."omni.cae.data".warpVoxelizationBatchSize = 250000000
+
+# radius factor for voxelization with Warp
+persistent.exts."omni.cae.data".warpVoxelizationRadiusFactor = 1.0
+
+# set maximum number of blocks with using Flow for voxelization
+persistent.exts."omni.cae.data".flowVoxelizationMaxBlocks = 102400
+
+# choose which implementation to use for Streamlines
+# options are "VTK" or "Warp"
+persistent.exts."omni.cae.data".streamlinesImpl = "VTK"
+
+[[python.module]]
+name = "omni.cae.data"
+
+[[native.plugin]]
+path = "bin/*.plugin"
+recursive = false
+
+[documentation]
+pages = [
+    "docs/Overview.md",
+    "docs/CHANGELOG.md",
+]
+
+cpp_api = [
+    "../../../include/omni/cae/data/DataDelegateUtils.h",
+    "../../../include/omni/cae/data/DataDelegateUtilsIncludes.h",
+    "../../../include/omni/cae/data/IDataDelegate.h",
+    "../../../include/omni/cae/data/IDataDelegateIncludes.h",
+    "../../../include/omni/cae/data/IDataDelegateInterface.h",
+    "../../../include/omni/cae/data/IDataDelegateRegistry.h",
+    "../../../include/omni/cae/data/IFieldArray.h",
+    "../../../include/omni/cae/data/IFieldArrayUtils.h",
+    "../../../include/omni/cae/data/Types.h",
+]
+
+[[test]]
+dependencies = [
+    "omni.cae.testing",
+    "omni.cae.npz",
+    "omni.cae.cgns",
+    "omni.cae.vtk",
+    "omni.cae.sids",
+]
+
+args =[
+]

@@ -1,0 +1,224 @@
+#usda 1.0
+(
+    upAxis = "Y"
+    defaultPrim = "tut21"
+)
+
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+def Xform "tut21"
+{
+    def Scope "tut21_cgns"
+    {
+        class "CGNSFieldArrayClass"
+        {
+            asset[] fileNames = [@tut21.cgns@]
+        }
+
+        def CGNSBase "Base1"
+        {
+            def CGNSZone "Zone1"
+            {
+                def CGNSGridCoordinates "GridCoordinates"
+                {
+                    def CaeCgnsFieldArray "CoordinateX" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "vertex"
+                        string fieldPath = "/Base1/Zone1/GridCoordinates/CoordinateX"
+                    }
+
+                    def CaeCgnsFieldArray "CoordinateY" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "vertex"
+                        string fieldPath = "/Base1/Zone1/GridCoordinates/CoordinateY"
+                    }
+
+                    def CaeCgnsFieldArray "CoordinateZ" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "vertex"
+                        string fieldPath = "/Base1/Zone1/GridCoordinates/CoordinateZ"
+                    }
+                }
+
+                def CaeDataSet "GridElements" (
+                    prepend apiSchemas = ["CaeSidsUnstructuredAPI"]
+                )
+                {
+                    rel cae:sids:elementConnectivity = </tut21/tut21_cgns/Base1/Zone1/GridElements/ElementConnectivity>
+                    uniform token cae:sids:elementType = "MIXED"
+                    rel cae:sids:gridCoordinates = [
+                        </tut21/tut21_cgns/Base1/Zone1/GridCoordinates/CoordinateX>,
+                        </tut21/tut21_cgns/Base1/Zone1/GridCoordinates/CoordinateY>,
+                        </tut21/tut21_cgns/Base1/Zone1/GridCoordinates/CoordinateZ>,
+                    ]
+                    custom rel field:Density = </tut21/tut21_cgns/Base1/Zone1/Solution1/Density>
+                    custom rel field:Pressure = </tut21/tut21_cgns/Base1/Zone1/Solution1/Pressure>
+                    custom rel field:SpecificHeatPressure = </tut21/tut21_cgns/Base1/Zone1/Solution1/SpecificHeatPressure>
+                    custom rel field:Temperature = </tut21/tut21_cgns/Base1/Zone1/Solution1/Temperature>
+                    custom rel field:ThermalConductivity = </tut21/tut21_cgns/Base1/Zone1/Solution1/ThermalConductivity>
+                    custom rel field:TurbulentDissipation = </tut21/tut21_cgns/Base1/Zone1/Solution1/TurbulentDissipation>
+                    custom rel field:TurbulentEnergyKinetic = </tut21/tut21_cgns/Base1/Zone1/Solution1/TurbulentEnergyKinetic>
+                    custom rel field:TurbulentViscosity = </tut21/tut21_cgns/Base1/Zone1/Solution1/TurbulentViscosity>
+                    custom rel field:VelocityX = </tut21/tut21_cgns/Base1/Zone1/Solution1/VelocityX>
+                    custom rel field:VelocityY = </tut21/tut21_cgns/Base1/Zone1/Solution1/VelocityY>
+                    custom rel field:VelocityZ = </tut21/tut21_cgns/Base1/Zone1/Solution1/VelocityZ>
+                    custom rel field:ViscosityMolecular = </tut21/tut21_cgns/Base1/Zone1/Solution1/ViscosityMolecular>
+
+                    def CaeCgnsFieldArray "ElementConnectivity" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "none"
+                        string fieldPath = "/Base1/Zone1/GridElements/ElementConnectivity"
+                    }
+                }
+
+                def CaeDataSet "GridShells" (
+                    prepend apiSchemas = ["CaeSidsUnstructuredAPI"]
+                )
+                {
+                    rel cae:sids:elementConnectivity = </tut21/tut21_cgns/Base1/Zone1/GridShells/ElementConnectivity>
+                    uniform token cae:sids:elementType = "MIXED"
+                    rel cae:sids:gridCoordinates = [
+                        </tut21/tut21_cgns/Base1/Zone1/GridCoordinates/CoordinateX>,
+                        </tut21/tut21_cgns/Base1/Zone1/GridCoordinates/CoordinateY>,
+                        </tut21/tut21_cgns/Base1/Zone1/GridCoordinates/CoordinateZ>,
+                    ]
+                    custom rel field:Density = </tut21/tut21_cgns/Base1/Zone1/Solution1/Density>
+                    custom rel field:Pressure = </tut21/tut21_cgns/Base1/Zone1/Solution1/Pressure>
+                    custom rel field:SpecificHeatPressure = </tut21/tut21_cgns/Base1/Zone1/Solution1/SpecificHeatPressure>
+                    custom rel field:Temperature = </tut21/tut21_cgns/Base1/Zone1/Solution1/Temperature>
+                    custom rel field:ThermalConductivity = </tut21/tut21_cgns/Base1/Zone1/Solution1/ThermalConductivity>
+                    custom rel field:TurbulentDissipation = </tut21/tut21_cgns/Base1/Zone1/Solution1/TurbulentDissipation>
+                    custom rel field:TurbulentEnergyKinetic = </tut21/tut21_cgns/Base1/Zone1/Solution1/TurbulentEnergyKinetic>
+                    custom rel field:TurbulentViscosity = </tut21/tut21_cgns/Base1/Zone1/Solution1/TurbulentViscosity>
+                    custom rel field:VelocityX = </tut21/tut21_cgns/Base1/Zone1/Solution1/VelocityX>
+                    custom rel field:VelocityY = </tut21/tut21_cgns/Base1/Zone1/Solution1/VelocityY>
+                    custom rel field:VelocityZ = </tut21/tut21_cgns/Base1/Zone1/Solution1/VelocityZ>
+                    custom rel field:ViscosityMolecular = </tut21/tut21_cgns/Base1/Zone1/Solution1/ViscosityMolecular>
+
+                    def CaeCgnsFieldArray "ElementConnectivity" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "none"
+                        string fieldPath = "/Base1/Zone1/GridShells/ElementConnectivity"
+                    }
+                }
+
+                def CGNSFlowSolution "Solution1"
+                {
+                    def CaeCgnsFieldArray "VelocityX" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "cellCenter"
+                        string fieldPath = "/Base1/Zone1/Solution1/VelocityX"
+                    }
+
+                    def CaeCgnsFieldArray "VelocityY" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "cellCenter"
+                        string fieldPath = "/Base1/Zone1/Solution1/VelocityY"
+                    }
+
+                    def CaeCgnsFieldArray "VelocityZ" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "cellCenter"
+                        string fieldPath = "/Base1/Zone1/Solution1/VelocityZ"
+                    }
+
+                    def CaeCgnsFieldArray "Pressure" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "cellCenter"
+                        string fieldPath = "/Base1/Zone1/Solution1/Pressure"
+                    }
+
+                    def CaeCgnsFieldArray "TurbulentEnergyKinetic" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "cellCenter"
+                        string fieldPath = "/Base1/Zone1/Solution1/TurbulentEnergyKinetic"
+                    }
+
+                    def CaeCgnsFieldArray "TurbulentDissipation" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "cellCenter"
+                        string fieldPath = "/Base1/Zone1/Solution1/TurbulentDissipation"
+                    }
+
+                    def CaeCgnsFieldArray "TurbulentViscosity" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "cellCenter"
+                        string fieldPath = "/Base1/Zone1/Solution1/TurbulentViscosity"
+                    }
+
+                    def CaeCgnsFieldArray "Temperature" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "cellCenter"
+                        string fieldPath = "/Base1/Zone1/Solution1/Temperature"
+                    }
+
+                    def CaeCgnsFieldArray "Density" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "cellCenter"
+                        string fieldPath = "/Base1/Zone1/Solution1/Density"
+                    }
+
+                    def CaeCgnsFieldArray "ViscosityMolecular" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "cellCenter"
+                        string fieldPath = "/Base1/Zone1/Solution1/ViscosityMolecular"
+                    }
+
+                    def CaeCgnsFieldArray "SpecificHeatPressure" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "cellCenter"
+                        string fieldPath = "/Base1/Zone1/Solution1/SpecificHeatPressure"
+                    }
+
+                    def CaeCgnsFieldArray "ThermalConductivity" (
+                        specializes = </tut21/tut21_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "cellCenter"
+                        string fieldPath = "/Base1/Zone1/Solution1/ThermalConductivity"
+                    }
+                }
+            }
+        }
+    }
+}

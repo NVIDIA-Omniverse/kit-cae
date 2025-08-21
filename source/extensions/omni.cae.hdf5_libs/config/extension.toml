@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+[package]
+title = "Omni CAE HDF5 Libs"
+version = "1.14.6" # Version should match the HDF5 library version
+description = "HDF5 libraries for CAE extensions"
+category = "Internal"
+changelog = "docs/CHANGELOG.md"
+icon = "data/icon.png"
+keywords = ["kit", "cae", "hdf5", "library"]
+readme  = "docs/README.md"
+repository = "https://github.com/NVIDIA-Omniverse/kit-cae"
+
+[core]
+reloadable = false
+# Load early to make libraries available to other extensions
+order = -200
+
+[[native.library]]
+"filter:platform"."linux-x86_64"."path" = "lib/libhdf5.so"
+"filter:platform"."windows-x86_64"."path" = "bin/hdf5.dll"
+
+[[native.library]]
+"filter:platform"."linux-x86_64"."path" = "lib/libhdf5_cpp.so"
+"filter:platform"."windows-x86_64"."path" = "bin/hdf5_cpp.dll"
+
+[[native.library]]
+"filter:platform"."linux-x86_64"."path" = "lib/libhdf5_hl.so"
+"filter:platform"."windows-x86_64"."path" = "bin/hdf5_hl.dll"
+
+[[native.library]]
+"filter:platform"."linux-x86_64"."path" = "lib/libhdf5_hl_cpp.so"
+"filter:platform"."windows-x86_64"."path" = "bin/hdf5_hl_cpp.dll"
+
+[documentation]
+pages = [
+    "docs/Overview.md",
+    "docs/CHANGELOG.md",
+]

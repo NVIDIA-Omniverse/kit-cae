@@ -1,0 +1,48 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+[package]
+version = "1.0.0"
+title = "CAE Flow"
+description = "Extension for Flow support for CAE data delegage."
+category = "CAE"
+readme  = "docs/README.md"
+keywords = ["kit", "cae"]
+changelog = "docs/CHANGELOG.md"
+icon = "data/icon.png"
+
+[dependencies]
+"omni.cae.data" = {}
+"omni.cae.schema" = {}
+"omni.cae.algorithms.core" = {}
+"omni.usd" = {}
+"omni.flowusd" = {}
+"omni.kit.commands" = {optional = true}
+
+[[python.module]]
+name = "omni.cae.flow"
+
+[settings]
+rtx.flow.enabled = 1
+rtx.flow.pathTracingEnabled = 1
+rtx.flow.rayTracedReflectionsEnabled = 1
+rtx.flow.rayTracedTranslucencyEnabled = 1
+
+# [[native.plugin]]
+# path = "bin/*.plugin"
+# recursive = false
+
+[documentation]
+pages = [
+    "docs/Overview.md",
+    "docs/CHANGELOG.md",
+]
+cpp_api = [
+]

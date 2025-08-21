@@ -1,0 +1,210 @@
+#usda 1.0
+(
+    """
+        This file describes a proposal for supporting CAE meshes.
+    """
+    subLayers = [
+        @usd/schema.usda@
+    ]
+)
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+over "GLOBAL" (
+    customData = {
+        string libraryName = "omniCae"
+        string libraryPath = "omniCae"
+        string libraryPrefix = "OmniCae"
+        bool useLiteralIdentifier = true
+    }
+)
+{
+
+}
+
+class CaeDataSet "CaeDataSet" (
+    inherits = </Typed>
+    customData = {
+        string className = "DataSet"
+    }
+    doc = """A scientific dataset. A dataset is made up of any number of CaeFieldArray
+             primitives bound together in this dataset. Each CaeFieldArray primitive is specified as a
+             relationship with namespace prefix of "field"."""
+)
+{
+}
+
+class CaeFieldArray "CaeFieldArray" (
+    inherits = </Typed>
+    customData = {
+        string className = "FieldArray"
+    }
+)
+{
+   asset[] fileNames = [] (
+        doc = """Specifies the assets for the files. With multiple assets
+            are specified then they are treated as spatial partitions of the same
+            dataset. Temporal partitions may be specified by animating this attribute
+            i.e. using time codes.
+            """
+        displayName = "File Names"
+    )
+
+    uniform token fieldAssociation = "none" (
+        allowedTokens = [ "none", "vertex", "cell" ] #  "faceCenter", "edgeCenter" ]
+        doc = "Specifies the dataset element this field array is associated with."
+        displayName = "Field Association"
+    )
+}
+
+
+class CaeNumPyFieldArray "CaeNumPyFieldArray" (
+    inherits = </CaeFieldArray>
+    doc = "Defines a NumPy data array"
+    customData = {
+        string className = "NumPyFieldArray"
+    }
+)
+{
+    bool allowPickle = false (
+        doc = """Specifies whether to allow pickle when reading NumPy files.
+        Only enable for files from trusted sources.  Refer to NumPy documentation
+        for `numpy.load` function for details and security implications."""
+        displayName = "Allow Pickle"
+    )
+
+    string arrayName = "" (
+        doc = "Specifies the name for the array in the NumPy file."
+        displayName = "Array Name"
+    )
+
+}
+
+
+class CaeHdf5FieldArray "CaeHdf5FieldArray" (
+    inherits = </CaeFieldArray>
+    customData = {
+        string className = "Hdf5FieldArray"
+    }
+)
+{
+    string hdf5Path = "" (
+        doc = "Specifies the path to the HDF5 dataset."
+        displayName = "Hdf5 Path"
+    )
+}
+
+class CaeCgnsFieldArray "CaeCgnsFieldArray" (
+    inherits = </CaeFieldArray>
+    doc = "Defines a CGNS data array"
+    customData = {
+        string className = "CgnsFieldArray"
+    }
+)
+{
+    string fieldPath = "" (
+        doc = "Specifies the path to the node in the CGNS database."
+        displayName = "Field Path"
+    )
+}
+
+class "CaePointCloudAPI" (
+    inherits = </APISchemaBase>
+    doc = "Defines a dataset that represents a point cloud."
+    customData = {
+        string className = "PointCloudAPI"
+        token apiSchemaType = "singleApply"
+    }
+)
+{
+    rel cae:pointCloud:coordinates (
+        doc = """Specifies the CaeFieldArray that must be treated as the coordinates. Multiple targets
+                 may be specified when individual components are split among multiple field arrays."""
+        displayName = "Coordinates"
+        displayGroup = "Relationships"
+        customData = {
+            string apiName = "coordinates"
+        }
+    )
+}
+
+class "CaeDenseVolumeAPI" (
+    inherits = </APISchemaBase>
+    doc = "Defines a dataset that represents a dense volume."
+    customData = {
+        string className = "DenseVolumeAPI"
+        token apiSchemaType = "singleApply"
+    }
+)
+{
+    uniform int3 cae:denseVolume:minExtent (
+        doc = "Specifies the minimum structured (IJK) extent for the volume."
+        displayName = "Min Extent"
+        displayGroup = "Attributes"
+        customData = {
+            string apiName = "minExtent"
+        }
+    )
+
+    uniform int3 cae:denseVolume:maxExtent (
+        doc = "Specifies the maximum structured (IJK) extent for the volume."
+        displayName = "Max Extent"
+        displayGroup = "Attributes"
+        customData = {
+            string apiName = "maxExtent"
+        }
+    )
+
+    uniform float3 cae:denseVolume:spacing = (1.0, 1.0, 1.0) (
+        doc = "Specifies the spacing along each axis."
+        displayName = "Spacing"
+        displayGroup = "Attributes"
+        customData = {
+            string apiName = "spacing"
+        }
+    )
+}
+
+class "CaeMeshAPI" (
+    inherits = </APISchemaBase>
+    doc = "Defines a dataset that represents a surface mesh."
+    customData = {
+        string className = "MeshAPI"
+        token apiSchemaType = "singleApply"
+    }
+)
+{
+    rel cae:mesh:points (
+        doc = "Specifies the CaeFieldArray that must be treated as the points."
+        displayName = "Points"
+        displayGroup = "Relationships"
+        customData = {
+            string apiName = "points"
+        }
+    )
+
+    rel cae:mesh:faceVertexIndices (
+        doc = "Specifies the CaeFieldArray that must be treated as the face vertex indices."
+        displayName = "Face Vertex Indices"
+        displayGroup = "Relationships"
+        customData = {
+            string apiName = "faceVertexIndices"
+        }
+    )
+
+    rel cae:mesh:faceVertexCounts (
+        doc = "Specifies the CaeFieldArray that must be treated as the face vertex counts."
+        displayName = "Face Vertex Counts"
+        displayGroup = "Relationships"
+        customData = {
+            string apiName = "faceVertexCounts"
+        }
+    )
+}

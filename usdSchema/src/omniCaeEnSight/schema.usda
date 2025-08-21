@@ -1,0 +1,137 @@
+#usda 1.0
+(
+    """
+        Schema for EnSight data.
+    """
+    subLayers = [
+        # This is mainly needed for definition of UsdTyped.
+        @../omniCae/schema.usda@
+    ]
+)
+
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+over "GLOBAL" (
+    customData = {
+        string libraryName = "omniCaeEnSight"
+        string libraryPath = "omniCaeEnSight"
+        string libraryPrefix = "OmniCaeEnSight"
+        bool useLiteralIdentifier = true
+    }
+)
+{
+}
+
+class CaeEnSightGoldGeoFieldArray "CaeEnSightGoldGeoFieldArray" (
+    inherits = </CaeFieldArray>
+    customData = {
+        string className = "GoldGeoFieldArray"
+    }
+)
+{
+    uniform token type (
+        allowedTokens = [ "coordinateX", "coordinateY", "coordinateZ", "connectivity", "elementNodeCounts" ]
+        doc = "Specifies the type of data this field array represents."
+        displayName = "Type"
+    )
+
+    uniform int partId (
+        doc = "Specifies the part id."
+        displayName = "Part Id"
+    )
+
+    uniform int pieceId  = -1 (
+        doc = "Specifies the piece id."
+        displayName = "Piece Id"
+    )
+}
+
+class CaeEnSightGoldVarFieldArray "CaeEnSightGoldVarFieldArray" (
+    inherits = </CaeFieldArray>
+    customData = {
+        string className = "GoldVarFieldArray"
+    }
+)
+{
+    uniform token type (
+        allowedTokens = [ "scalar", "vector", "tensor", "tensor9" ]
+        doc = "Specifies the type of data this field array represents."
+        displayName = "Type"
+    )
+
+    uniform int partId (
+        doc = "Specifies the part id."
+        displayName = "Part Id"
+    )
+
+    uniform int pieceId  = -1 (
+        doc = "Specifies the piece id."
+        displayName = "Piece Id"
+    )
+
+    asset[] geoFileNames = [] (
+        doc = """Specifies the assets for the geometry files. With multiple assets
+            are specified then they are treated as spatial partitions of the same
+            dataset. Temporal partitions may be specified by animating this attribute
+            i.e. using time codes.
+            """
+        displayName = "Geometry File Names"
+    )
+}
+
+class "CaeEnSightUnstructuredPieceAPI" (
+    inherits = </APISchemaBase>
+    doc = "Defines a dataset that represents a piece of an EnSight dataset."
+    customData = {
+        string className = "UnstructuredPieceAPI"
+        token apiSchemaType = "singleApply"
+    }
+)
+{
+    rel cae:ensight:piece:coordinates (
+        doc = "Specifies the CaeFieldArray that must be treated as the coordinates."
+        displayName = "Coordinates"
+        displayGroup = "Relationships"
+        customData = {
+            string apiName = "coordinates"
+        }
+    )
+
+    rel cae:ensight:piece:connectivity (
+        doc = "Specifies the CaeFieldArray that must be treated as the connectivity."
+        displayName = "Connectivity"
+        displayGroup = "Relationships"
+        customData = {
+            string apiName = "connectivity"
+        }
+    )
+
+    rel cae:ensight:piece:elementNodeCounts (
+        doc = "Specifies the CaeFieldArray that must be treated as the element node counts."
+        displayName = "Element Node Counts"
+        displayGroup = "Relationships"
+        customData = {
+            string apiName = "elementNodeCounts"
+        }
+    )
+
+    uniform token cae:ensight:piece:elementType (
+        allowedTokens = [ "point", "bar2", "bar3", "tria3", "tria6", "quad4", "quad8",
+                          "tetra4", "tetra10", "pyramid5", "pyramid13", "penta6", "penta15", "hexa8", "hexa20",
+                          "nsided", "nfaced"]
+        doc = "Specifies the element type."
+        displayName = "Element Type"
+        displayGroup = "Attributes"
+        customData = {
+            string apiName = "elementType"
+        }
+    )
+}

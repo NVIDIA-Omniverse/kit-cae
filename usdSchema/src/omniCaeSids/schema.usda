@@ -1,0 +1,121 @@
+#usda 1.0
+(
+    """
+        This file describes a proposal for supporting CAE meshes.
+    """
+    subLayers = [
+        @usd/schema.usda@
+    ]
+)
+
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+over "GLOBAL" (
+    customData = {
+        string libraryName = "omniCaeSids"
+        string libraryPath = "omniCaeSids"
+        string libraryPrefix = "OmniCaeSids"
+        bool useLiteralIdentifier = true
+    }
+)
+{
+
+}
+
+class "CaeSidsUnstructuredAPI" (
+    inherits = </APISchemaBase>
+    doc = "Defines a mesh that follows the CGNS SIDS data model for unstructured data."
+    customData = {
+        string className = "UnstructuredAPI"
+        token apiSchemaType = "singleApply"
+    }
+)
+{
+    uniform token cae:sids:elementType = "ElementTypeNull" (
+        allowedTokens = [
+            "ElementTypeNull", "ElementTypeUserDefined", "NODE", "BAR_2", "BAR_3",
+            "TRI_3", "TRI_6", "QUAD_4", "QUAD_8", "QUAD_9",
+            "TETRA_4", "TETRA_10", "PYRA_5", "PYRA_14",
+            "PENTA_6", "PENTA_15", "PENTA_18", "HEXA_8", "HEXA_20", "HEXA_27",
+            "MIXED", "PYRA_13", "NGON_n", "NFACE_n",
+            "BAR_4", "TRI_9", "TRI_10", "QUAD_12", "QUAD_16",
+            "TETRA_16", "TETRA_20", "PYRA_21", "PYRA_29", "PYRA_30",
+            "PENTA_24", "PENTA_38", "PENTA_40", "HEXA_32", "HEXA_56", "HEXA_64",
+            "BAR_5", "TRI_12", "TRI_15", "QUAD_P4_16", "QUAD_25", "TETRA_22",
+            "TETRA_34", "TETRA_35", "PYRA_P4_29", "PYRA_50", "PYRA_55", "PENTA_33", "PENTA_66",
+            "PENTA_75", "HEXA_44", "HEXA_98", "HEXA_125"
+        ]
+        doc = "Specifies required element type."
+        displayName = "Element Type"
+        displayGroup = "Attributes"
+        customData = {
+            string apiName = "elementType"
+        }
+    )
+
+    uniform uint64 cae:sids:elementRangeStart (
+        doc = "Specifies required element range start which is the index of the first element in this section."
+        displayName = "Element Range Start"
+        displayGroup = "Attributes"
+        customData = {
+            string apiName = "elementRangeStart"
+        }
+    )
+
+    uniform uint64 cae:sids:elementRangeEnd (
+        doc = "Specifies required element range end which is the index of the last eleemnt in this section."
+        displayName = "Element Range End"
+        displayGroup = "Attributes"
+        customData = {
+            string apiName = "elementRangeEnd"
+        }
+    )
+
+    rel cae:sids:elementConnectivity (
+        doc = "Specifies required CaeFieldArray that must be treated as element connectivity specification."
+        displayName = "Element Connectivity"
+        displayGroup = "Relationships"
+        customData = {
+            string apiName = "elementConnectivity"
+        }
+
+    )
+
+    rel cae:sids:elementStartOffset (
+        doc = "Specifies optional CaeFieldArray that must be treated as element start offsets specification."
+        displayName = "Element Start Offset"
+        displayGroup = "Relationships"
+        customData = {
+            string apiName = "elementStartOffset"
+        }
+    )
+
+    rel cae:sids:gridCoordinates (
+        doc = """Specifies optional CaeFieldArray that must be treated as the grid coordinate. Multiple targets
+        may be specified when individual components are split among multiple CaeFieldArrays."""
+        displayName = "Grid Coordinates"
+        displayGroup = "Relationships"
+        customData = {
+            string apiName = "gridCoordinates"
+        }
+    )
+
+    rel cae:sids:ngons (
+        doc ="""For datasets of 'NFACE_n' element type, this relationship is used to specify dataset prims that
+        describe the faces (N-gons) that form the polyhedral elements. Multiple targets may be specified
+        if the face definitions are split among multiple element blocks."""
+        displayName = "N_GONs"
+        displayGroup = "Relationships"
+        customData = {
+            string apiName = "ngons"
+        }
+    )
+}

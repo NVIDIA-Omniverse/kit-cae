@@ -1,0 +1,206 @@
+#usda 1.0
+(
+    """
+        Schema for volume rendering. This is provided as an example and not intended
+        to be official schemas for volume rendering.
+    """
+    subLayers = [
+        @usd/schema.usda@,
+    ]
+)
+
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+over "GLOBAL" (
+    customData = {
+        string libraryName = "omniCaeIndeX"
+        string libraryPath = "."
+        string libraryPrefix = "OmniCaeIndeX"
+        bool skipCodeGeneration = true
+    }
+)
+{
+}
+
+class "CaeIndeXVolumeAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "VolumeAPI"
+    }
+    doc = """Applies to a UsdVolVolume prim to set it up for volume render render with IndeX."""
+)
+{
+    rel omni:cae:index:volume:dataset (
+        doc = "Specifies the CaeDataSet prim"
+        displayName = "Dataset"
+        customData = {
+            string apiName = "dataset"
+        }
+    )
+
+    rel omni:cae:index:volume:field (
+        doc = "Specifies the field(s) to use for volume rendering. Multiple fields may be specified for multi-field rendering."
+        displayName = "Field"
+        customData = {
+            string apiName = "field"
+        }
+    )
+
+    # float omni:cae:volume:samplingSegmentLength (
+    #     doc = "Sampling segment length"
+    #     customData = {
+    #         string apiName = "samplingSegmentLength"
+    #     }
+    # )
+}
+
+class "CaeIndeXNanoVdbVolumeAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "NanoVdbVolumeAPI"
+    }
+    doc = """Applies to a UsdVolVolume prim to set it up for volume render render with IndeX using NanoVDB conversion."""
+)
+{
+    rel omni:cae:index:nvdb:dataset (
+        doc = "Specifies the CaeDataSet prim"
+        displayName = "Dataset"
+        displayGroup = "Data"
+        customData = {
+            string apiName = "dataset"
+        }
+    )
+
+    rel omni:cae:index:nvdb:field (
+        doc = "Specifies the field to use for volume rendering."
+        displayName = "Field"
+        displayGroup = "Data"
+        customData = {
+            string apiName = "field"
+        }
+    )
+
+    rel omni:cae:index:nvdb:roi (
+        doc = "Specifies the prim whose bounds should be used as the region of interest (ROI) to target for the volume rendering."
+        displayName = "Region-of-interest (ROI)"
+        displayGroup = "Voxelization"
+        customData = {
+            string apiName = "roi"
+        }
+    )
+
+    uniform int omni:cae:index:nvdb:maxResolution = 128 (
+        doc = "Specifies the maximum resolution in any direction for the voxel grid"
+        displayName = "Max Resolution"
+        displayGroup = "Voxelization"
+        customData = {
+            string apiName = "maxResolution"
+        }
+    )
+
+    uniform bool omni:cae:index:nvdb:temporalInterpolation = false (
+        doc = "When enabled, the volume will be temporally interpolated between frames."
+        displayName = "Temporal Interpolation"
+        displayGroup = "Temporal Interpolation"
+        customData = {
+            string apiName = "temporalInterpolation"
+        }
+    )
+}
+
+class "CaeIndeXVolumeSliceAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "VolumeSliceAPI"
+    }
+)
+{
+    rel omni:cae:index:slice:volume (
+        doc = "Specifies the UsdVolVolume prim to slice"
+        displayName = "Volume"
+        customData = {
+            string apiName = "volume"
+        }
+    )
+}
+
+class "CaeIndeXSliceAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "SliceAPI"
+    }
+    doc = """Applies to a Mesh prim to set it up for slice render with IndeX."""
+)
+{
+    rel omni:cae:index:slice:dataset (
+        doc = "Specifies the CaeDataSet prim"
+        displayName = "Dataset"
+        customData = {
+            string apiName = "dataset"
+        }
+    )
+
+    rel omni:cae:index:slice:field (
+        doc = "Specifies the field(s) to use for volume rendering. Multiple fields may be specified for multi-field rendering."
+        displayName = "Field"
+        customData = {
+            string apiName = "field"
+        }
+    )
+}
+
+class "CaeIndeXNanoVdbSliceAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "NanoVdbSliceAPI"
+    }
+    doc = """Applies to a Mesh prim to set it up for slice render with IndeX."""
+)
+{
+    rel omni:cae:index:slice:dataset (
+        doc = "Specifies the CaeDataSet prim"
+        displayName = "Dataset"
+        customData = {
+            string apiName = "dataset"
+        }
+    )
+
+    rel omni:cae:index:slice:field (
+        doc = "Specifies the field(s) to use for volume rendering. Multiple fields may be specified for multi-field rendering."
+        displayName = "Field"
+        customData = {
+            string apiName = "field"
+        }
+    )
+
+    rel omni:cae:index:slice:roi (
+        doc = "Specifies the prim whose bounds should be used as the region of interest (ROI) to target for the volume rendering."
+        displayName = "Region-of-interest (ROI)"
+        displayGroup = "Voxelization"
+        customData = {
+            string apiName = "roi"
+        }
+    )
+
+    uniform int omni:cae:index:slice:maxResolution = 128 (
+        doc = "Specifies the maximum resolution in any direction for the voxel grid"
+        displayName = "Max Resolution"
+        displayGroup = "Voxelization"
+        customData = {
+            string apiName = "maxResolution"
+        }
+    )
+}

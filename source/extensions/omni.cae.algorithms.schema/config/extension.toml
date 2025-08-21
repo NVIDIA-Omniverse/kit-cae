@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+[core]
+reloadable = false
+order = -100  # Load at the start, load all schemas with order -100 (with order -1000 the USD libs are loaded)
+
+[package]
+title = "CAE Algorithms USD Schema"
+version = "1.0.0"
+description = "USD schemas for CAE algorithms in Omniverse."
+category = "internal"
+changelog = "docs/CHANGELOG.md"
+icon = "data/icon.png"  # Icon to show in the Extension Manager
+keywords = ["cae", "schema"]  # Search keywords for the Extension Manager
+readme  = "docs/README.md"  # Path (relative to the root) or content of readme markdown file for UI
+
+[[python.module]]  # Main python module this extension provides, it will be publicly available as "import omni.cae.algorithms.schema"
+name = "omni.cae.algorithms.schema"
+
+[dependencies]
+"omni.usd.libs" = {}

@@ -1,0 +1,714 @@
+#usda 1.0
+(
+    defaultPrim = "Root"
+    upAxis = "Y"
+)
+
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+def Xform "Root"
+{
+    def Xform "yf17_hdf5"
+    {
+        def Scope "yf17_hdf5_cgns"
+        {
+            class "CGNSFieldArrayClass"
+            {
+                asset[] fileNames = [@yf17_hdf5.cgns@]
+            }
+
+            def CGNSBase "Base"
+            {
+                def CGNSZone "Zone1"
+                {
+                    def CGNSGridCoordinates "GridCoordinates"
+                    {
+                        def CaeCgnsFieldArray "CoordinateX"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/GridCoordinates/CoordinateX"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "CoordinateY"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/GridCoordinates/CoordinateY"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "CoordinateZ"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/GridCoordinates/CoordinateZ"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+
+                    def CaeDataSet "GridElements" (
+                        apiSchemas = ["CaeSidsUnstructuredAPI"]
+                    )
+                    {
+                        rel cae:sids:elementConnectivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridElements/ElementConnectivity>
+                        uniform token cae:sids:elementType = "TETRA_4"
+                        rel cae:sids:gridCoordinates = [
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateX>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateY>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateZ>,
+                        ]
+                        custom rel field:Density = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Density>
+                        custom rel field:Enthalpy = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Enthalpy>
+                        custom rel field:EnthalpyStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/EnthalpyStagnation>
+                        custom rel field:Mach = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Mach>
+                        custom rel field:Pressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Pressure>
+                        custom rel field:PressureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/PressureStagnation>
+                        custom rel field:SpecificHeatPressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/SpecificHeatPressure>
+                        custom rel field:Temperature = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Temperature>
+                        custom rel field:TemperatureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/TemperatureStagnation>
+                        custom rel field:ThermalConductivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ThermalConductivity>
+                        custom rel field:THERMX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/THERMX>
+                        custom rel field:VelocitySoundSquared = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocitySoundSquared>
+                        custom rel field:VelocityX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityX>
+                        custom rel field:VelocityY = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityY>
+                        custom rel field:VelocityZ = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityZ>
+                        custom rel field:ViscosityMolecular = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ViscosityMolecular>
+
+                        def CaeCgnsFieldArray "ElementConnectivity"
+                        {
+                            uniform token fieldAssociation = "none"
+                            string fieldPath = "/Base/Zone1/GridElements/ElementConnectivity"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+
+                    def CaeDataSet "intake" (
+                        apiSchemas = ["CaeSidsUnstructuredAPI"]
+                    )
+                    {
+                        rel cae:sids:elementConnectivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/intake/ElementConnectivity>
+                        uniform token cae:sids:elementType = "TRI_3"
+                        rel cae:sids:gridCoordinates = [
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateX>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateY>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateZ>,
+                        ]
+                        custom rel field:Density = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Density>
+                        custom rel field:Enthalpy = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Enthalpy>
+                        custom rel field:EnthalpyStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/EnthalpyStagnation>
+                        custom rel field:Mach = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Mach>
+                        custom rel field:Pressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Pressure>
+                        custom rel field:PressureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/PressureStagnation>
+                        custom rel field:SpecificHeatPressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/SpecificHeatPressure>
+                        custom rel field:Temperature = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Temperature>
+                        custom rel field:TemperatureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/TemperatureStagnation>
+                        custom rel field:ThermalConductivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ThermalConductivity>
+                        custom rel field:THERMX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/THERMX>
+                        custom rel field:VelocitySoundSquared = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocitySoundSquared>
+                        custom rel field:VelocityX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityX>
+                        custom rel field:VelocityY = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityY>
+                        custom rel field:VelocityZ = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityZ>
+                        custom rel field:ViscosityMolecular = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ViscosityMolecular>
+
+                        def CaeCgnsFieldArray "ElementConnectivity"
+                        {
+                            uniform token fieldAssociation = "none"
+                            string fieldPath = "/Base/Zone1/intake/ElementConnectivity"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+
+                    def CaeDataSet "exhaust" (
+                        apiSchemas = ["CaeSidsUnstructuredAPI"]
+                    )
+                    {
+                        rel cae:sids:elementConnectivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/exhaust/ElementConnectivity>
+                        uniform token cae:sids:elementType = "TRI_3"
+                        rel cae:sids:gridCoordinates = [
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateX>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateY>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateZ>,
+                        ]
+                        custom rel field:Density = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Density>
+                        custom rel field:Enthalpy = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Enthalpy>
+                        custom rel field:EnthalpyStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/EnthalpyStagnation>
+                        custom rel field:Mach = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Mach>
+                        custom rel field:Pressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Pressure>
+                        custom rel field:PressureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/PressureStagnation>
+                        custom rel field:SpecificHeatPressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/SpecificHeatPressure>
+                        custom rel field:Temperature = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Temperature>
+                        custom rel field:TemperatureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/TemperatureStagnation>
+                        custom rel field:ThermalConductivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ThermalConductivity>
+                        custom rel field:THERMX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/THERMX>
+                        custom rel field:VelocitySoundSquared = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocitySoundSquared>
+                        custom rel field:VelocityX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityX>
+                        custom rel field:VelocityY = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityY>
+                        custom rel field:VelocityZ = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityZ>
+                        custom rel field:ViscosityMolecular = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ViscosityMolecular>
+
+                        def CaeCgnsFieldArray "ElementConnectivity"
+                        {
+                            uniform token fieldAssociation = "none"
+                            string fieldPath = "/Base/Zone1/exhaust/ElementConnectivity"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+
+                    def CaeDataSet "intake_ramp" (
+                        apiSchemas = ["CaeSidsUnstructuredAPI"]
+                    )
+                    {
+                        rel cae:sids:elementConnectivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/intake_ramp/ElementConnectivity>
+                        uniform token cae:sids:elementType = "TRI_3"
+                        rel cae:sids:gridCoordinates = [
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateX>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateY>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateZ>,
+                        ]
+                        custom rel field:Density = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Density>
+                        custom rel field:Enthalpy = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Enthalpy>
+                        custom rel field:EnthalpyStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/EnthalpyStagnation>
+                        custom rel field:Mach = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Mach>
+                        custom rel field:Pressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Pressure>
+                        custom rel field:PressureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/PressureStagnation>
+                        custom rel field:SpecificHeatPressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/SpecificHeatPressure>
+                        custom rel field:Temperature = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Temperature>
+                        custom rel field:TemperatureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/TemperatureStagnation>
+                        custom rel field:ThermalConductivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ThermalConductivity>
+                        custom rel field:THERMX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/THERMX>
+                        custom rel field:VelocitySoundSquared = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocitySoundSquared>
+                        custom rel field:VelocityX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityX>
+                        custom rel field:VelocityY = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityY>
+                        custom rel field:VelocityZ = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityZ>
+                        custom rel field:ViscosityMolecular = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ViscosityMolecular>
+
+                        def CaeCgnsFieldArray "ElementConnectivity"
+                        {
+                            uniform token fieldAssociation = "none"
+                            string fieldPath = "/Base/Zone1/intake ramp/ElementConnectivity"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+
+                    def CaeDataSet "downstream" (
+                        apiSchemas = ["CaeSidsUnstructuredAPI"]
+                    )
+                    {
+                        rel cae:sids:elementConnectivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/downstream/ElementConnectivity>
+                        uniform token cae:sids:elementType = "TRI_3"
+                        rel cae:sids:gridCoordinates = [
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateX>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateY>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateZ>,
+                        ]
+                        custom rel field:Density = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Density>
+                        custom rel field:Enthalpy = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Enthalpy>
+                        custom rel field:EnthalpyStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/EnthalpyStagnation>
+                        custom rel field:Mach = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Mach>
+                        custom rel field:Pressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Pressure>
+                        custom rel field:PressureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/PressureStagnation>
+                        custom rel field:SpecificHeatPressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/SpecificHeatPressure>
+                        custom rel field:Temperature = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Temperature>
+                        custom rel field:TemperatureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/TemperatureStagnation>
+                        custom rel field:ThermalConductivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ThermalConductivity>
+                        custom rel field:THERMX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/THERMX>
+                        custom rel field:VelocitySoundSquared = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocitySoundSquared>
+                        custom rel field:VelocityX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityX>
+                        custom rel field:VelocityY = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityY>
+                        custom rel field:VelocityZ = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityZ>
+                        custom rel field:ViscosityMolecular = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ViscosityMolecular>
+
+                        def CaeCgnsFieldArray "ElementConnectivity"
+                        {
+                            uniform token fieldAssociation = "none"
+                            string fieldPath = "/Base/Zone1/downstream/ElementConnectivity"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+
+                    def CaeDataSet "lower" (
+                        apiSchemas = ["CaeSidsUnstructuredAPI"]
+                    )
+                    {
+                        rel cae:sids:elementConnectivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/lower/ElementConnectivity>
+                        uniform token cae:sids:elementType = "TRI_3"
+                        rel cae:sids:gridCoordinates = [
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateX>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateY>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateZ>,
+                        ]
+                        custom rel field:Density = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Density>
+                        custom rel field:Enthalpy = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Enthalpy>
+                        custom rel field:EnthalpyStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/EnthalpyStagnation>
+                        custom rel field:Mach = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Mach>
+                        custom rel field:Pressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Pressure>
+                        custom rel field:PressureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/PressureStagnation>
+                        custom rel field:SpecificHeatPressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/SpecificHeatPressure>
+                        custom rel field:Temperature = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Temperature>
+                        custom rel field:TemperatureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/TemperatureStagnation>
+                        custom rel field:ThermalConductivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ThermalConductivity>
+                        custom rel field:THERMX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/THERMX>
+                        custom rel field:VelocitySoundSquared = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocitySoundSquared>
+                        custom rel field:VelocityX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityX>
+                        custom rel field:VelocityY = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityY>
+                        custom rel field:VelocityZ = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityZ>
+                        custom rel field:ViscosityMolecular = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ViscosityMolecular>
+
+                        def CaeCgnsFieldArray "ElementConnectivity"
+                        {
+                            uniform token fieldAssociation = "none"
+                            string fieldPath = "/Base/Zone1/lower/ElementConnectivity"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+
+                    def CaeDataSet "upper" (
+                        apiSchemas = ["CaeSidsUnstructuredAPI"]
+                    )
+                    {
+                        rel cae:sids:elementConnectivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/upper/ElementConnectivity>
+                        uniform token cae:sids:elementType = "TRI_3"
+                        rel cae:sids:gridCoordinates = [
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateX>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateY>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateZ>,
+                        ]
+                        custom rel field:Density = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Density>
+                        custom rel field:Enthalpy = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Enthalpy>
+                        custom rel field:EnthalpyStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/EnthalpyStagnation>
+                        custom rel field:Mach = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Mach>
+                        custom rel field:Pressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Pressure>
+                        custom rel field:PressureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/PressureStagnation>
+                        custom rel field:SpecificHeatPressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/SpecificHeatPressure>
+                        custom rel field:Temperature = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Temperature>
+                        custom rel field:TemperatureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/TemperatureStagnation>
+                        custom rel field:ThermalConductivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ThermalConductivity>
+                        custom rel field:THERMX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/THERMX>
+                        custom rel field:VelocitySoundSquared = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocitySoundSquared>
+                        custom rel field:VelocityX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityX>
+                        custom rel field:VelocityY = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityY>
+                        custom rel field:VelocityZ = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityZ>
+                        custom rel field:ViscosityMolecular = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ViscosityMolecular>
+
+                        def CaeCgnsFieldArray "ElementConnectivity"
+                        {
+                            uniform token fieldAssociation = "none"
+                            string fieldPath = "/Base/Zone1/upper/ElementConnectivity"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+
+                    def CaeDataSet "upstream" (
+                        apiSchemas = ["CaeSidsUnstructuredAPI"]
+                    )
+                    {
+                        rel cae:sids:elementConnectivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/upstream/ElementConnectivity>
+                        uniform token cae:sids:elementType = "TRI_3"
+                        rel cae:sids:gridCoordinates = [
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateX>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateY>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateZ>,
+                        ]
+                        custom rel field:Density = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Density>
+                        custom rel field:Enthalpy = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Enthalpy>
+                        custom rel field:EnthalpyStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/EnthalpyStagnation>
+                        custom rel field:Mach = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Mach>
+                        custom rel field:Pressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Pressure>
+                        custom rel field:PressureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/PressureStagnation>
+                        custom rel field:SpecificHeatPressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/SpecificHeatPressure>
+                        custom rel field:Temperature = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Temperature>
+                        custom rel field:TemperatureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/TemperatureStagnation>
+                        custom rel field:ThermalConductivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ThermalConductivity>
+                        custom rel field:THERMX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/THERMX>
+                        custom rel field:VelocitySoundSquared = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocitySoundSquared>
+                        custom rel field:VelocityX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityX>
+                        custom rel field:VelocityY = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityY>
+                        custom rel field:VelocityZ = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityZ>
+                        custom rel field:ViscosityMolecular = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ViscosityMolecular>
+
+                        def CaeCgnsFieldArray "ElementConnectivity"
+                        {
+                            uniform token fieldAssociation = "none"
+                            string fieldPath = "/Base/Zone1/upstream/ElementConnectivity"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+
+                    def CaeDataSet "strake" (
+                        apiSchemas = ["CaeSidsUnstructuredAPI"]
+                    )
+                    {
+                        rel cae:sids:elementConnectivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/strake/ElementConnectivity>
+                        uniform token cae:sids:elementType = "TRI_3"
+                        rel cae:sids:gridCoordinates = [
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateX>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateY>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateZ>,
+                        ]
+                        custom rel field:Density = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Density>
+                        custom rel field:Enthalpy = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Enthalpy>
+                        custom rel field:EnthalpyStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/EnthalpyStagnation>
+                        custom rel field:Mach = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Mach>
+                        custom rel field:Pressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Pressure>
+                        custom rel field:PressureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/PressureStagnation>
+                        custom rel field:SpecificHeatPressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/SpecificHeatPressure>
+                        custom rel field:Temperature = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Temperature>
+                        custom rel field:TemperatureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/TemperatureStagnation>
+                        custom rel field:ThermalConductivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ThermalConductivity>
+                        custom rel field:THERMX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/THERMX>
+                        custom rel field:VelocitySoundSquared = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocitySoundSquared>
+                        custom rel field:VelocityX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityX>
+                        custom rel field:VelocityY = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityY>
+                        custom rel field:VelocityZ = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityZ>
+                        custom rel field:ViscosityMolecular = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ViscosityMolecular>
+
+                        def CaeCgnsFieldArray "ElementConnectivity"
+                        {
+                            uniform token fieldAssociation = "none"
+                            string fieldPath = "/Base/Zone1/strake/ElementConnectivity"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+
+                    def CaeDataSet "vertical_tail" (
+                        apiSchemas = ["CaeSidsUnstructuredAPI"]
+                    )
+                    {
+                        rel cae:sids:elementConnectivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/vertical_tail/ElementConnectivity>
+                        uniform token cae:sids:elementType = "TRI_3"
+                        rel cae:sids:gridCoordinates = [
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateX>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateY>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateZ>,
+                        ]
+                        custom rel field:Density = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Density>
+                        custom rel field:Enthalpy = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Enthalpy>
+                        custom rel field:EnthalpyStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/EnthalpyStagnation>
+                        custom rel field:Mach = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Mach>
+                        custom rel field:Pressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Pressure>
+                        custom rel field:PressureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/PressureStagnation>
+                        custom rel field:SpecificHeatPressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/SpecificHeatPressure>
+                        custom rel field:Temperature = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Temperature>
+                        custom rel field:TemperatureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/TemperatureStagnation>
+                        custom rel field:ThermalConductivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ThermalConductivity>
+                        custom rel field:THERMX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/THERMX>
+                        custom rel field:VelocitySoundSquared = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocitySoundSquared>
+                        custom rel field:VelocityX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityX>
+                        custom rel field:VelocityY = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityY>
+                        custom rel field:VelocityZ = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityZ>
+                        custom rel field:ViscosityMolecular = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ViscosityMolecular>
+
+                        def CaeCgnsFieldArray "ElementConnectivity"
+                        {
+                            uniform token fieldAssociation = "none"
+                            string fieldPath = "/Base/Zone1/vertical tail/ElementConnectivity"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+
+                    def CaeDataSet "horizontal_tail" (
+                        apiSchemas = ["CaeSidsUnstructuredAPI"]
+                    )
+                    {
+                        rel cae:sids:elementConnectivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/horizontal_tail/ElementConnectivity>
+                        uniform token cae:sids:elementType = "TRI_3"
+                        rel cae:sids:gridCoordinates = [
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateX>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateY>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateZ>,
+                        ]
+                        custom rel field:Density = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Density>
+                        custom rel field:Enthalpy = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Enthalpy>
+                        custom rel field:EnthalpyStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/EnthalpyStagnation>
+                        custom rel field:Mach = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Mach>
+                        custom rel field:Pressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Pressure>
+                        custom rel field:PressureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/PressureStagnation>
+                        custom rel field:SpecificHeatPressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/SpecificHeatPressure>
+                        custom rel field:Temperature = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Temperature>
+                        custom rel field:TemperatureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/TemperatureStagnation>
+                        custom rel field:ThermalConductivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ThermalConductivity>
+                        custom rel field:THERMX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/THERMX>
+                        custom rel field:VelocitySoundSquared = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocitySoundSquared>
+                        custom rel field:VelocityX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityX>
+                        custom rel field:VelocityY = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityY>
+                        custom rel field:VelocityZ = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityZ>
+                        custom rel field:ViscosityMolecular = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ViscosityMolecular>
+
+                        def CaeCgnsFieldArray "ElementConnectivity"
+                        {
+                            uniform token fieldAssociation = "none"
+                            string fieldPath = "/Base/Zone1/horizontal tail/ElementConnectivity"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+
+                    def CaeDataSet "side" (
+                        apiSchemas = ["CaeSidsUnstructuredAPI"]
+                    )
+                    {
+                        rel cae:sids:elementConnectivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/side/ElementConnectivity>
+                        uniform token cae:sids:elementType = "TRI_3"
+                        rel cae:sids:gridCoordinates = [
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateX>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateY>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateZ>,
+                        ]
+                        custom rel field:Density = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Density>
+                        custom rel field:Enthalpy = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Enthalpy>
+                        custom rel field:EnthalpyStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/EnthalpyStagnation>
+                        custom rel field:Mach = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Mach>
+                        custom rel field:Pressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Pressure>
+                        custom rel field:PressureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/PressureStagnation>
+                        custom rel field:SpecificHeatPressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/SpecificHeatPressure>
+                        custom rel field:Temperature = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Temperature>
+                        custom rel field:TemperatureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/TemperatureStagnation>
+                        custom rel field:ThermalConductivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ThermalConductivity>
+                        custom rel field:THERMX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/THERMX>
+                        custom rel field:VelocitySoundSquared = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocitySoundSquared>
+                        custom rel field:VelocityX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityX>
+                        custom rel field:VelocityY = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityY>
+                        custom rel field:VelocityZ = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityZ>
+                        custom rel field:ViscosityMolecular = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ViscosityMolecular>
+
+                        def CaeCgnsFieldArray "ElementConnectivity"
+                        {
+                            uniform token fieldAssociation = "none"
+                            string fieldPath = "/Base/Zone1/side/ElementConnectivity"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+
+                    def CaeDataSet "wing" (
+                        apiSchemas = ["CaeSidsUnstructuredAPI"]
+                    )
+                    {
+                        rel cae:sids:elementConnectivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/wing/ElementConnectivity>
+                        uniform token cae:sids:elementType = "TRI_3"
+                        rel cae:sids:gridCoordinates = [
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateX>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateY>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateZ>,
+                        ]
+                        custom rel field:Density = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Density>
+                        custom rel field:Enthalpy = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Enthalpy>
+                        custom rel field:EnthalpyStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/EnthalpyStagnation>
+                        custom rel field:Mach = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Mach>
+                        custom rel field:Pressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Pressure>
+                        custom rel field:PressureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/PressureStagnation>
+                        custom rel field:SpecificHeatPressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/SpecificHeatPressure>
+                        custom rel field:Temperature = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Temperature>
+                        custom rel field:TemperatureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/TemperatureStagnation>
+                        custom rel field:ThermalConductivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ThermalConductivity>
+                        custom rel field:THERMX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/THERMX>
+                        custom rel field:VelocitySoundSquared = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocitySoundSquared>
+                        custom rel field:VelocityX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityX>
+                        custom rel field:VelocityY = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityY>
+                        custom rel field:VelocityZ = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityZ>
+                        custom rel field:ViscosityMolecular = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ViscosityMolecular>
+
+                        def CaeCgnsFieldArray "ElementConnectivity"
+                        {
+                            uniform token fieldAssociation = "none"
+                            string fieldPath = "/Base/Zone1/wing/ElementConnectivity"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+
+                    def CaeDataSet "fuselage" (
+                        apiSchemas = ["CaeSidsUnstructuredAPI"]
+                    )
+                    {
+                        rel cae:sids:elementConnectivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/fuselage/ElementConnectivity>
+                        uniform token cae:sids:elementType = "TRI_3"
+                        rel cae:sids:gridCoordinates = [
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateX>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateY>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateZ>,
+                        ]
+                        custom rel field:Density = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Density>
+                        custom rel field:Enthalpy = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Enthalpy>
+                        custom rel field:EnthalpyStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/EnthalpyStagnation>
+                        custom rel field:Mach = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Mach>
+                        custom rel field:Pressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Pressure>
+                        custom rel field:PressureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/PressureStagnation>
+                        custom rel field:SpecificHeatPressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/SpecificHeatPressure>
+                        custom rel field:Temperature = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Temperature>
+                        custom rel field:TemperatureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/TemperatureStagnation>
+                        custom rel field:ThermalConductivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ThermalConductivity>
+                        custom rel field:THERMX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/THERMX>
+                        custom rel field:VelocitySoundSquared = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocitySoundSquared>
+                        custom rel field:VelocityX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityX>
+                        custom rel field:VelocityY = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityY>
+                        custom rel field:VelocityZ = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityZ>
+                        custom rel field:ViscosityMolecular = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ViscosityMolecular>
+
+                        def CaeCgnsFieldArray "ElementConnectivity"
+                        {
+                            uniform token fieldAssociation = "none"
+                            string fieldPath = "/Base/Zone1/fuselage/ElementConnectivity"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+
+                    def CaeDataSet "symmetry" (
+                        apiSchemas = ["CaeSidsUnstructuredAPI"]
+                    )
+                    {
+                        rel cae:sids:elementConnectivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/symmetry/ElementConnectivity>
+                        uniform token cae:sids:elementType = "TRI_3"
+                        rel cae:sids:gridCoordinates = [
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateX>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateY>,
+                            </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/GridCoordinates/CoordinateZ>,
+                        ]
+                        custom rel field:Density = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Density>
+                        custom rel field:Enthalpy = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Enthalpy>
+                        custom rel field:EnthalpyStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/EnthalpyStagnation>
+                        custom rel field:Mach = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Mach>
+                        custom rel field:Pressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Pressure>
+                        custom rel field:PressureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/PressureStagnation>
+                        custom rel field:SpecificHeatPressure = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/SpecificHeatPressure>
+                        custom rel field:Temperature = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/Temperature>
+                        custom rel field:TemperatureStagnation = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/TemperatureStagnation>
+                        custom rel field:ThermalConductivity = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ThermalConductivity>
+                        custom rel field:THERMX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/THERMX>
+                        custom rel field:VelocitySoundSquared = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocitySoundSquared>
+                        custom rel field:VelocityX = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityX>
+                        custom rel field:VelocityY = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityY>
+                        custom rel field:VelocityZ = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/VelocityZ>
+                        custom rel field:ViscosityMolecular = </Root/yf17_hdf5/yf17_hdf5_cgns/Base/Zone1/FlowSolution/ViscosityMolecular>
+
+                        def CaeCgnsFieldArray "ElementConnectivity"
+                        {
+                            uniform token fieldAssociation = "none"
+                            string fieldPath = "/Base/Zone1/symmetry/ElementConnectivity"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+
+                    def CGNSFlowSolution "FlowSolution"
+                    {
+                        def CaeCgnsFieldArray "Density"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/FlowSolution/Density"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "Mach"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/FlowSolution/Mach"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "Pressure"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/FlowSolution/Pressure"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "Temperature"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/FlowSolution/Temperature"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "VelocityX"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/FlowSolution/VelocityX"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "VelocityY"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/FlowSolution/VelocityY"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "VelocityZ"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/FlowSolution/VelocityZ"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "ThermalConductivity"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/FlowSolution/ThermalConductivity"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "ViscosityMolecular"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/FlowSolution/ViscosityMolecular"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "Enthalpy"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/FlowSolution/Enthalpy"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "SpecificHeatPressure"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/FlowSolution/SpecificHeatPressure"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "THERMX"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/FlowSolution/THERMX"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "EnthalpyStagnation"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/FlowSolution/EnthalpyStagnation"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "PressureStagnation"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/FlowSolution/PressureStagnation"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "TemperatureStagnation"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/FlowSolution/TemperatureStagnation"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+
+                        def CaeCgnsFieldArray "VelocitySoundSquared"
+                        {
+                            uniform token fieldAssociation = "vertex"
+                            string fieldPath = "/Base/Zone1/FlowSolution/VelocitySoundSquared"
+                            asset[] fileNames = [@yf17_hdf5.cgns@]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

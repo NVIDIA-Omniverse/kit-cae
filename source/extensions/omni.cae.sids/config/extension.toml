@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+[package]
+version = "1.0.0"
+title = "CAE SIDS"
+category = "internal"
+description = "Extension that provides utilities and operator commands for working with CAE field arrays and datasets using the SIDS data model."
+keywords = ["cae"]
+
+changelog = "docs/CHANGELOG.md"
+readme  = "docs/README.md"
+icon = "data/icon.png"
+
+[dependencies]
+"omni.cae.data" = {}
+"omni.cae.schema" = {}
+"omni.kit.commands" = {}
+"omni.warp.core" = {}
+"omni.cae.index" = {optional = true}
+"omni.cae.vtk" = {optional = true}
+
+[[python.module]]
+name = "omni.cae.sids"
+
+[documentation]
+pages = [
+    "docs/Overview.md",
+    "docs/CHANGELOG.md",
+]
+cpp_api = [
+]
+
+[[test]]
+dependencies = [
+    "omni.cae.cgns",
+    "omni.cae.npz",
+    "omni.cae.index",
+    "omni.cae.testing",
+]

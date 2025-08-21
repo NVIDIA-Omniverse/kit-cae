@@ -1,0 +1,27 @@
+{
+    "Plugins": [
+        {
+            "Info": {
+                "Types": {
+                    "CGNSFileFormat": {
+                        "bases": [
+                            "SdfFileFormat"
+                        ],
+                        "displayName": "USD CGNS File Format",
+                        "extensions": [
+                            "cgns"
+                        ],
+                        "formatId": "CGNSFileFormat",
+                        "primary": true,
+                        "target": "usd"
+                    }
+                }
+            },
+            "LibraryPath": "../../bin/omni.cae.file_format.cgns.plugin.dll",
+            "Name": "CGNSFileFormat",
+            "ResourcePath": "resources",
+            "Root": "..",
+            "Type": "library"
+        }
+    ]
+}

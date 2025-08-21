@@ -1,0 +1,45 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+[repo_launch]
+command = "launch"
+entry_point = "${root}/tools/repoman/launch.py:setup_repo_tool"
+
+[repo_package]
+# Hide default repo_package under internal command to be used by `repo_package_app`
+command = "_package"
+
+[repo_package_app]
+# Replace regular repo_package with our guided packaging tool
+command = "package"
+entry_point = "${root}/tools/repoman/package.py:setup_repo_tool"
+enabled = true
+
+[repo_schema]
+command = "schema"
+entry_point = "${root}/tools/repoman/schema.py:setup_repo_tool"
+enabled = true
+
+[repo_bump]
+command = "bump"
+entry_point = "${root}/tools/repoman/bump.py:setup_repo_tool"
+enabled = true
+
+# default paths to search for apps and extensions
+ext_folders = [
+  "${root}/source/extensions",
+  "${root}/source/apps",
+]
+pkg_version_md = "${root}/tools/VERSION.md"
+
+[repo_pip_download]
+command = "pip_download"
+entry_point = "${root}/tools/repoman/pip_download.py:setup_repo_tool"
+enabled = true

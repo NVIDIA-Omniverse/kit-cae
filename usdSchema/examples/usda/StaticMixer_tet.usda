@@ -1,0 +1,170 @@
+#usda 1.0
+(
+    defaultPrim = "Root"
+    upAxis = "Y"
+)
+
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+def Xform "Root"
+{
+    def Xform "StaticMixer_tet"
+    {
+        def Scope "StaticMixer_tet_npz"
+        {
+            class "NumPyFieldArrayClass"
+            {
+                bool allowPickle = 0
+                uniform token fieldAssociation
+                asset[] fileNames = [@StaticMixer_tet.npz@]
+            }
+
+            def CaeDataSet "NumPyMesh" (
+                apiSchemas = ["CaeSidsUnstructuredAPI"]
+            )
+            {
+                rel cae:sids:elementConnectivity = </Root/StaticMixer_tet/StaticMixer_tet_npz/NumPyArrays/element_connectivity>
+                rel cae:sids:elementStartOffset
+                uniform token cae:sids:elementType = "TETRA_4"
+                rel cae:sids:gridCoordinates = [
+                    </Root/StaticMixer_tet/StaticMixer_tet_npz/NumPyArrays/coords_0>,
+                    </Root/StaticMixer_tet/StaticMixer_tet_npz/NumPyArrays/coords_1>,
+                    </Root/StaticMixer_tet/StaticMixer_tet_npz/NumPyArrays/coords_2>,
+                ]
+                custom rel field:eddyViscosity = </Root/StaticMixer_tet/StaticMixer_tet_npz/NumPyArrays/Eddy_Viscosity>
+                custom rel field:pressure = </Root/StaticMixer_tet/StaticMixer_tet_npz/NumPyArrays/Pressure>
+                custom rel field:temperature = </Root/StaticMixer_tet/StaticMixer_tet_npz/NumPyArrays/Temperature>
+                custom rel field:totalPressure = </Root/StaticMixer_tet/StaticMixer_tet_npz/NumPyArrays/Total_Pressure>
+                custom rel field:totalTemperature = </Root/StaticMixer_tet/StaticMixer_tet_npz/NumPyArrays/Total_Temperature>
+                custom rel field:turbulenceEddyDissipation = </Root/StaticMixer_tet/StaticMixer_tet_npz/NumPyArrays/Turbulence_Eddy_Dissipation>
+                custom rel field:turbulenceKineticEnergy = </Root/StaticMixer_tet/StaticMixer_tet_npz/NumPyArrays/Turbulence_Kinetic_Energy>
+                custom rel field:velocity0 = </Root/StaticMixer_tet/StaticMixer_tet_npz/NumPyArrays/Velocity_0>
+                custom rel field:velocity1 = </Root/StaticMixer_tet/StaticMixer_tet_npz/NumPyArrays/Velocity_1>
+                custom rel field:velocity2 = </Root/StaticMixer_tet/StaticMixer_tet_npz/NumPyArrays/Velocity_2>
+            }
+
+            def Scope "NumPyArrays"
+            {
+                def CaeNumPyFieldArray "coords_0"
+                {
+                    bool allowPickle = 0
+                    string arrayName = "coords_0"
+                    uniform token fieldAssociation
+                    asset[] fileNames = [StaticMixer_tet.npz@]
+                }
+
+                def CaeNumPyFieldArray "coords_1"
+                {
+                    bool allowPickle = 0
+                    string arrayName = "coords_1"
+                    uniform token fieldAssociation
+                    asset[] fileNames = [StaticMixer_tet.npz@]
+                }
+
+                def CaeNumPyFieldArray "coords_2"
+                {
+                    bool allowPickle = 0
+                    string arrayName = "coords_2"
+                    uniform token fieldAssociation
+                    asset[] fileNames = [StaticMixer_tet.npz@]
+                }
+
+                def CaeNumPyFieldArray "Velocity_0"
+                {
+                    bool allowPickle = 0
+                    string arrayName = "Velocity_0"
+                    uniform token fieldAssociation
+                    asset[] fileNames = [StaticMixer_tet.npz@]
+                }
+
+                def CaeNumPyFieldArray "Velocity_1"
+                {
+                    bool allowPickle = 0
+                    string arrayName = "Velocity_1"
+                    uniform token fieldAssociation
+                    asset[] fileNames = [StaticMixer_tet.npz@]
+                }
+
+                def CaeNumPyFieldArray "Velocity_2"
+                {
+                    bool allowPickle = 0
+                    string arrayName = "Velocity_2"
+                    uniform token fieldAssociation
+                    asset[] fileNames = [StaticMixer_tet.npz@]
+                }
+
+                def CaeNumPyFieldArray "Eddy_Viscosity"
+                {
+                    bool allowPickle = 0
+                    string arrayName = "Eddy_Viscosity"
+                    uniform token fieldAssociation
+                    asset[] fileNames = [StaticMixer_tet.npz@]
+                }
+
+                def CaeNumPyFieldArray "Pressure"
+                {
+                    bool allowPickle = 0
+                    string arrayName = "Pressure"
+                    uniform token fieldAssociation
+                    asset[] fileNames = [StaticMixer_tet.npz@]
+                }
+
+                def CaeNumPyFieldArray "Temperature"
+                {
+                    bool allowPickle = 0
+                    string arrayName = "Temperature"
+                    uniform token fieldAssociation
+                    asset[] fileNames = [StaticMixer_tet.npz@]
+                }
+
+                def CaeNumPyFieldArray "Total_Pressure"
+                {
+                    bool allowPickle = 0
+                    string arrayName = "Total_Pressure"
+                    uniform token fieldAssociation
+                    asset[] fileNames = [StaticMixer_tet.npz@]
+                }
+
+                def CaeNumPyFieldArray "Total_Temperature"
+                {
+                    bool allowPickle = 0
+                    string arrayName = "Total_Temperature"
+                    uniform token fieldAssociation
+                    asset[] fileNames = [StaticMixer_tet.npz@]
+                }
+
+                def CaeNumPyFieldArray "Turbulence_Eddy_Dissipation"
+                {
+                    bool allowPickle = 0
+                    string arrayName = "Turbulence_Eddy_Dissipation"
+                    uniform token fieldAssociation
+                    asset[] fileNames = [StaticMixer_tet.npz@]
+                }
+
+                def CaeNumPyFieldArray "Turbulence_Kinetic_Energy"
+                {
+                    bool allowPickle = 0
+                    string arrayName = "Turbulence_Kinetic_Energy"
+                    uniform token fieldAssociation
+                    asset[] fileNames = [StaticMixer_tet.npz@]
+                }
+
+                def CaeNumPyFieldArray "element_connectivity"
+                {
+                    bool allowPickle = 0
+                    string arrayName = "element_connectivity"
+                    uniform token fieldAssociation
+                    asset[] fileNames = [StaticMixer_tet.npz@]
+                }
+            }
+        }
+    }
+}

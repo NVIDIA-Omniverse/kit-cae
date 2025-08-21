@@ -1,0 +1,20 @@
+<project toolsVersion="5.0">
+  <!-- Put all extension specific dependencies in this file. -->
+  <!-- Edit this section to pull extension specific dependencies -->
+  <dependency name="cgns" linkPath="../../_build/target-deps/cgns" tags="non-redist">
+     <package name="cgns" version="4.5.0-2-${platform_target_abi}-dynamic-release" />
+  </dependency>
+
+  <dependency name="hdf5" linkPath="../../_build/target-deps/hdf5">
+    <package name="hdf5"  version="1.14.6-0-${platform_target_abi}-dynamic-release" />
+  </dependency>
+
+  <dependency name="omni_cae" linkPath="../../_build/target-deps/omni-cae/${config}" tags="non-redist">
+    <source path="../../usdSchema/_install/${platform_target}/${config}" />
+  </dependency>
+
+  <dependency name="index-for-omniverse-headers" linkPath="../../_build/target-deps/nvindex">
+    <package name="index-for-omniverse-headers" version="380600.2218" />
+  </dependency>
+
+</project>

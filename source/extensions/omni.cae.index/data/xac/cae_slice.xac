@@ -1,0 +1,159 @@
+// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+//
+// NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+// property and proprietary rights in and to this material, related
+// documentation and any modifications thereto. Any use, reproduction,
+// disclosure or distribution of this material and related documentation
+// without an express license agreement from NVIDIA CORPORATION or
+//  its affiliates is strictly prohibited.
+
+NV_IDX_XAC_VERSION_1_0
+
+using namespace nv::index::xac;
+
+// When sampling NanoVDB in a surface shader, this needs to match the NanoVDB data
+// using vdb_grid_type = float;
+// using vdb_grid_type = nanovdb::Fp8;
+// using vdb_grid_type = nanovdb::Fp16;
+// using vdb_grid_type = nanovdb::FpN;
+
+// When sampling NanoVDB in a surface shader, this controls the filtering
+// auto const vdb_filter_mode = VDB_volume_filter_mode::NEAREST;
+auto const vdb_filter_mode = VDB_volume_filter_mode::TRILINEAR;
+// auto const vdb_filter_mode = VDB_volume_filter_mode::TRIQUADRATIC;
+// auto const vdb_filter_mode = VDB_volume_filter_mode::TRICUBIC;
+
+#define PROGRAM_MODE_FLOAT 0
+#define PROGRAM_MODE_VEC3F 1
+
+#define SLOT_VOLUME     0
+#define SLOT_COLORMAP   1
+
+
+// Sample overload for NanoVDB volumes
+NV_IDX_DEVICE_INLINE
+float sample(const uint attrib_idx, const VDB_volume& volume, const Sample_info_surface& sample_info, const int mode, int &status)
+{
+    const float3 sample_position = transform_point(volume.get_scene_to_object_transform(), sample_info.scene_position);
+    if (mode == PROGRAM_MODE_FLOAT)
+    {
+        status = NV_IDX_PROG_OK; // Set status to OK before sampling
+
+        // generate a volume sampler: filter and compression mode needs to be specified explicitly
+        const auto sampler = volume.template generate_sampler<float, vdb_filter_mode, float>(attrib_idx);
+        return sampler.fetch_sample(sample_position);
+    }
+    else if (mode == PROGRAM_MODE_VEC3F)
+    {
+        status = NV_IDX_PROG_OK; // Set status to OK before sampling
+
+        const auto sampler = volume.template generate_sampler<float3, vdb_filter_mode, nanovdb::Vec3f>(attrib_idx);
+        const float3 val = sampler.fetch_sample(sample_position);
+        return sqrtf(val.x * val.x + val.y * val.y + val.z * val.z);
+    }
+    else
+    {
+        status = NV_IDX_PROG_DISCARD_SAMPLE; // Set status to discard sample for unsupported mode
+        return 0.0f; // unsupported mode
+    }
+}
+
+// Sample overload for Irregular volumes
+NV_IDX_DEVICE_INLINE
+float sample(uint attrib_idx, const Irregular_volume& volume, const Sample_info_surface& sample_info, const int mode, int &status)
+{
+    // sample the irregular volume at the current position
+    const auto cell_sample_info = volume.generate_cell_sample_info(sample_info.scene_position);
+    if (cell_sample_info.is_valid() == false)
+    {
+        status = NV_IDX_PROG_DISCARD_SAMPLE; // Set status to discard sample if position is outside the volume
+        return 0.0f; // position is outside the volume
+    }
+
+    if (mode == PROGRAM_MODE_FLOAT)
+    {
+        status = NV_IDX_PROG_OK; // Set status to OK before sampling
+        return volume.fetch_attribute<float>(attrib_idx, cell_sample_info);
+    }
+    else if (mode == PROGRAM_MODE_VEC3F)
+    {
+        status = NV_IDX_PROG_OK; // Set status to OK before sampling
+        const float3 val = volume.fetch_attribute<float3>(attrib_idx, cell_sample_info);
+        return sqrtf(val.x * val.x + val.y * val.y + val.z * val.z);
+    }
+    else
+    {
+        status = NV_IDX_PROG_DISCARD_SAMPLE; // Set status to discard sample for unsupported mode
+        return 0.0f; // unsupported mode
+    }
+}
+
+
+NV_IDX_DEVICE_INLINE
+bool is_inside_bounding_box(const VDB_volume& volume, const float3& position)
+{
+    const float3 position_volume = transform_point(volume.get_scene_to_object_transform(), position);
+    return nv::index::xaclib::is_inside_bounding_box(volume.get_volume_bbox_min(), volume.get_volume_bbox_max(), position_volume);
+}
+
+NV_IDX_DEVICE_INLINE
+bool is_inside_bounding_box(const Irregular_volume& volume, const float3& position)
+{
+    return nv::index::xaclib::is_inside_bounding_box(volume.get_scene_bounding_box_min(), volume.get_scene_bounding_box_max(), position);
+}
+
+template <typename VolumeType>
+NV_IDX_DEVICE_INLINE
+int execute_volume(const VolumeType& volume,
+                   const Colormap& colormap,
+                   const Sample_info_surface& sample_info,
+                   int mode,
+                   Sample_output&    sample_output)
+{
+    if (is_inside_bounding_box(volume, sample_info.scene_position))
+    {
+        int status = NV_IDX_PROG_OK; // Initialize status
+        const float value = sample(0u, volume, sample_info, mode, status);
+        const float4 color = colormap.lookup(value);
+        sample_output.set_color(color);
+        return status;
+    }
+    else
+    {
+        return NV_IDX_PROG_DISCARD_SAMPLE;
+    }
+}
+class Surface_sample_program
+{
+    NV_IDX_SURFACE_SAMPLE_PROGRAM
+    int mode = PROGRAM_MODE_FLOAT;
+public:
+    NV_IDX_DEVICE_INLINE_MEMBER
+    void initialize()
+    {
+        mode = *state.bind_parameter_buffer<int>(0);
+    }
+
+    NV_IDX_DEVICE_INLINE_MEMBER
+    int execute(
+        const Sample_info_self& sample_info,
+              Sample_output&    sample_output)
+    {
+        const auto& colormap = state.scene.access<Colormap>(SLOT_COLORMAP);
+        if (state.scene.is_valid_element<Irregular_volume>(SLOT_VOLUME))
+        {
+            const auto volume = state.scene.access<Irregular_volume>(SLOT_VOLUME);
+            return execute_volume(volume, colormap, sample_info, mode, sample_output);
+        }
+        else if (state.scene.is_valid_element<VDB_volume>(SLOT_VOLUME))
+        {
+            const auto volume = state.scene.access<VDB_volume>(SLOT_VOLUME);
+            return execute_volume(volume, colormap, sample_info, mode, sample_output);
+        }
+        else
+        {
+            return NV_IDX_PROG_DISCARD_SAMPLE; // no valid volume found
+        }
+    }
+};

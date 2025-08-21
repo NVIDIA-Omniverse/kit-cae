@@ -1,0 +1,122 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+[repo_usd]
+usd_root = "${root}/_build/usd-deps/nv-usd/%{config}"
+usd_python_root = "${root}/_build/usd-deps/python"
+generate_plugin_buildfiles = true
+plugin_buildfile_format = "cmake"
+generate_root_buildfile = false
+
+[repo_usd.plugin.omniCae]
+schema_file = "${root}/src/omniCae/schema.usda"
+library_prefix = "OmniCae"
+generate_dir = "${root}/_build/generated/omniCae"
+plugin_dir = "${root}/src/schema/omniCae"
+install_root = "${root}/_install/${platform}/%{config}/"
+include_dir = "include/omniCae"
+resources_dir = "plugins/OmniCae/resources"
+module_dir = "OmniCae"
+lib_dir = "lib"
+bin_dir = "bin"
+usd_lib_dependencies = [
+    "arch",
+    "tf",
+    "vt",
+    "sdf",
+    "usd"
+]
+additional_include_dirs = [
+    "${root}/_build/generated"
+]
+
+[repo_usd.plugin.omniCaeSids]
+schema_file = "${root}/src/omniCaeSids/schema.usda"
+library_prefix = "OmniCaeSids"
+generate_dir = "${root}/_build/generated/omniCaeSids"
+plugin_dir = "${root}/src/schema/omniCaeSids"
+install_root = "${root}/_install/${platform}/%{config}/"
+include_dir = "include/omniCaeSids"
+resources_dir = "plugins/OmniCaeSids/resources"
+module_dir = "OmniCaeSids"
+lib_dir = "lib"
+bin_dir = "bin"
+usd_lib_dependencies = [
+    "arch",
+    "tf",
+    "vt",
+    "sdf",
+    "usd"
+]
+additional_include_dirs = [
+    "${root}/_build/generated"
+]
+
+[repo_usd.plugin.omniCaeVtk]
+schema_file = "${root}/src/omniCaeVtk/schema.usda"
+library_prefix = "OmniCaeVtk"
+generate_dir = "${root}/_build/generated/omniCaeVtk"
+plugin_dir = "${root}/src/schema/omniCaeVtk"
+install_root = "${root}/_install/${platform}/%{config}/"
+include_dir = "include/omniCaeVtk"
+resources_dir = "plugins/OmniCaeVtk/resources"
+module_dir = "OmniCaeVtk"
+lib_dir = "lib"
+bin_dir = "bin"
+usd_lib_dependencies = [
+    "arch",
+    "tf",
+    "vt",
+    "sdf",
+    "usd"
+]
+additional_include_dirs = [
+    "${root}/_build/generated"
+]
+additional_library_dirs = [
+    "${root}/_install/${platform}/%{config}/lib"
+]
+additional_libs = [
+    "omniCae"
+]
+depends_on = [
+    "omniCae"
+]
+
+[repo_usd.plugin.omniCaeEnSight]
+schema_file = "${root}/src/omniCaeEnSight/schema.usda"
+library_prefix = "OmniCaeEnSight"
+generate_dir = "${root}/_build/generated/omniCaeEnSight"
+plugin_dir = "${root}/src/schema/omniCaeEnSight"
+install_root = "${root}/_install/${platform}/%{config}/"
+include_dir = "include/omniCaeEnSight"
+resources_dir = "plugins/OmniCaeEnSight/resources"
+module_dir = "OmniCaeEnSight"
+lib_dir = "lib"
+bin_dir = "bin"
+usd_lib_dependencies = [
+    "arch",
+    "tf",
+    "vt",
+    "sdf",
+    "usd"
+]
+additional_include_dirs = [
+    "${root}/_build/generated"
+]
+additional_library_dirs = [
+    "${root}/_install/${platform}/%{config}/lib"
+]
+additional_libs = [
+    "omniCae"
+]
+depends_on = [
+    "omniCae"
+]

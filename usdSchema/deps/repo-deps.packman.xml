@@ -1,0 +1,5 @@
+<project toolsVersion="5.6">
+  <dependency name="repo_usd" linkPath="../../_repo/deps/repo_usd">
+    <package name="repo_usd" version="5.0.12" />
+  </dependency>
+</project>

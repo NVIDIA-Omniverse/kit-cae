@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+[package]
+version = "1.0.0"
+title = "CAE File Format CGNS"
+description = "Extension that provides USD file format plugin for reading CGNS files in an USD stage."
+category = "CAE"
+readme  = "docs/README.md"
+keywords = ["kit", "cae", "cgns", "fileformat"]
+changelog = "docs/CHANGELOG.md"
+icon = "data/icon.png"
+
+[package.writeTarget]
+# The extension will only run with the same kit-sdk version it was built with
+kit = true
+usd = true
+
+[core]
+reloadable = false
+# Load at the start, load all schemas with order -100 (with order -1000 the USD libs are loaded)
+order = -100
+
+[dependencies]
+"omni.cae.cgns_libs" = {}
+"omni.cae.schema" = {}
+
+[[python.module]]
+name = "omni.cae.file_format.cgns"
+
+[documentation]
+pages = [
+    "docs/Overview.md",
+    "docs/CHANGELOG.md",
+]
+
+[[test]]
+dependencies = [
+    "omni.cae.testing",
+]

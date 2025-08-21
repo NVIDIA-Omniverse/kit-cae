@@ -1,0 +1,297 @@
+#usda 1.0
+(
+    defaultPrim = "World"
+    upAxis = "Z"
+)
+
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+#  its affiliates is strictly prohibited.
+
+def Xform "World"
+{
+    def Scope "StaticMixer_cgns"
+    {
+        class "CGNSFieldArrayClass"
+        {
+            asset[] fileNames = [@StaticMixer.cgns@]
+        }
+
+        def CGNSBase "Base"
+        {
+            def CGNSZone "StaticMixer"
+            {
+                def CGNSGridCoordinates "GridCoordinates"
+                {
+                    def CaeCgnsFieldArray "CoordinateX" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "vertex"
+                        string fieldPath = "/Base/StaticMixer/GridCoordinates/CoordinateX"
+                    }
+
+                    def CaeCgnsFieldArray "CoordinateY" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "vertex"
+                        string fieldPath = "/Base/StaticMixer/GridCoordinates/CoordinateY"
+                    }
+
+                    def CaeCgnsFieldArray "CoordinateZ" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "vertex"
+                        string fieldPath = "/Base/StaticMixer/GridCoordinates/CoordinateZ"
+                    }
+                }
+
+                def CaeDataSet "B1_P3" (
+                    prepend apiSchemas = ["CaeSidsUnstructuredAPI"]
+                )
+                {
+                    rel cae:sids:elementConnectivity = </World/StaticMixer_cgns/Base/StaticMixer/B1_P3/ElementConnectivity>
+                    uniform token cae:sids:elementType = "MIXED"
+                    rel cae:sids:gridCoordinates = [
+                        </World/StaticMixer_cgns/Base/StaticMixer/GridCoordinates/CoordinateX>,
+                        </World/StaticMixer_cgns/Base/StaticMixer/GridCoordinates/CoordinateY>,
+                        </World/StaticMixer_cgns/Base/StaticMixer/GridCoordinates/CoordinateZ>,
+                    ]
+                    custom rel field:Eddy_Viscosity = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Eddy_Viscosity>
+                    custom rel field:Pressure = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Pressure>
+                    custom rel field:Temperature = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Temperature>
+                    custom rel field:Total_Pressure = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Total_Pressure>
+                    custom rel field:Total_Temperature = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Total_Temperature>
+                    custom rel field:Turbulence_Eddy_Dissipation = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Turbulence_Eddy_Dissipation>
+                    custom rel field:Turbulence_Kinetic_Energy = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Turbulence_Kinetic_Energy>
+                    custom rel field:VelocityX = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/VelocityX>
+                    custom rel field:VelocityY = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/VelocityY>
+                    custom rel field:VelocityZ = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/VelocityZ>
+
+                    def CaeCgnsFieldArray "ElementConnectivity" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "none"
+                        string fieldPath = "/Base/StaticMixer/B1.P3/ElementConnectivity"
+                    }
+                }
+
+                def CaeDataSet "StaticMixer_Default" (
+                    prepend apiSchemas = ["CaeSidsUnstructuredAPI"]
+                )
+                {
+                    rel cae:sids:elementConnectivity = </World/StaticMixer_cgns/Base/StaticMixer/StaticMixer_Default/ElementConnectivity>
+                    uniform token cae:sids:elementType = "MIXED"
+                    rel cae:sids:gridCoordinates = [
+                        </World/StaticMixer_cgns/Base/StaticMixer/GridCoordinates/CoordinateX>,
+                        </World/StaticMixer_cgns/Base/StaticMixer/GridCoordinates/CoordinateY>,
+                        </World/StaticMixer_cgns/Base/StaticMixer/GridCoordinates/CoordinateZ>,
+                    ]
+                    custom rel field:Eddy_Viscosity = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Eddy_Viscosity>
+                    custom rel field:Pressure = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Pressure>
+                    custom rel field:Temperature = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Temperature>
+                    custom rel field:Total_Pressure = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Total_Pressure>
+                    custom rel field:Total_Temperature = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Total_Temperature>
+                    custom rel field:Turbulence_Eddy_Dissipation = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Turbulence_Eddy_Dissipation>
+                    custom rel field:Turbulence_Kinetic_Energy = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Turbulence_Kinetic_Energy>
+                    custom rel field:VelocityX = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/VelocityX>
+                    custom rel field:VelocityY = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/VelocityY>
+                    custom rel field:VelocityZ = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/VelocityZ>
+
+                    def CaeCgnsFieldArray "ElementConnectivity" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "none"
+                        string fieldPath = "/Base/StaticMixer/StaticMixer Default/ElementConnectivity"
+                    }
+                }
+
+                def CaeDataSet "in1" (
+                    prepend apiSchemas = ["CaeSidsUnstructuredAPI"]
+                )
+                {
+                    rel cae:sids:elementConnectivity = </World/StaticMixer_cgns/Base/StaticMixer/in1/ElementConnectivity>
+                    uniform token cae:sids:elementType = "MIXED"
+                    rel cae:sids:gridCoordinates = [
+                        </World/StaticMixer_cgns/Base/StaticMixer/GridCoordinates/CoordinateX>,
+                        </World/StaticMixer_cgns/Base/StaticMixer/GridCoordinates/CoordinateY>,
+                        </World/StaticMixer_cgns/Base/StaticMixer/GridCoordinates/CoordinateZ>,
+                    ]
+                    custom rel field:Eddy_Viscosity = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Eddy_Viscosity>
+                    custom rel field:Pressure = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Pressure>
+                    custom rel field:Temperature = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Temperature>
+                    custom rel field:Total_Pressure = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Total_Pressure>
+                    custom rel field:Total_Temperature = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Total_Temperature>
+                    custom rel field:Turbulence_Eddy_Dissipation = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Turbulence_Eddy_Dissipation>
+                    custom rel field:Turbulence_Kinetic_Energy = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Turbulence_Kinetic_Energy>
+                    custom rel field:VelocityX = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/VelocityX>
+                    custom rel field:VelocityY = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/VelocityY>
+                    custom rel field:VelocityZ = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/VelocityZ>
+
+                    def CaeCgnsFieldArray "ElementConnectivity" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "none"
+                        string fieldPath = "/Base/StaticMixer/in1/ElementConnectivity"
+                    }
+                }
+
+                def CaeDataSet "in2" (
+                    prepend apiSchemas = ["CaeSidsUnstructuredAPI"]
+                )
+                {
+                    rel cae:sids:elementConnectivity = </World/StaticMixer_cgns/Base/StaticMixer/in2/ElementConnectivity>
+                    uniform token cae:sids:elementType = "MIXED"
+                    rel cae:sids:gridCoordinates = [
+                        </World/StaticMixer_cgns/Base/StaticMixer/GridCoordinates/CoordinateX>,
+                        </World/StaticMixer_cgns/Base/StaticMixer/GridCoordinates/CoordinateY>,
+                        </World/StaticMixer_cgns/Base/StaticMixer/GridCoordinates/CoordinateZ>,
+                    ]
+                    custom rel field:Eddy_Viscosity = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Eddy_Viscosity>
+                    custom rel field:Pressure = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Pressure>
+                    custom rel field:Temperature = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Temperature>
+                    custom rel field:Total_Pressure = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Total_Pressure>
+                    custom rel field:Total_Temperature = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Total_Temperature>
+                    custom rel field:Turbulence_Eddy_Dissipation = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Turbulence_Eddy_Dissipation>
+                    custom rel field:Turbulence_Kinetic_Energy = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Turbulence_Kinetic_Energy>
+                    custom rel field:VelocityX = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/VelocityX>
+                    custom rel field:VelocityY = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/VelocityY>
+                    custom rel field:VelocityZ = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/VelocityZ>
+
+                    def CaeCgnsFieldArray "ElementConnectivity" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "none"
+                        string fieldPath = "/Base/StaticMixer/in2/ElementConnectivity"
+                    }
+                }
+
+                def CaeDataSet "out" (
+                    prepend apiSchemas = ["CaeSidsUnstructuredAPI"]
+                )
+                {
+                    rel cae:sids:elementConnectivity = </World/StaticMixer_cgns/Base/StaticMixer/out/ElementConnectivity>
+                    uniform token cae:sids:elementType = "MIXED"
+                    rel cae:sids:gridCoordinates = [
+                        </World/StaticMixer_cgns/Base/StaticMixer/GridCoordinates/CoordinateX>,
+                        </World/StaticMixer_cgns/Base/StaticMixer/GridCoordinates/CoordinateY>,
+                        </World/StaticMixer_cgns/Base/StaticMixer/GridCoordinates/CoordinateZ>,
+                    ]
+                    custom rel field:Eddy_Viscosity = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Eddy_Viscosity>
+                    custom rel field:Pressure = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Pressure>
+                    custom rel field:Temperature = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Temperature>
+                    custom rel field:Total_Pressure = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Total_Pressure>
+                    custom rel field:Total_Temperature = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Total_Temperature>
+                    custom rel field:Turbulence_Eddy_Dissipation = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Turbulence_Eddy_Dissipation>
+                    custom rel field:Turbulence_Kinetic_Energy = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/Turbulence_Kinetic_Energy>
+                    custom rel field:VelocityX = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/VelocityX>
+                    custom rel field:VelocityY = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/VelocityY>
+                    custom rel field:VelocityZ = </World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution/VelocityZ>
+
+                    def CaeCgnsFieldArray "ElementConnectivity" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "none"
+                        string fieldPath = "/Base/StaticMixer/out/ElementConnectivity"
+                    }
+                }
+
+                def CGNSFlowSolution "Flow_Solution"
+                {
+                    def CaeCgnsFieldArray "Eddy_Viscosity" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "vertex"
+                        string fieldPath = "/Base/StaticMixer/Flow Solution/Eddy_Viscosity"
+                    }
+
+                    def CaeCgnsFieldArray "Pressure" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "vertex"
+                        string fieldPath = "/Base/StaticMixer/Flow Solution/Pressure"
+                    }
+
+                    def CaeCgnsFieldArray "Temperature" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "vertex"
+                        string fieldPath = "/Base/StaticMixer/Flow Solution/Temperature"
+                    }
+
+                    def CaeCgnsFieldArray "Total_Pressure" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "vertex"
+                        string fieldPath = "/Base/StaticMixer/Flow Solution/Total_Pressure"
+                    }
+
+                    def CaeCgnsFieldArray "Total_Temperature" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "vertex"
+                        string fieldPath = "/Base/StaticMixer/Flow Solution/Total_Temperature"
+                    }
+
+                    def CaeCgnsFieldArray "Turbulence_Eddy_Dissipation" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "vertex"
+                        string fieldPath = "/Base/StaticMixer/Flow Solution/Turbulence_Eddy_Dissipation"
+                    }
+
+                    def CaeCgnsFieldArray "Turbulence_Kinetic_Energy" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "vertex"
+                        string fieldPath = "/Base/StaticMixer/Flow Solution/Turbulence_Kinetic_Energy"
+                    }
+
+                    def CaeCgnsFieldArray "VelocityX" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "vertex"
+                        string fieldPath = "/Base/StaticMixer/Flow Solution/VelocityX"
+                    }
+
+                    def CaeCgnsFieldArray "VelocityY" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "vertex"
+                        string fieldPath = "/Base/StaticMixer/Flow Solution/VelocityY"
+                    }
+
+                    def CaeCgnsFieldArray "VelocityZ" (
+                        specializes = </World/StaticMixer_cgns/CGNSFieldArrayClass>
+                    )
+                    {
+                        uniform token fieldAssociation = "vertex"
+                        string fieldPath = "/Base/StaticMixer/Flow Solution/VelocityZ"
+                    }
+                }
+            }
+        }
+    }
+}
