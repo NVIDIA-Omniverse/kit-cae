@@ -103,7 +103,8 @@ all required package archives must be available in the specified directory.
 
 ## Users Guide
 
-[The User Guide](https://docs.nvidia.com/omniverse/index.html#blueprints-workflows) provides step-by-step instructions for trying out each of the example features
+[The User Guide](https://docs.omniverse.nvidia.com/guide-kit-cae/latest/index.html)
+provides step-by-step instructions for trying out each of the example features
 included in this sample.
 
 ## Sample scripts
