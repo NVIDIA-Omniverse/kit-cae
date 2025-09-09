@@ -150,7 +150,7 @@ class NPZAssetImporter(ai.AbstractImporterDelegate):
             caeFieldArrayClass = cae.NumPyFieldArray(
                 stage.CreateClassPrim(rootPath.AppendChild("NumPyFieldArrayClass"))
             )
-            caeFieldArrayClass.CreateFileNamesAttr().Set([path])
+            caeFieldArrayClass.CreateFileNamesAttr().Set([clientutils.make_file_url_if_possible(path)])
             caeFieldArrayClass.CreateAllowPickleAttr().Set(import_options.allow_pickle)
             caeFieldArrayClass.CreateFieldAssociationAttr()
 

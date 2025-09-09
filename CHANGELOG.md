@@ -2,7 +2,19 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Development]
+## [1.1.0]
+
+### Changes
+
+* Updates to use support Kit 108.0.0
+
+## Bug fixes
+
+* Fixed inability to correctly locate shaders and imported files when using nucleus stages by ensure
+  correct scheme (`file:`) is added to such paths.
+* Fixed texture PNGs to be non-lfs, avoiding the need to install `git lfs` for basic operation.
+
+## [1.0.0]
 
 ### Changes
 

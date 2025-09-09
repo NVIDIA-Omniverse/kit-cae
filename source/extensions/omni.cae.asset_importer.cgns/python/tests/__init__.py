@@ -37,7 +37,7 @@ class TestCGNSImporter(omni.kit.test.AsyncTestCase):
         stage = await self.importCGNS(get_test_data_path("StaticMixer.cgns"))
         await usd_context.attach_stage_async(stage)
         dataset_path = "/World/StaticMixer_cgns/Base/StaticMixer/B1_P3"
-        self.assert_(stage.GetPrimAtPath(dataset_path))
+        self.assertTrue(stage.GetPrimAtPath(dataset_path))
 
         # compute bounds
         bds = await ComputeBounds.invoke(stage.GetPrimAtPath(dataset_path), Usd.TimeCode.EarliestTime())

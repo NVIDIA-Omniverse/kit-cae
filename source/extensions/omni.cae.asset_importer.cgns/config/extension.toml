@@ -9,7 +9,7 @@
 #  its affiliates is strictly prohibited.
 
 [package]
-version = "1.0.0"
+version = "1.0.1"
 title = "CAE CGNS Importer"
 description = "Asset importer extension for importing CGNS files into Omniverse using the asset importer framework."
 category = "CAE"

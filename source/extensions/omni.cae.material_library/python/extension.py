@@ -12,6 +12,7 @@ import os.path
 from logging import getLogger
 
 import omni.client
+from omni.client.utils import make_file_url_if_possible
 from omni.ext import IExt
 from omni.kit.app import get_app
 
@@ -33,7 +34,7 @@ class Extension(IExt):
         # Get the absolute path of the materials directory.
         ext_path = get_app().get_extension_manager().get_extension_path(extId)
         materials_path = os.path.join(ext_path, "materials")
-        return materials_path
+        return make_file_url_if_possible(materials_path)
 
     def on_startup(self, extId):
         if path := self.get_materials_path(extId):

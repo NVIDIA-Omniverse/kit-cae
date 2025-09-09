@@ -28,7 +28,7 @@ class TestUsdUtils(omni.kit.test.AsyncTestCase):
         stage: Usd.Stage = usd_context.get_stage()
 
         gcPrim = stage.GetPrimAtPath("/World/hex_polyhedra_cgns/Base/Zone/GridCoordinates")
-        self.assert_(gcPrim.IsValid())
+        self.assertTrue(gcPrim.IsValid())
         coords = usd_utils.get_target_paths(gcPrim, cae.Tokens.caePointCloudCoordinates)
         self.assertEqual(len(coords), 3)
 
@@ -39,7 +39,7 @@ class TestUsdUtils(omni.kit.test.AsyncTestCase):
         self.assertIsNone(none_field, "None should be returned on quiet=True")
 
         prim = stage.GetPrimAtPath("/World/hex_polyhedra_cgns/Base/Zone/ElementsNfaces")
-        self.assert_(prim.IsValid())
+        self.assertTrue(prim.IsValid())
 
         array = await usd_utils.get_vecN_from_relationship(
             prim, sids.Tokens.caeSidsGridCoordinates, 3, Usd.TimeCode.EarliestTime()

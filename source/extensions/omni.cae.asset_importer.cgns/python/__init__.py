@@ -68,7 +68,11 @@ class CGNSAssetImporter(ai.AbstractImporterDelegate):
         # to create a valid identifier for the root prim. Otherwise, for remote files this ends up using
         # the name for the local copy in cache to create the root prim name, which is not correct.
         source_layer: Sdf.Layer = Sdf.Layer.FindOrOpen(
-            str(local_path), {"rootName": Tf.MakeValidIdentifier(os.path.basename(path)), "assetPath": path}
+            str(local_path),
+            {
+                "rootName": Tf.MakeValidIdentifier(os.path.basename(path)),
+                "assetPath": clientutils.make_file_url_if_possible(path),
+            },
         )
 
         if import_as_reference:

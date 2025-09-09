@@ -43,7 +43,7 @@ class TestNanoVDBStreamline(AsyncTestCase):
         )
 
         viz_prim: Usd.Prim = stage.GetPrimAtPath(viz_path)
-        self.assert_(viz_prim.IsValid())
+        self.assertTrue(viz_prim.IsValid())
         viz_prim.GetRelationship("omni:cae:warp:streamlines:seeds").SetTargets([sphere_path])
         flow_solution_prim_path = "/World/StaticMixer_cgns/Base/StaticMixer/Flow_Solution"
         velocity_targets = [

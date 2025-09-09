@@ -15,6 +15,7 @@ from logging import getLogger
 import numpy as np
 from omni.cae.data.delegates import DataDelegateBase
 from omni.cae.schema import cae, ensight
+from omni.client.utils import make_file_url_if_possible
 from pxr import Sdf, Tf, Usd, UsdGeom, UsdUtils
 
 logger = getLogger(__name__)
@@ -146,7 +147,7 @@ def process_gold_case(stage: Usd.Stage, case_filename: str, rootPath: Sdf.Path):
         caeFieldArrayClass = cae.FieldArray(stage.CreateClassPrim(partPrim.GetPath().AppendChild("GeoFieldArrayClass")))
         attr = caeFieldArrayClass.CreateFileNamesAttr()
         for ts, fname in enumerate(geo_filenames):  # zip(geo_ts, geo_filenames):
-            attr.Set([os.path.join(case_dir, fname)], TimeOffset.get(ts))
+            attr.Set([make_file_url_if_possible(os.path.join(case_dir, fname))], TimeOffset.get(ts))
 
         all_datasets = []
         # Create a singular dataset for the coordinates
@@ -210,11 +211,11 @@ def process_gold_case(stage: Usd.Stage, case_filename: str, rootPath: Sdf.Path):
                 attr = field.CreateFileNamesAttr()
                 var_fnames, var_ts = get_filenames(fname, start_number, increment, nb_steps)
                 for ts, var_fname in enumerate(var_fnames):  # zip(var_ts, var_fnames):
-                    attr.Set([os.path.join(case_dir, var_fname)], TimeOffset.get(ts))
+                    attr.Set([make_file_url_if_possible(os.path.join(case_dir, var_fname))], TimeOffset.get(ts))
 
                 attr = field.CreateGeoFileNamesAttr()
                 for ts, gname in enumerate(geo_filenames):  # zip(geo_ts, geo_filenames):
-                    attr.Set([os.path.join(case_dir, gname)], TimeOffset.get(ts))
+                    attr.Set([make_file_url_if_possible(os.path.join(case_dir, gname))], TimeOffset.get(ts))
 
                 for dataset in all_datasets:
                     dataset.GetPrim().CreateRelationship(f"field:{clean_name}").SetTargets({field.GetPath()})

@@ -39,10 +39,10 @@ class TestVTKImporter(omni.kit.test.AsyncTestCase):
         await usd_context.attach_stage_async(stage)
         dataset_path = "/World/headsq_vti/VTKImageData"
         dataset_prim = stage.GetPrimAtPath(dataset_path)
-        self.assert_(dataset_prim)
+        self.assertTrue(dataset_prim)
 
-        self.assert_(dataset_prim.IsA(cae.DataSet))
-        self.assert_(dataset_prim.HasAPI(cae.DenseVolumeAPI))
+        self.assertTrue(dataset_prim.IsA(cae.DataSet))
+        self.assertTrue(dataset_prim.HasAPI(cae.DenseVolumeAPI))
 
         denseVolumeAPI = cae.DenseVolumeAPI(dataset_prim)
         self.assertEqual(denseVolumeAPI.GetMinExtentAttr().Get(), Gf.Vec3i(0, 0, 0))

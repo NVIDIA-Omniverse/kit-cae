@@ -64,7 +64,7 @@ class TestConvertToPointCloud(omni.kit.test.AsyncTestCase):
             stage: Usd.Stage = usd_context.get_stage()
             prim_path = f"/World/{dname}_cgns/Base/Zone/ElementsNfaces"
             dataset: Usd.Prim = stage.GetPrimAtPath(prim_path)
-            self.assert_(dataset.IsValid())
+            self.assertTrue(dataset.IsValid())
 
             result = await ConvertToPointCloud.invoke(dataset, [], Usd.TimeCode.EarliestTime())
             self.assertIsNotNone(result)
@@ -101,7 +101,7 @@ class TestConvertToPointCloud(omni.kit.test.AsyncTestCase):
         stage: Usd.Stage = usd_context.get_stage()
         prim_path = "/World/hex_uniform_cgns/Base/Zone/ElementsUniform"
         dataset: Usd.Prim = stage.GetPrimAtPath(prim_path)
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         result = await ConvertToPointCloud.invoke(dataset, [], Usd.TimeCode.EarliestTime())
         self.assertIsNotNone(result)
@@ -142,7 +142,7 @@ class TestConvertToPointCloud(omni.kit.test.AsyncTestCase):
         stage: Usd.Stage = usd_context.get_stage()
         prim_path = "/World/hex_mixed_cgns/Base/Zone/ElementsMixed"
         dataset: Usd.Prim = stage.GetPrimAtPath(prim_path)
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         result = await ConvertToPointCloud.invoke(dataset, [], Usd.TimeCode.EarliestTime())
         self.assertIsNotNone(result)
@@ -194,7 +194,7 @@ class TestComputeBounds(omni.kit.test.AsyncTestCase):
         zone_path = "/World/hex_polyhedra_cgns/Base/Zone"
 
         dataset: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/GridCoordinates")
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         bds: Gf.Range3d = await ComputeBounds.invoke(dataset, Usd.TimeCode.EarliestTime())
         self.assertIsNotNone(bds)
@@ -202,7 +202,7 @@ class TestComputeBounds(omni.kit.test.AsyncTestCase):
         self.assertEqual(bds, Gf.Range3d((0, 0, 0), (32, 32, 32)))
 
         dataset: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/ElementsNgons")
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         bds: Gf.Range3d = await ComputeBounds.invoke(dataset, Usd.TimeCode.EarliestTime())
         self.assertIsNotNone(bds)
@@ -210,7 +210,7 @@ class TestComputeBounds(omni.kit.test.AsyncTestCase):
         self.assertEqual(bds, Gf.Range3d((0, 0, 0), (32, 32, 32)))
 
         dataset: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/ElementsNfaces")
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         bds: Gf.Range3d = await ComputeBounds.invoke(dataset, Usd.TimeCode.EarliestTime())
         self.assertIsNotNone(bds)
@@ -228,37 +228,37 @@ class TestComputeBounds(omni.kit.test.AsyncTestCase):
         zone_path = "/World/StaticMixer_cgns/Base/StaticMixer"
 
         dataset: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/GridCoordinates")
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         bds: Gf.Range3d = await ComputeBounds.invoke(dataset, Usd.TimeCode.EarliestTime())
         self.assertEqual(bds, Gf.Range3d((-2, -3, -2), (2, 3, 2)))
 
         dataset: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/B1_P3")
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         bds: Gf.Range3d = await ComputeBounds.invoke(dataset, Usd.TimeCode.EarliestTime())
         self.assertEqual(bds, Gf.Range3d((-2, -3, -2), (2, 3, 2)))
 
         dataset: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/StaticMixer_Default")
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         bds: Gf.Range3d = await ComputeBounds.invoke(dataset, Usd.TimeCode.EarliestTime())
         self.assertEqual(bds, Gf.Range3d((-2, -3, -2), (2, 3, 2)))
 
         dataset: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/in1")
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         bds: Gf.Range3d = await ComputeBounds.invoke(dataset, Usd.TimeCode.EarliestTime())
         self.assertEqual(bds, Gf.Range3d((-1.5, -3, 0.5), (-0.5, -3.0, 1.5)))
 
         dataset: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/in2")
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         bds: Gf.Range3d = await ComputeBounds.invoke(dataset, Usd.TimeCode.EarliestTime())
         self.assertEqual(bds, Gf.Range3d(Gf.Vec3d(0.5, 3.0, 0.5), Gf.Vec3d(1.5, 3.0, 1.5)))
 
         dataset: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/out")
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         bds: Gf.Range3d = await ComputeBounds.invoke(dataset, Usd.TimeCode.EarliestTime())
         self.assertEqual(bds, Gf.Range3d(Gf.Vec3d(-0.5, -0.5, -2.0), Gf.Vec3d(0.5, 0.5, -2.0)))
@@ -272,7 +272,7 @@ class TestComputeBounds(omni.kit.test.AsyncTestCase):
         stage: Usd.Stage = usd_context.get_stage()
 
         dataset: Usd.Prim = stage.GetPrimAtPath("/World/headsq/headsq_vti/VTIDataSet")
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         bds: Gf.Range3d = await ComputeBounds.invoke(dataset, Usd.TimeCode.EarliestTime())
         self.assertEqual(bds, Gf.Range3d((0, 0, 0), (255, 255, 93 * 2)))
@@ -289,7 +289,7 @@ class TestComputeIJKExtents(omni.kit.test.AsyncTestCase):
         stage: Usd.Stage = usd_context.get_stage()
 
         dataset: Usd.Prim = stage.GetPrimAtPath("/World/headsq/headsq_vti/VTIDataSet")
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         extents: IJKExtents = await ComputeIJKExtents.invoke(
             dataset, max_dims=(100, 100, 100), timeCode=Usd.TimeCode.EarliestTime()
@@ -314,7 +314,7 @@ class TestComputeIJKExtents(omni.kit.test.AsyncTestCase):
         stage: Usd.Stage = usd_context.get_stage()
 
         dataset: Usd.Prim = stage.GetPrimAtPath("/Root/disk_out_ref_npz/NumPyDataSet")
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         extents: IJKExtents = await ComputeIJKExtents.invoke(
             dataset, max_dims=(100, 100, 100), timeCode=Usd.TimeCode.EarliestTime()
@@ -352,7 +352,7 @@ class TestComputeIJKExtents(omni.kit.test.AsyncTestCase):
         prim_path = "/World/hex_mixed_cgns/Base/Zone/ElementsMixed"
 
         dataset: Usd.Prim = stage.GetPrimAtPath(prim_path)
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
         extents: IJKExtents = await ComputeIJKExtents.invoke(
             dataset, max_dims=(100, 100, 100), timeCode=Usd.TimeCode.EarliestTime()
         )
@@ -398,7 +398,7 @@ class TestConvertToMesh(omni.kit.test.AsyncTestCase):
         zone_path = "/World/StaticMixer_cgns/Base/StaticMixer"
 
         dataset: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/B1_P3")
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         mesh = await ConvertToMesh.invoke(dataset, [], Usd.TimeCode.EarliestTime())
         self.assertIsNotNone(mesh)
@@ -420,13 +420,13 @@ class TestConvertToMesh(omni.kit.test.AsyncTestCase):
         zone_path = "/World/hex_polyhedra_cgns/Base/Zone"
 
         dataset: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/ElementsNgons")
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         with self.assertRaises(NotImplementedError):
             _ = await ConvertToMesh.invoke(dataset, [], Usd.TimeCode.EarliestTime())
 
         dataset: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/ElementsNfaces")
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         with self.assertRaises(NotImplementedError):
             _ = await ConvertToMesh.invoke(dataset, [], Usd.TimeCode.EarliestTime())
@@ -447,10 +447,10 @@ class TestGenerateStreamlines(omni.kit.test.AsyncTestCase):
         zone_path = "/World/StaticMixer_cgns/Base/StaticMixer"
 
         dataset: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/B1_P3")
-        self.assert_(dataset.IsValid())
+        self.assertTrue(dataset.IsValid())
 
         in1: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/in1")
-        self.assert_(in1.IsValid())
+        self.assertTrue(in1.IsValid())
 
         seeds = await ConvertToPointCloud.invoke(in1, [], Usd.TimeCode.EarliestTime())
 
@@ -490,12 +490,12 @@ class TestGenerateStreamlines(omni.kit.test.AsyncTestCase):
         self.assertEqual(np.amax(streamlines.curveVertexCounts).tolist(), 102)
 
         self.assertEqual(streamlines.fields["scalar"].shape, (408,))
-        self.assertAlmostEquals(np.amin(streamlines.fields["scalar"]), 296.36197, 3)
+        self.assertAlmostEqual(np.amin(streamlines.fields["scalar"]), 296.36197, 3)
         self.assertEqual(np.amax(streamlines.fields["scalar"]), 315.0)
 
         self.assertEqual(streamlines.fields["time"].shape, (408,))
         self.assertEqual(np.amin(streamlines.fields["time"]), 0.0)
-        self.assertAlmostEquals(np.amax(streamlines.fields["time"]), 7.37515, 2)
+        self.assertAlmostEqual(np.amax(streamlines.fields["time"]), 7.37515, 2)
 
     async def test_yf17_warp(self):
         usd_context = get_context()
@@ -504,10 +504,10 @@ class TestGenerateStreamlines(omni.kit.test.AsyncTestCase):
         zone_path = "/World/yf17_hdf5_cgns/Base/Zone1"
 
         dataset: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/GridElements")
-        self.assert_(dataset.IsValid(), f"'{zone_path}/GridElements' is not valid Prim in stage.")
+        self.assertTrue(dataset.IsValid(), f"'{zone_path}/GridElements' is not valid Prim in stage.")
 
         intake: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/intake")
-        self.assert_(intake.IsValid())
+        self.assertTrue(intake.IsValid())
         seeds = await ConvertToPointCloud.invoke(intake, [], Usd.TimeCode.EarliestTime())
 
         GenerateStreamlines.override_impl("Warp")
@@ -541,9 +541,9 @@ class TestGenerateStreamlines(omni.kit.test.AsyncTestCase):
         self.assertEqual(np.amax(streamlines.curveVertexCounts).tolist(), 19)
 
         self.assertEqual(streamlines.fields["scalar"].shape, (418,))
-        self.assertAlmostEquals(np.amin(streamlines.fields["scalar"].numpy()), 0.0, 1)
-        self.assertAlmostEquals(np.amax(streamlines.fields["scalar"].numpy()), 299.9464, 2)
+        self.assertAlmostEqual(np.amin(streamlines.fields["scalar"].numpy()), 0.0, 1)
+        self.assertAlmostEqual(np.amax(streamlines.fields["scalar"].numpy()), 299.9464, 2)
 
         self.assertEqual(streamlines.fields["time"].shape, (418,))
         self.assertEqual(np.amin(streamlines.fields["time"].numpy()), -8.5)
-        self.assertAlmostEquals(np.amax(streamlines.fields["time"].numpy()), 8.5, 1)
+        self.assertAlmostEqual(np.amax(streamlines.fields["time"].numpy()), 8.5, 1)

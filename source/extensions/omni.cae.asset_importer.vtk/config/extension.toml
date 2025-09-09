@@ -10,7 +10,7 @@
 
 [package]
 title = "CAE VTK Importer"
-version = "1.0.0"
+version = "1.0.1"
 description = "Asset importer extension for importing VTK files into Omniverse using the asset importer framework."
 category = "CAE"
 changelog = "docs/CHANGELOG.md"

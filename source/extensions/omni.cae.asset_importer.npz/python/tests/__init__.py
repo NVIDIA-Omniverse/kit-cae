@@ -48,7 +48,7 @@ class TestNPZImporter(omni.kit.test.AsyncTestCase):
             array_prim = stage.GetPrimAtPath(array_path)
             print(array_prim, array_path)
             self.assertIsNotNone(array_prim)
-            self.assert_(array_prim.IsA(cae.FieldArray))
+            self.assertTrue(array_prim.IsA(cae.FieldArray))
             array = cae.FieldArray(array_prim)
             array.GetFieldAssociationAttr().Set(cae.Tokens.vertex)
 

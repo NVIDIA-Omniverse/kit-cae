@@ -31,7 +31,8 @@ usd_lib_dependencies = [
     "tf",
     "vt",
     "sdf",
-    "usd"
+    "usd",
+    "python"
 ]
 additional_include_dirs = [
     "${root}/_build/generated"
@@ -53,7 +54,8 @@ usd_lib_dependencies = [
     "tf",
     "vt",
     "sdf",
-    "usd"
+    "usd",
+    "python"
 ]
 additional_include_dirs = [
     "${root}/_build/generated"
@@ -75,7 +77,8 @@ usd_lib_dependencies = [
     "tf",
     "vt",
     "sdf",
-    "usd"
+    "usd",
+    "python"
 ]
 additional_include_dirs = [
     "${root}/_build/generated"
@@ -106,7 +109,8 @@ usd_lib_dependencies = [
     "tf",
     "vt",
     "sdf",
-    "usd"
+    "usd",
+    "python"
 ]
 additional_include_dirs = [
     "${root}/_build/generated"

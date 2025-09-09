@@ -13,6 +13,7 @@ from logging import getLogger
 
 from omni.cae.schema import cae
 from omni.cae.schema import vtk as cae_vtk
+from omni.client import utils as clientutils
 from pxr import Gf, Tf, Usd, UsdGeom
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonDataModel import vtkDataObject
@@ -91,7 +92,7 @@ def populate_stage(path: str, stage: Usd.Stage):
         raise ValueError(f"Unknown file extension: {ext}")
 
     caeFieldArrayClass = cae_vtk.FieldArray(stage.CreateClassPrim(rootPath.AppendChild("VTKFieldArrayClass")))
-    caeFieldArrayClass.CreateFileNamesAttr().Set([path])
+    caeFieldArrayClass.CreateFileNamesAttr().Set([clientutils.make_file_url_if_possible(path)])
 
     reader.UpdateDataObject()
     output = reader.GetOutputDataObject(0)

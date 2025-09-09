@@ -16,6 +16,7 @@ from logging import getLogger
 
 import omni.client
 from omni.cae.algorithms.core import Factory, get_factory
+from omni.client.utils import make_file_url_if_possible
 from omni.ext import IExt
 from omni.kit.app import get_app
 
@@ -42,7 +43,7 @@ class Extension(IExt):
         # add materials path to the omni.client search path
         # so stage can find the XAC materials included in this extension.
         ext_path = get_app().get_extension_manager().get_extension_path(extId)
-        materials_path = os.path.join(ext_path, "data")
+        materials_path = make_file_url_if_possible(os.path.join(ext_path, "data"))
         omni.client.add_default_search_path(materials_path)
         self._path = materials_path
 

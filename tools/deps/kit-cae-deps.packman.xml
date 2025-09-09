@@ -17,4 +17,7 @@
     <package name="index-for-omniverse-headers" version="380600.2218" />
   </dependency>
 
+  <dependency name="cuda" linkPath="../../_build/target-deps/cuda">
+    <package name="cuda" version="11.8.0-3-${platform_target}-${config}" />
+  </dependency>
 </project>

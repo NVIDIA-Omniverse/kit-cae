@@ -10,7 +10,7 @@
 
 [package]
 title = "CAE EnSight"
-version = "1.0.0"
+version = "1.0.1"
 description = "Extension adds support for EnSight datasets."
 category = "CAE"
 changelog = "docs/CHANGELOG.md"
@@ -20,6 +20,7 @@ readme  = "docs/README.md"
 
 [dependencies]
 "omni.cae.data" = {}
+"omni.client" = {}
 
 [[python.module]]  # Main python module this extension provides, it will be publicly available as "import omni.cae.ensight"
 name = "omni.cae.ensight"
