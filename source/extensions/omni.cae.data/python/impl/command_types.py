@@ -464,6 +464,7 @@ class GenerateStreamlines(Command):
         dX: float,
         maxLength: int,
         timeCode: Usd.TimeCode,
+        extra_fields: list[str] = None,
     ):
         self._dataset = dataset
         self._seeds = seeds
@@ -472,6 +473,7 @@ class GenerateStreamlines(Command):
         self._dX = dX
         self._maxLength = maxLength
         self._timeCode: Usd.TimeCode = timeCode
+        self._extra_fields = extra_fields if extra_fields is not None else []
 
     @property
     def dataset(self) -> Usd.Prim:
@@ -488,6 +490,10 @@ class GenerateStreamlines(Command):
     @property
     def colorField(self) -> str:
         return self._color_field
+
+    @property
+    def extra_fields(self) -> list[str]:
+        return self._extra_fields
 
     @property
     def dX(self) -> float:
@@ -517,6 +523,7 @@ class GenerateStreamlines(Command):
         dX: float,
         maxLength: int,
         timeCode: Usd.TimeCode,
+        extra_fields: list[str] = None,
     ) -> Union[None, Streamlines]:
         global _generate_streamlines_impl
 
@@ -549,4 +556,5 @@ class GenerateStreamlines(Command):
             dX=dX,
             maxLength=maxLength,
             timeCode=timeCode,
+            extra_fields=extra_fields,
         )

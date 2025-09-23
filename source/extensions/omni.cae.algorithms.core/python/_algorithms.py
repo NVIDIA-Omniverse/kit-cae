@@ -448,10 +448,13 @@ class Streamlines(Algorithm):
 
         velocity_field_names = usd_utils.get_target_field_names(self.prim, f"{self._ns}:velocity", dataset_prim)
         color_field_name = usd_utils.get_target_field_name(self.prim, f"{self._ns}:colors", dataset_prim, quiet=True)
+        primvars = usd_utils.get_target_field_names(
+            self.prim, f"omni:cae:algorithms:primvars", dataset_prim, quiet=True
+        )
 
         seeds = await self.get_seeds(timeCode)
         streamlines = await GenerateStreamlines.invoke(
-            dataset_prim, seeds, velocity_field_names, color_field_name, dX, maxLength, timeCode
+            dataset_prim, seeds, velocity_field_names, color_field_name, dX, maxLength, timeCode, extra_fields=primvars
         )
 
         if streamlines is None:
@@ -514,6 +517,23 @@ class Streamlines(Algorithm):
 
         # generate random ids for each individual streamline
         primvarsApi.GetPrimvar("rnd").Set(VtRt.FloatArray(rnd.reshape(-1, 1)))
+
+        # pass extra primvars
+        for pvarname in primvars:
+            field = streamlines.fields.get(pvarname)
+            if field is not None:
+                if field.shape[-1] == 3:
+                    primvarsApi.CreatePrimvar(pvarname, SdfRt.ValueTypeNames.Float3Array, UsdGeomRt.Tokens.vertex).Set(
+                        VtRt.Float3Array(field.reshape(-1, 3))
+                    )
+                elif field.shape[-1] == 1 or len(field.shape) == 1:
+                    primvarsApi.CreatePrimvar(pvarname, SdfRt.ValueTypeNames.FloatArray, UsdGeomRt.Tokens.vertex).Set(
+                        VtRt.FloatArray(field.reshape(-1, 1))
+                    )
+                else:
+                    logger.warning("Unsupported primvar shape %s for %s", field.shape, pvarname)
+            else:
+                logger.warning("Primvar field %s not found", pvarname)
 
         # set extents
         if streamlines.points is not None and streamlines.points.shape[0] > 0:

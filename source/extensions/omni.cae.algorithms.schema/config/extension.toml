@@ -14,7 +14,7 @@ order = -100  # Load at the start, load all schemas with order -100 (with order 
 
 [package]
 title = "CAE Algorithms USD Schema"
-version = "1.0.0"
+version = "1.1.0"
 description = "USD schemas for CAE algorithms in Omniverse."
 category = "internal"
 changelog = "docs/CHANGELOG.md"

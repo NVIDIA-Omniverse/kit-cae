@@ -9,7 +9,7 @@
 #  its affiliates is strictly prohibited.
 
 [package]
-version = "1.0.1"
+version = "1.0.2"
 title = "CAE IndeX"
 description = "Extension for IndeX support for CAE data delegage."
 category = "CAE"

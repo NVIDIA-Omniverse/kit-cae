@@ -2,13 +2,24 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.2.0]
+
+### Changes
+
+* Streamlines now supports passing arbitrary fields as primvars to the shaders.
+
+### Bug Fixes
+
+* Ensured IndeX algorithms use proper edit-layer when updating attributes on prims during execution
+  to avoid clobbering root layer.
+
 ## [1.1.0]
 
 ### Changes
 
 * Updates to use support Kit 108.0.0
 
-## Bug fixes
+### Bug fixes
 
 * Fixed inability to correctly locate shaders and imported files when using nucleus stages by ensure
   correct scheme (`file:`) is added to such paths.

@@ -59,10 +59,6 @@ class OmniCaeDataSetGenerateStreamlinesVTK(GenerateStreamlines):
 
     async def do(self) -> Streamlines:
         logger.info("executing %s.do()", self.__class__.__name__)
-        fields = []
-        fields += self.velocity_fields
-        fields += [self.colorField] if self.colorField is not None else []
-
         vtk_dataset = await self.get_dataset()
 
         seeds = dsa.WrapDataObject(vtkUnstructuredGrid())
@@ -78,12 +74,19 @@ class OmniCaeDataSetGenerateStreamlinesVTK(GenerateStreamlines):
         result.fields["time"] = streamlines.PointData["IntegrationTime"]
         if "colors" in streamlines.PointData.keys():
             result.fields["scalar"] = streamlines.PointData["colors"]
+
+        for field in self.extra_fields:
+            result.fields[field] = streamlines.PointData[field]
+
         return result
 
     async def get_dataset(self) -> dsa.DataSet:
         fields = []
         fields += self.velocity_fields
         fields += [self.colorField] if self.colorField is not None else []
+        fields += self.extra_fields
+
+        fields = list(set(fields))  # unique
 
         cache_key = {
             "label": "OmniCaeDataSetGenerateStreamlinesVTK",
@@ -110,6 +113,10 @@ class OmniCaeDataSetGenerateStreamlinesVTK(GenerateStreamlines):
         dataset.PointData.append(velocity, "velocity")
         if self.colorField is not None:
             dataset.PointData.append(vtk_dataset.PointData[self.colorField], "colors")
+
+        for field in self.extra_fields:
+            dataset.PointData.append(vtk_dataset.PointData[field], field)
+
         cache.put(str(cache_key), dataset, state=cache_state, sourcePrims=[self.dataset], timeCode=self.timeCode)
         return dataset
 

@@ -30,6 +30,26 @@ over "GLOBAL" (
 {
 }
 
+class "CaeAlgorithmsPrimvarsAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "PrimvarsAPI"
+    }
+    doc = """Applies to any UsdGeom prim to specify fields to be pulled from a CaeDataSet and passed as
+            primvars to the shader."""
+)
+{
+    rel omni:cae:algorithms:primvars (
+        doc = "Specifies the primvar name to field name mapping. The primvar name is the name used in the shader."
+              "The field name is the name of the field in the CaeDataSet."
+        displayName = "Primvars"
+        customData = {
+            string apiName = "primvars"
+        }
+    )
+}
+
 class "CaeAlgorithmsBoundingBoxAPI" (
     inherits = </APISchemaBase>
     customData = {
@@ -163,6 +183,7 @@ class "CaeAlgorithmsStreamlinesAPI" (
         string className = "StreamlinesAPI"
     }
     doc = "Applies to a BasisCurves prim to generate streamlines."
+    prepend apiSchemas = ["CaeAlgorithmsPrimvarsAPI"]
 )
 {
     rel omni:cae:algorithms:streamlines:dataset (

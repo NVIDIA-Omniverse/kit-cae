@@ -10,7 +10,7 @@
 
 [package]
 title = "CAE VTK"
-version = "1.0.0"
+version = "1.1.0"
 description = "Extension that provides VTK data delegate and VTK-specific operator commands."
 category = "CAE"
 changelog = "docs/CHANGELOG.md"

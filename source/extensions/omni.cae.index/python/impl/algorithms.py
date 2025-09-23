@@ -409,7 +409,7 @@ class Slice(Algorithm):
         with self.edit_context:
             IrregularVolumeHelper.update(volume_prim, dataset_prim, field_prims, bds, timeCode)
 
-        mesh_prim.CreateAttribute("nvindex:composite", Sdf.ValueTypeNames.Bool, custom=True).Set(1)
+            mesh_prim.CreateAttribute("nvindex:composite", Sdf.ValueTypeNames.Bool, custom=True).Set(1)
 
         # Let's do the colormap default setting happening in the root layer
         # so it can be overridden by the user and just acts as a default value.
@@ -611,7 +611,8 @@ class Volume(Algorithm):
 
         # ComputeBounds will be caching the extent computed for this prim.
         bounds = await ComputeBounds.invoke(dataset_prim, timeCode)
-        IrregularVolumeHelper.update(prim, dataset_prim, field_prims, bounds, timeCode)
+        with self.edit_context:
+            IrregularVolumeHelper.update(prim, dataset_prim, field_prims, bounds, timeCode)
 
         # Let's do the colormap default setting happening in the root layer
         # so it can be overridden by the user and just acts as a default value.

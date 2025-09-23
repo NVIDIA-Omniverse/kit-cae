@@ -10,7 +10,7 @@
 
 [package]
 title = "Omni CAE Data"
-version = "1.0.0"  # Semantic Versioning is used: https://semver.org/
+version = "1.1.0"  # Semantic Versioning is used: https://semver.org/
 description = "Core extension that provides the CAE data delegate API and infrastructure for reading CAE field arrays."
 category = "internal"  # How to categorize this in the Extension Manager
 changelog = "docs/CHANGELOG.md"
