@@ -2,6 +2,15 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.3.0]
+
+## Changes
+
+* Points, Glyphs, External Faces now support coloring by vectors. When coloring with vectors, the
+  vector magnitude is used for coloring.
+* Cleaned up code for resetting color ranges for colormaps, and domains on MDL shaders. The ranges are automatically
+  reset if value is invalid (i.e. min > max) or if the field used to color with is changed.
+
 ## [1.2.0]
 
 ### Changes

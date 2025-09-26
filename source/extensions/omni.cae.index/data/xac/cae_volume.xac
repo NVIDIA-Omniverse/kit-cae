@@ -28,6 +28,13 @@ auto const vdb_filter_mode = VDB_volume_filter_mode::TRILINEAR;
 #define PROGRAM_MODE_FLOAT 0
 #define PROGRAM_MODE_VEC3F 1
 
+
+struct Params
+{
+    float fraction = 0.0f; // default to no interpolation
+    int mode = PROGRAM_MODE_FLOAT; // default to vector mode
+};
+
 // Sample overload for NanoVDB volumes
 NV_IDX_DEVICE_INLINE
 float sample(const uint attrib_idx, const VDB_volume& volume, const Sample_info_vdb& sample_info, const int mode)
@@ -43,7 +50,7 @@ float sample(const uint attrib_idx, const VDB_volume& volume, const Sample_info_
     {
         const auto sampler = volume.template generate_sampler<float3, vdb_filter_mode, nanovdb::Vec3f>(attrib_idx);
         const float3 val = sampler.fetch_sample(sample_position);
-        return sqrtf(val.x * val.x + val.y * val.y + val.z * val.z);
+        return length(val);
     }
     else
         return 0.0f; // unsupported mode
@@ -61,7 +68,7 @@ float sample(uint attrib_idx, const Irregular_volume& volume, const Sample_info_
     else if (mode == PROGRAM_MODE_VEC3F)
     {
         const float3 val = volume.fetch_attribute<float3>(attrib_idx, sample_info.sample_cell_info);
-        return sqrtf(val.x * val.x + val.y * val.y + val.z * val.z);
+        return length(val);
     }
     else
         return 0.0f; // unsupported mode
@@ -70,14 +77,13 @@ float sample(uint attrib_idx, const Irregular_volume& volume, const Sample_info_
 class Volume_sample_program
 {
     NV_IDX_VOLUME_SAMPLE_PROGRAM
-    int mode = PROGRAM_MODE_VEC3F;
-    float fraction = 0.0f;
+    Params m_params;
 public:
     NV_IDX_DEVICE_INLINE_MEMBER
     void initialize()
     {
-        fraction = *state.bind_parameter_buffer<float>(0);
-        mode = *state.bind_parameter_buffer<int>(1);
+        // bind the parameters
+        m_params = *state.bind_parameter_buffer<Params>(0);
     }
 
     NV_IDX_DEVICE_INLINE_MEMBER
@@ -90,12 +96,12 @@ public:
         const Colormap& colormap = state.self.get_colormap();
 
         // sample the volume at the current position
-        float s0 = sample(0u, volume, sample_info, mode);
-        if (fraction > 0.0f)
+        float s0 = sample(0u, volume, sample_info, m_params.mode);
+        if (m_params.fraction > 0.0f)
         {
             // apply linear interpolation if enabled
-            const float s1 = sample(1u, volume, sample_info, mode);
-            s0 = s0 + fraction * (s1 - s0);
+            const float s1 = sample(1u, volume, sample_info, m_params.mode);
+            s0 = s0 + m_params.fraction * (s1 - s0);
         }
 
         // apply the colormap

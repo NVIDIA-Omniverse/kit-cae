@@ -110,7 +110,7 @@ class CreateCaeAlgorithmsExtractPoints(omni.kit.commands.Command):
         prim.CreateAttribute(f"{ns}:width", Sdf.ValueTypeNames.Float, custom=False).Set(default_width)
         prim.CreateAttribute(f"{ns}:maxCount", Sdf.ValueTypeNames.Int, custom=False).Set(10000000)
         prim.CreateAttribute(f"{ns}:widthsRamp", Sdf.ValueTypeNames.Float2, custom=False).Set((0.5, 1.5))
-        prim.CreateAttribute(f"{ns}:widthsDomain", Sdf.ValueTypeNames.Float2, custom=False).Set((0.0, 1.0))
+        prim.CreateAttribute(f"{ns}:widthsDomain", Sdf.ValueTypeNames.Float2, custom=False).Set((0.0, -1.0))
 
         primT.CreatePointsAttr()
 

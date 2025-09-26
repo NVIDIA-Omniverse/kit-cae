@@ -15,6 +15,7 @@ import traceback
 from abc import ABC, abstractmethod
 from logging import getLogger
 from typing import Union
+from unicodedata import name
 
 from omni.cae.data import progress, usd_utils
 from omni.cae.data.usd_utils import ChangeTracker, QuietableException
@@ -217,6 +218,12 @@ class Algorithm(ABC):
         material_prim = materials.GetChild(name) if materials else None
         return material_prim
 
+    def get_surface_shader(self, material_name: str, render_context: str) -> UsdShade.Shader:
+        if material := self.get_material(material_name):
+            materialT = UsdShade.Material(material)
+            return materialT.ComputeSurfaceSource(render_context)[0]
+        return None
+
     def set_extent(self, extent: Gf.Range3d) -> None:
         """
         Sets the extent of the algorithm. This is used to determine the bounding box of the algorithm.
@@ -225,3 +232,7 @@ class Algorithm(ABC):
             if not self._prim.IsA(UsdGeom.Boundable):
                 raise RuntimeError("Extent can only be set on UsdGeom.Boundable prims")
             UsdGeom.Boundable(self._prim).CreateExtentAttr().Set([extent.min, extent.max])
+
+    def attribute_changed(self, attr_name: str) -> bool:
+        attr_path = self._prim.GetPath().AppendProperty(attr_name)
+        return self._tracker.AttributeChanged(str(attr_path))

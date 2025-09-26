@@ -139,8 +139,8 @@ class "CaeAlgorithmsPointsAPI" (
         }
     )
 
-    uniform float2 omni:cae:algorithms:points:widthsDomain = (0.0, 1.0) (
-        doc = "Specifies the domain for the point width ramp."
+    uniform float2 omni:cae:algorithms:points:widthsDomain = (0.0, -1.0) (
+        doc = "Specifies the domain for the point width ramp. Invalid range indicates auto-compute from data."
         displayName = "Widths Domain"
         displayGroup = "Width Mapping"
         customData = {

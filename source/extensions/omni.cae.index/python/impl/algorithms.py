@@ -32,15 +32,15 @@ class IrregularVolumeHelper:
 
     IMPORTER_RELATION_NAME = "importer"
 
-    @staticmethod
-    def get_dataset(prim: Usd.Prim) -> Usd.Prim:
+    @classmethod
+    def get_dataset(cls, prim: Usd.Prim) -> Usd.Prim:
         """Returns the dataset prim for the given irregular volume prim."""
         return usd_utils.get_target_prim(prim, "omni:cae:index:volume:dataset", quiet=True)
 
-    @staticmethod
-    def get_fields(prim: Usd.Prim) -> list[Usd.Prim]:
-        """Returns the field prims for the given irregular volume prim."""
-        return usd_utils.get_target_prims(prim, "omni:cae:index:volume:field", quiet=True)
+    @classmethod
+    def get_field_names(cls, prim: Usd.Prim) -> list[str]:
+        """Returns the field names for the given irregular volume prim."""
+        return usd_utils.get_target_field_names(prim, "omni:cae:index:volume:field", cls.get_dataset(prim), quiet=True)
 
     @staticmethod
     def define_volume(stage: Usd.Stage, path: str) -> Usd.Prim:
@@ -81,7 +81,7 @@ class IrregularVolumeHelper:
     def update(
         volume_prim: Usd.Prim,
         dataset_prim: Usd.Prim,
-        field_prims: list[Usd.Prim],
+        field_names: list[str],
         bounds: Gf.Range3d,
         timeCode: Usd.TimeCode,
     ) -> None:
@@ -100,9 +100,9 @@ class IrregularVolumeHelper:
             "mesh": Vt.Token(str(dataset_prim.GetPath())),
             "timeCode": Vt.Double(timeCode.GetValue()),
         }
-        for idx, field in enumerate(field_prims):
-            settings[f"field:{idx}"] = Vt.Token(usd_utils.get_field_name(dataset_prim, field))
-        settings["nb_fields"] = Vt.Int(len(field_prims))
+        for idx, field in enumerate(field_names):
+            settings[f"field:{idx}"] = Vt.Token(field)
+        settings["nb_fields"] = Vt.Int(len(field_names))
         logger.info("Setting importer settings for %s: %s", volume_prim.GetPath(), settings)
         importer.SetCustomDataByKey("nvindex.importerSettings", settings)
 
@@ -129,9 +129,9 @@ class NanoVdbHelper:
         return usd_utils.get_target_prim(prim, "omni:cae:index:nvdb:dataset", quiet=True)
 
     @staticmethod
-    def get_fields(prim: Usd.Prim) -> list[Usd.Prim]:
-        """Returns the field prims for the given NanoVDB volume prim."""
-        return usd_utils.get_target_prims(prim, "omni:cae:index:nvdb:field", quiet=True)
+    def get_field_names(prim: Usd.Prim) -> list[str]:
+        """Returns the field names for the given NanoVDB volume prim."""
+        return usd_utils.get_target_field_names(prim, "omni:cae:index:nvdb:field", quiet=True)
 
     @staticmethod
     def define_volume(stage: Usd.Stage, path: str) -> Usd.Prim:
@@ -260,7 +260,7 @@ class ColormapHelper:
             [(0.2, 0.3, 0.8, 0), (0.86, 0.86, 0.86, 0.5), (0.7, 0.01, 0.14, 1.0)]
         )
         colormap_prim.CreateAttribute("xPoints", Sdf.ValueTypeNames.FloatArray).Set([0, 0.5, 1.0])
-        colormap_prim.CreateAttribute("domain", Sdf.ValueTypeNames.Float2).Set((0, 1))
+        colormap_prim.CreateAttribute("domain", Sdf.ValueTypeNames.Float2).Set((0, -1))
         colormap_prim.CreateAttribute("domainBoundaryMode", Sdf.ValueTypeNames.Token).Set("clampToEdge")
         return colormap_prim
 
@@ -274,7 +274,7 @@ class ColormapHelper:
             [(0.2, 0.3, 0.8, 1), (0.86, 0.86, 0.86, 1), (0.7, 0.01, 0.14, 1)]
         )
         colormap_prim.CreateAttribute("xPoints", Sdf.ValueTypeNames.FloatArray).Set([0, 0.5, 1.0])
-        colormap_prim.CreateAttribute("domain", Sdf.ValueTypeNames.Float2).Set((0, 1))
+        colormap_prim.CreateAttribute("domain", Sdf.ValueTypeNames.Float2).Set((0, -1))
         colormap_prim.CreateAttribute("domainBoundaryMode", Sdf.ValueTypeNames.Token).Set("clampToTransparent")
         return colormap_prim
 
@@ -393,7 +393,7 @@ class Slice(Algorithm):
     async def execute_impl(self, timeCode: Usd.TimeCode) -> None:
         prim: Usd.Prim = self.prim
         dataset_prim = usd_utils.get_target_prim(prim, "omni:cae:index:slice:dataset")
-        field_prims: list[Usd.Prim] = usd_utils.get_target_prims(prim, "omni:cae:index:slice:field")
+        field_names: list[str] = usd_utils.get_target_field_names(prim, "omni:cae:index:slice:field")
 
         mesh_prim = prim.GetPrimAtPath("Plane")
         if not mesh_prim:
@@ -407,16 +407,18 @@ class Slice(Algorithm):
         SliceHelper.update_xform(mesh_prim, bds)
 
         with self.edit_context:
-            IrregularVolumeHelper.update(volume_prim, dataset_prim, field_prims, bds, timeCode)
-
+            IrregularVolumeHelper.update(volume_prim, dataset_prim, field_names, bds, timeCode)
             mesh_prim.CreateAttribute("nvindex:composite", Sdf.ValueTypeNames.Bool, custom=True).Set(1)
 
-        # Let's do the colormap default setting happening in the root layer
-        # so it can be overridden by the user and just acts as a default value.
-        if len(field_prims) == 1:
-            await usd_utils.apply_dataset_colormap_range(
-                field_prims[0], prim.GetPrimAtPath("Material/Colormap"), timeCode
-            )
+        # Colormap domain is set in the root layer so that it can be overridden by the user.
+        attr = prim.GetPrimAtPath("Material/Colormap").GetAttribute("domain")
+        await usd_utils.compute_and_set_range(
+            attr,
+            dataset_prim,
+            field_names,
+            timeCode=timeCode,
+            force=self.attribute_changed("omni:cae:index:slice:field"),
+        )
 
 
 class NanoVdbSlice(Algorithm):
@@ -487,8 +489,7 @@ class NanoVdbSlice(Algorithm):
 
         prim: Usd.Prim = self.prim
         dataset_prim: Usd.Prim = usd_utils.get_target_prim(prim, "omni:cae:index:slice:dataset")
-        field_prims: list[Usd.Prim] = usd_utils.get_target_prims(prim, "omni:cae:index:slice:field")
-        field_names: list[str] = [usd_utils.get_field_name(dataset_prim, field) for field in field_prims]
+        field_names: list[str] = usd_utils.get_target_field_names(prim, "omni:cae:index:slice:field")
 
         mesh_prim = prim.GetPrimAtPath("Plane")
         if not mesh_prim:
@@ -524,12 +525,15 @@ class NanoVdbSlice(Algorithm):
         # last step: enable IndeX compositing.
         mesh_prim.CreateAttribute("nvindex:composite", Sdf.ValueTypeNames.Bool, custom=True).Set(1)
 
-        # Let's do the colormap default setting happening in the root layer
-        # so it can be overridden by the user and just acts as a default value.
-        if len(field_prims) == 1:
-            await usd_utils.apply_dataset_colormap_range(
-                field_prims[0], prim.GetPrimAtPath("Material/Colormap"), timeCode
-            )
+        # Colormap domain is set in the root layer so that it can be overridden by the user.
+        attr = prim.GetPrimAtPath("Material/Colormap").GetAttribute("domain")
+        await usd_utils.compute_and_set_range(
+            attr,
+            dataset_prim,
+            field_names,
+            timeCode=timeCode,
+            force=self.attribute_changed("omni:cae:index:slice:field"),
+        )
 
     async def get_structured_extents(self, timeCode: Usd.TimeCode) -> IJKExtents:
         dataset: Usd.Prim = usd_utils.get_target_prim(self.prim, "omni:cae:index:slice:dataset")
@@ -569,24 +573,24 @@ class VolumeSlice(Algorithm):
         if not dataset_prim:
             raise usd_utils.QuietableException(f"Dataset prim not found for slice {prim.GetPath()}")
 
-        field_prims: list[Usd.Prim] = NanoVdbHelper.get_fields(volume_prim) or IrregularVolumeHelper.get_fields(
+        field_names: list[str] = NanoVdbHelper.get_field_names(volume_prim) or IrregularVolumeHelper.get_field_names(
             volume_prim
         )
-        if not field_prims:
-            raise usd_utils.QuietableException(f"Field prims not found for slice {prim.GetPath()}")
+        if not field_names:
+            raise usd_utils.QuietableException(f"Field names not found for slice {prim.GetPath()}")
+
+        with self.edit_context:
+            mesh_prim.CreateAttribute("nvindex:composite", Sdf.ValueTypeNames.Bool, custom=True).Set(1)
 
         # we use Volume bounds to update the slice mesh transform.
         bds = usd_utils.get_bounds(volume_prim)
         SliceHelper.update_xform(mesh_prim, bds)
 
-        mesh_prim.CreateAttribute("nvindex:composite", Sdf.ValueTypeNames.Bool, custom=True).Set(1)
-
-        # Let's do the colormap default setting happening in the root layer
-        # so it can be overridden by the user and just acts as a default value.
-        if len(field_prims) == 1:
-            await usd_utils.apply_dataset_colormap_range(
-                field_prims[0], prim.GetPrimAtPath("Material/Colormap"), timeCode
-            )
+        # Colormap domain is set in the root layer so that it can be overridden by the user.
+        attr = prim.GetPrimAtPath("Material/Colormap").GetAttribute("domain")
+        await usd_utils.compute_and_set_range(
+            attr, dataset_prim, field_names, timeCode=timeCode, force=self.attribute_changed(f"{ns}:field")
+        )
 
 
 class Volume(Algorithm):
@@ -607,16 +611,24 @@ class Volume(Algorithm):
         ns = "omni:cae:index:volume"
         prim: Usd.Prim = self.prim
         dataset_prim: Usd.Prim = usd_utils.get_target_prim(prim, f"{ns}:dataset")
-        field_prims: Usd.Prim = usd_utils.get_target_prims(prim, f"{ns}:field")
+        field_names: list[str] = usd_utils.get_target_field_names(prim, f"{ns}:field", dataset_prim)
 
         # ComputeBounds will be caching the extent computed for this prim.
         bounds = await ComputeBounds.invoke(dataset_prim, timeCode)
         with self.edit_context:
-            IrregularVolumeHelper.update(prim, dataset_prim, field_prims, bounds, timeCode)
+            IrregularVolumeHelper.update(prim, dataset_prim, field_names, bounds, timeCode)
 
-        # Let's do the colormap default setting happening in the root layer
-        # so it can be overridden by the user and just acts as a default value.
-        await usd_utils.apply_dataset_colormap_range(field_prims[0], prim.GetPrimAtPath("Material/Colormap"), timeCode)
+        # NOTE: for now, we are not really handling vec3/float3 for this to avoid complicating this right now.
+        # It will be supported later.
+
+        # Colormap domain is set in the root layer so that it can be overridden by the user.
+        force_range_update = self._tracker.AttributeChanged(
+            self.prim.GetAttribute(f"{ns}:field")
+        ) or self._tracker.AttributeChanged(self.prim.GetAttribute(f"{ns}:dataset"))
+        attr = prim.GetPrimAtPath("Material/Colormap").GetAttribute("domain")
+        await usd_utils.compute_and_set_range(
+            attr, dataset_prim, field_names, timeCode=timeCode, force=force_range_update
+        )
 
 
 class NanoVdbVolume(Algorithm):
@@ -721,7 +733,7 @@ class NanoVdbVolume(Algorithm):
 
         prim: Usd.Prim = self.prim
         dataset_prim: Usd.Prim = usd_utils.get_target_prim(prim, "omni:cae:index:nvdb:dataset")
-        field_prim: Usd.Prim = usd_utils.get_target_prim(prim, "omni:cae:index:nvdb:field")
+        field_names: list[str] = usd_utils.get_target_field_names(prim, "omni:cae:index:nvdb:field", dataset_prim)
         enable_interpolation: bool = usd_utils.get_attribute(prim, "omni:cae:index:nvdb:temporalInterpolation")
 
         # we have to process data to determine a few attributes ijk extents and spacing/scale
@@ -729,7 +741,6 @@ class NanoVdbVolume(Algorithm):
         # we will use the earliest timesample to compute the extents.
         ijk_extents = await self.get_structured_extents(Usd.TimeCode.EarliestTime())
 
-        fields = [usd_utils.get_field_name(dataset_prim, field_prim)]
         codes = self.get_execution_timecodes(timeCode)
         logger.info("executing time codes %s", f"{codes[0]} -> {codes[-1]}")
 
@@ -738,7 +749,7 @@ class NanoVdbVolume(Algorithm):
             # we trigger voxelization here so that this potentially slow steps happens before rendering passes
             volume = await Voxelize.invoke(
                 dataset_prim,
-                fields=fields,
+                fields=field_names,
                 bbox=ijk_extents.getRange(),
                 voxel_size=ijk_extents.spacing[0],
                 device_ordinal=0,
@@ -772,9 +783,14 @@ class NanoVdbVolume(Algorithm):
                 shader: UsdShade.Shader = UsdShade.Shader(shader_prim)
                 shader.CreateInput("mode", Sdf.ValueTypeNames.Int).Set(mode)
 
-        # Let's do the colormap default setting happening in the root layer
-        # so it can be overridden by the user and just acts as a default value.
-        await usd_utils.apply_dataset_colormap_range(field_prim, prim.GetPrimAtPath("Material/Colormap"), timeCode)
+        # Colormap domain is set in the root layer so that it can be overridden by the user.
+        force_range_update = self._tracker.AttributeChanged(
+            self.prim.GetAttribute("omni:cae:index:nvdb:field")
+        ) or self._tracker.AttributeChanged(self.prim.GetAttribute("omni:cae:index:nvdb:dataset"))
+        attr = prim.GetPrimAtPath("Material/Colormap").GetAttribute("domain")
+        await usd_utils.compute_and_set_range(
+            attr, dataset_prim, field_names, timeCode=timeCode, force=force_range_update
+        )
 
         # reset change tracker
         self._rel_tracker.ClearChanges()

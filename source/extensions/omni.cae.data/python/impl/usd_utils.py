@@ -19,7 +19,7 @@ __all__ = [
     "quietable_with_default",
     "async_quietable",
     "async_quietable_with_default",
-    "apply_dataset_colormap_range",
+    "compute_and_set_range",
     "get_target_paths",
     "get_target_path",
     "get_target_prim",
@@ -28,7 +28,6 @@ __all__ = [
     "get_arrays",
     "get_arrays_from_relationship",
     "get_array_from_relationship",
-    "get_array_range",
     "get_vecN_from_relationship",
     "get_attribute",
     "get_prim_pxr",
@@ -60,7 +59,7 @@ from usdrt import Rt
 from usdrt import Usd as UsdRt
 
 from .. import get_data_delegate_registry
-from . import array_utils, cache, progress
+from . import array_utils, cache, progress, range_utils
 from .bindings import IFieldArray
 
 logger = getLogger(__name__)
@@ -323,66 +322,25 @@ def get_bounds(prim: Usd.Prim, timeCode=Usd.TimeCode.Default()) -> Gf.Range3d:
 
 
 @async_quietable
-@progress.progress_context("Computing range")
-async def get_array_range(prim: Usd.Prim, timeCode: Usd.TimeCode = Usd.TimeCode.Default()) -> tuple[any, any]:
-    """Returns the range for the field array prim as tuple (min, max). For multi-component arrays, `min` and `max`
-    themselves are tuples.
-    """
-    if not prim or not prim.IsValid():
-        raise QuietableException("Invalid prim %s" % prim)
+async def compute_and_set_range(
+    attr: Union[Usd.Attribute, UsdRt.Attribute],
+    dataset: Usd.Prim,
+    field_name_or_names: Union[str, list[str]],
+    timeCode=Usd.TimeCode.EarliestTime(),
+    precomputed_range: tuple[float, float] = None,
+    force: bool = False,
+):
+    field_names = [field_name_or_names] if isinstance(field_name_or_names, str) else field_name_or_names
 
-    cache_state = {
-        "timeCode": str(timeCode.GetValue()),
-    }
+    if precomputed_range is None:
+        # need to get the field arrays from the dataset
+        field_arrays = []
+        for f in field_names:
+            field_arrays.extend(await get_arrays_from_relationship(dataset, f"field:{f}", timeCode))
+    else:
+        field_arrays = None
 
-    cache_key = {"label": "usd_utils.get_range", "fieldArray": prim.GetPath()}
-
-    range = cache.get(str(cache_key), cache_state)
-    if range is None:
-        array = array_utils.as_numpy_array(await get_array(prim, timeCode))
-        if np.issubdtype(array.dtype, np.floating):
-            mask = np.isfinite(array)
-            range = (
-                np.amin(array, axis=0, where=mask, initial=np.inf).tolist(),
-                np.amax(array, axis=0, where=mask, initial=-np.inf).tolist(),
-            )
-        else:
-            range = (np.amin(array, axis=0).tolist(), np.amax(array, axis=0).tolist())
-
-        if range[0] > range[1]:
-            raise QuietableException("Invalid range, is data valid?")
-
-        cache.put(str(cache_key), range, cache_state, sourcePrims=[prim])
-    return range
-
-
-@async_quietable
-async def apply_dataset_colormap_range(
-    field_prim: Usd.Prim, colormap_prim: Usd.Prim, timeCode: Usd.TimeCode = Usd.TimeCode.Default(), **kwargs
-) -> None:
-    """If both field_prim and colormap_prim are valid, apply field_prim range to colormap's domain."""
-    colormap_attribute_name = kwargs.get("colormap_attribute_name", "domain")
-    if field_prim and colormap_prim:
-        customdatakey = "omni.cae.kit:last_prim_sync"
-        last_prim_sync = colormap_prim.GetCustomDataByKey(customdatakey)
-        if last_prim_sync != str(field_prim.GetPath()):
-            if attr := colormap_prim.GetAttribute(colormap_attribute_name):
-                range = kwargs.get("range", None)
-                if range is None:
-                    range = await get_array_range(field_prim, timeCode)
-                    logger.info(f"Setting {colormap_prim} range to {range[0]}:{range[1]} from {field_prim}")
-                else:
-                    logger.info(f"Setting {colormap_prim} range to {range[0]}:{range[1]}")
-                if isinstance(range[0], tuple) or isinstance(range[0], list):
-                    # multi-component range, so we just skip it.
-                    pass
-                else:
-                    attr.Set((range[0], range[1]))  # Colormap and timecode works messily. Just don't use it!
-                colormap_prim.SetCustomDataByKey(customdatakey, str(field_prim.GetPath()))
-            else:
-                logger.warning(f"{colormap_prim} has no attribute {colormap_attribute_name}")
-        else:
-            logger.info(f"{colormap_prim} has already been synced from {field_prim}")
+    return await range_utils.compute_and_set_range(attr, field_arrays, precomputed_range, force=force)
 
 
 def get_bracketing_time_codes(prim: Usd.Prim, timeCode: Usd.TimeCode) -> tuple[Usd.TimeCode, Usd.TimeCode]:
@@ -625,6 +583,14 @@ class ChangeTracker:
             path = str(prim_or_path)
 
         return self._tracker.PrimChanged(path)
+
+    def AttributeChanged(self, attr_or_path) -> None:
+        if hasattr(attr_or_path, "GetPath"):
+            path = str(attr_or_path.GetPath())
+        else:
+            path = str(attr_or_path)
+
+        return self._tracker.AttributeChanged(path)
 
     def ClearChanges(self) -> None:
         return self._tracker.ClearChanges()

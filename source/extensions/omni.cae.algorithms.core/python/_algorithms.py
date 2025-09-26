@@ -12,56 +12,17 @@ from logging import getLogger
 
 import numpy as np
 import warp as wp
-from omni.cae.data import array_utils, progress, usd_utils
+from omni.cae.data import array_utils, progress, range_utils, usd_utils
 from omni.cae.data.commands import ComputeBounds, ConvertToMesh, ConvertToPointCloud, GenerateStreamlines
 from omni.cae.data.commands import Streamlines as StreamlinesT
-from pxr import Gf, Sdf, Usd, UsdGeom, UsdShade, Vt
+from pxr import Gf, Sdf, Usd, UsdGeom, Vt
 from usdrt import Sdf as SdfRt
-from usdrt import Usd as UsdRt
 from usdrt import UsdGeom as UsdGeomRt
 from usdrt import Vt as VtRt
 
 from .algorithm import Algorithm
 
 logger = getLogger(__name__)
-
-
-def get_shader(materials_pxr: Usd.Prim) -> UsdShade.Shader:
-    shaders = []
-    for child in materials_pxr.GetChildren():
-        if child.IsA(UsdShade.Shader):
-            return UsdShade.Shader(child)
-    return None
-
-
-def set_shader_input(material_prim, name, type, value):
-    shader = get_shader(material_prim)
-    if not shader:
-        logger.error("No shaders were found under %s", material_prim)
-        return
-    else:
-        shader.CreateInput(name, type).Set(value)
-
-
-async def set_shader_domain(
-    material_prim: Usd.Prim, datasetPrim: Usd.Prim, fieldName: str, timeCode: Usd.TimeCode, domain=None
-):
-    shader = get_shader(material_prim)
-    if not shader:
-        logger.error("No shaders were found under %s", material_prim)
-        return
-
-    inp = shader.CreateInput("domain", Sdf.ValueTypeNames.Float2)
-    if inp.Get() == None or inp.Get() == (0, -1):
-        if domain is None:
-            arrayPrim = usd_utils.get_target_prim(datasetPrim, f"field:{fieldName}")
-            domain = await usd_utils.get_array_range(arrayPrim, timeCode, quiet=True)
-
-        if domain:
-            logger.info("setting domain to %s on %s (overriding %s)", domain, shader, inp.Get())
-            inp.Set(domain)
-    else:
-        logger.info("domain already set to %s on %s (skipping)", inp.Get(), shader)
 
 
 class BoundingBox(Algorithm):
@@ -150,15 +111,10 @@ class Points(Algorithm):
         width = usd_utils.get_attribute(self.prim, f"{self.ns}:width")
         max_count = usd_utils.get_attribute(self.prim, f"{self.ns}:maxCount")
 
-        colors_field = usd_utils.get_target_field_name(self.prim, f"{self.ns}:colors", dataset_prim, quiet=True)
-        widths_field = usd_utils.get_target_field_name(self.prim, f"{self.ns}:widths", dataset_prim, quiet=True)
+        colors_fields = usd_utils.get_target_field_names(self.prim, f"{self.ns}:colors", dataset_prim, quiet=True)
+        widths_fields = usd_utils.get_target_field_names(self.prim, f"{self.ns}:widths", dataset_prim, quiet=True)
 
-        fields = set()
-        if colors_field:
-            fields.add(colors_field)
-        if widths_field:
-            fields.add(widths_field)
-
+        fields = set(colors_fields + widths_fields)
         result = await ConvertToPointCloud.invoke(dataset_prim, list(fields), timeCode)
         points: np.ndarray = array_utils.as_numpy_array(result.points)
 
@@ -179,30 +135,41 @@ class Points(Algorithm):
         scalar_pvar = pvAPI.GetPrimvar("scalar")
         widths_pvar = pvAPI.GetPrimvar("widths")
 
-        if colors_field and colors_field in result.fields:
-            colors = array_utils.as_numpy_array(result.fields[colors_field])
+        if colors_fields and all(field in result.fields for field in colors_fields):
+            colors = array_utils.as_numpy_array(
+                array_utils.get_scalar_array([result.fields[field] for field in colors_fields])
+            )
             colors = colors[::stride] if stride > 1 else colors
-            assert colors.shape[0] == points.shape[0]
+            assert colors.shape[0] == points.shape[0], f"{colors.shape} vs {points.shape}"
             scalar_pvar.Set(VtRt.FloatArray(colors.reshape(-1, 1)))
         else:
-            # deactivate scalar coloring.
+            # deactivate scalar coloring
             scalar_pvar.Set(VtRt.FloatArray(np.full(points.shape[0], 0.0, dtype=np.float32).reshape(-1, 1)))
+            colors = None
             # colors = np.full(points.shape[0], 0.0, dtype=np.float32)
 
-        if material := self.get_material("ScalarColor"):
-            if colors_field:
-                set_shader_input(material, "enable_coloring", Sdf.ValueTypeNames.Bool, True)
-                await set_shader_domain(material, dataset_prim, colors_field, timeCode)
-            else:
-                set_shader_input(material, "enable_coloring", Sdf.ValueTypeNames.Bool, False)
+        if shader := self.get_surface_shader("ScalarColor", "mdl"):
+            shader.CreateInput("enable_coloring", Sdf.ValueTypeNames.Bool).Set(colors is not None)
+            await range_utils.compute_and_set_range(
+                shader.CreateInput("domain", Sdf.ValueTypeNames.Float2),
+                colors,
+                force=self.attribute_changed(f"{self.ns}:colors"),
+            )
         else:
-            logger.warning("No material found for ScalarColor")
+            logger.warning("No material or surface shader found for 'ScalarColor'")
 
-        if widths_field and widths_field in result.fields:
-            widths = array_utils.as_numpy_array(result.fields[widths_field])
+        if widths_fields and all(field in result.fields for field in widths_fields):
+            widths = array_utils.as_numpy_array(
+                array_utils.get_scalar_array([result.fields[field] for field in widths_fields])
+            )
             widths = widths[::stride] if stride > 1 else widths
             assert widths.shape[0] == points.shape[0]
 
+            await range_utils.compute_and_set_range(
+                self.prim.GetAttribute(f"{self.ns}:widthsDomain"),
+                widths,
+                force=self.attribute_changed(f"{self.ns}:widths"),
+            )
             widths_domain = usd_utils.get_attribute(self.prim, f"{self.ns}:widthsDomain")
             widths_ramp = usd_utils.get_attribute(self.prim, f"{self.ns}:widthsRamp")
 
@@ -237,14 +204,9 @@ class Glyphs(Algorithm):
         orientation_fields = usd_utils.get_target_field_names(
             self.prim, f"{self.ns}:orientation", dataset_prim, quiet=True
         )
-        color_field = usd_utils.get_target_field_name(self.prim, f"{self.ns}:colors", dataset_prim, quiet=True)
+        color_fields = usd_utils.get_target_field_names(self.prim, f"{self.ns}:colors", dataset_prim, quiet=True)
 
-        fields = set()
-        if color_field:
-            fields.add(color_field)
-        if orientation_fields:
-            fields.update(orientation_fields)
-
+        fields = set(color_fields + orientation_fields)
         result = await ConvertToPointCloud.invoke(dataset_prim, list(fields), timeCode)
         points: np.ndarray = array_utils.as_numpy_array(result.points).astype(np.float32, copy=False)
 
@@ -263,27 +225,30 @@ class Glyphs(Algorithm):
         elif shape == "sphere":
             protoIndices.fill(2)
 
-        if len(orientation_fields) == 3:
-            arrays = [array_utils.as_numpy_array(result.fields[i]) for i in orientation_fields]
-            if stride > 1:
-                arrays = [a[::stride] for a in arrays]
-            orientations: np.ndarray = array_utils.as_numpy_array(array_utils.stack(arrays))
-        elif len(orientation_fields) == 1:
-            array = array_utils.as_numpy_array(result.fields[orientation_fields[0]])
-            assert array.shape[0] == points.shape[0] and array.shape[1] == 3
-            orientations: np.ndarray = array[::stride] if stride > 1 else array
-        else:
-            orientations = None
-
-        if orientations is not None:
+        if orientation_fields and all(field in result.fields for field in orientation_fields):
+            orientations = array_utils.column_stack([result.fields[f] for f in orientation_fields])
+            if orientations.ndim != 2:
+                logger.error("Invalid orientation fields shape %s", orientations.shape)
+                orientations = None
+            elif orientations.shape[0] != points.shape[0]:
+                logger.error("Invalid orientation fields shape %s (pts=%s)", orientations.shape, points.shape[0])
+                orientations = None
+            elif orientations.shape[1] != 3:
+                logger.error("Invalid orientation fields shape %s (should have 3 components)", orientations.shape)
+                orientations = None
+            else:
+                orientations = array_utils.as_numpy_array(orientations).astype(np.float32, copy=False)
+                orientations = orientations[::stride] if stride > 1 else orientations
             quaternions = array_utils.compute_quaternions_from_directions(orientations)
         else:
+            orientations = None
             quaternions = None
 
-        if color_field:
-            scalars: np.ndarray = array_utils.as_numpy_array(result.fields[color_field])
-            if stride > 1:
-                scalars = scalars[::stride]
+        if color_fields and all(field in result.fields for field in color_fields):
+            scalars: np.ndarray = array_utils.as_numpy_array(
+                array_utils.get_scalar_array([result.fields[f] for f in color_fields])
+            )
+            scalars = scalars[::stride] if stride > 1 else scalars
             assert scalars.shape[0] == points.shape[0]
         else:
             scalars = None
@@ -292,27 +257,26 @@ class Glyphs(Algorithm):
         primvarsApi = UsdGeomRt.PrimvarsAPI(primT.GetPrim())
 
         primT.GetPositionsAttr().Set(VtRt.Vec3fArray(points))
-        primT.GetProtoIndicesAttr().Set(VtRt.IntArray(protoIndices.reshape(-1, 1).astype(np.intc)))
+        primT.GetProtoIndicesAttr().Set(VtRt.IntArray(protoIndices.reshape(-1, 1).astype(np.intc, copy=False)))
         primT.GetOrientationsAttr().Set(VtRt.QuathArray(quaternions) if quaternions is not None else [])
 
         # have to create primvar here, creating in PXR and using here doesn't work.
-        if scalar_pvar := primvarsApi.CreatePrimvar("scalar", SdfRt.ValueTypeNames.FloatArray, UsdGeomRt.Tokens.vertex):
-            if color_field:
-                scalar_pvar.Set(VtRt.FloatArray(scalars.reshape(-1, 1)))
-            else:
-                # deactivate scalar coloring.
-                scalar_pvar.Set(VtRt.FloatArray(np.full(points.shape[0], 0.0, dtype=np.float32).reshape(-1, 1)))
+        scalar_pvar = primvarsApi.CreatePrimvar("scalar", SdfRt.ValueTypeNames.FloatArray, UsdGeomRt.Tokens.vertex)
+        if scalars is not None:
+            scalar_pvar.Set(VtRt.FloatArray(scalars.reshape(-1, 1)))
         else:
-            logger.error("Scalar primvar not found")
+            # deactivate scalar coloring.
+            scalar_pvar.Set(VtRt.FloatArray(np.full(points.shape[0], 0.0, dtype=np.float32).reshape(-1, 1)))
 
-        if material := self.get_material("ScalarColor"):
-            if color_field:
-                set_shader_input(material, "enable_coloring", Sdf.ValueTypeNames.Bool, True)
-                await set_shader_domain(material, dataset_prim, color_field, timeCode)
-            else:
-                set_shader_input(material, "enable_coloring", Sdf.ValueTypeNames.Bool, False)
+        if shader := self.get_surface_shader("ScalarColor", "mdl"):
+            shader.CreateInput("enable_coloring", Sdf.ValueTypeNames.Bool).Set(scalars is not None)
+            await range_utils.compute_and_set_range(
+                shader.CreateInput("domain", Sdf.ValueTypeNames.Float2),
+                scalars,
+                force=self.attribute_changed(f"{self.ns}:colors"),
+            )
         else:
-            logger.warning("No material found for ScalarColor")
+            logger.warning("No material or surface shader found for 'ScalarColor'")
 
         # set extents
         self.set_extent(Gf.Range3d(np.amin(points, axis=0).tolist(), np.amax(points, axis=0).tolist()))
@@ -327,37 +291,44 @@ class ExternalFaces(Algorithm):
 
     async def execute_impl(self, timeCode: Usd.TimeCode) -> bool:
         dataset_prim = usd_utils.get_target_prim(self.prim, f"{self.ns}:dataset")
-        colors_field = usd_utils.get_target_field_name(self.prim, f"{self.ns}:colors", dataset_prim, quiet=True)
-        fields = [colors_field] if colors_field else []
+        colors_fields = usd_utils.get_target_field_names(self.prim, f"{self.ns}:colors", dataset_prim, quiet=True)
 
-        mesh: ConvertToMesh.Mesh = await ConvertToMesh.invoke(dataset_prim, fields, timeCode)
-
+        mesh: ConvertToMesh.Mesh = await ConvertToMesh.invoke(dataset_prim, list(set(colors_fields)), timeCode)
         mesh = mesh.numpy()
 
         meshT = UsdGeomRt.Mesh(self.prim_rt)
         primvarsApi = UsdGeomRt.PrimvarsAPI(self.prim_rt)
 
         meshT.CreatePointsAttr().Set(VtRt.Vec3fArray(mesh.points))
-        meshT.CreateFaceVertexCountsAttr().Set(VtRt.IntArray(mesh.faceVertexCounts.reshape(-1, 1).astype(np.intc)))
-        meshT.CreateFaceVertexIndicesAttr().Set(VtRt.IntArray(mesh.faceVertexIndices.reshape(-1, 1).astype(np.intc)))
+        meshT.CreateFaceVertexCountsAttr().Set(
+            VtRt.IntArray(mesh.faceVertexCounts.reshape(-1, 1).astype(np.intc, copy=False))
+        )
+        meshT.CreateFaceVertexIndicesAttr().Set(
+            VtRt.IntArray(mesh.faceVertexIndices.reshape(-1, 1).astype(np.intc, copy=False))
+        )
         scalar_pvar = primvarsApi.GetPrimvar("scalar")
 
         if mesh.normals is not None:
             meshT.CreateNormalsAttr().Set(VtRt.Vec3fArray(mesh.normals))
 
-        if colors_field and colors_field in mesh.fields:
-            scalar = mesh.fields[colors_field]
+        color_scalar = None
+        if colors_fields and all(field in mesh.fields for field in colors_fields):
+            scalar = array_utils.as_numpy_array(
+                array_utils.get_scalar_array([mesh.fields[field] for field in colors_fields])
+            )
             nb_scalars = scalar.shape[0]
             if nb_scalars == mesh.points.shape[0]:
                 # "vertex": Values are interpolated between each vertex in the surface primitive. The basis function
                 # of the surface is used for interpolation between vertices.
                 scalar_pvar.SetInterpolation(UsdGeomRt.Tokens.vertex)
                 scalar_pvar.Set(VtRt.FloatArray(scalar.reshape(-1, 1)))
+                color_scalar = scalar
             elif nb_scalars == mesh.faceVertexCounts.shape[0]:
                 # "uniform": One value remains constant for each uv patch segment of the surface primitive
                 # (which is a face for meshes).
                 scalar_pvar.SetInterpolation(UsdGeomRt.Tokens.uniform)
                 scalar_pvar.Set(VtRt.FloatArray(scalar.reshape(-1, 1)))
+                color_scalar = scalar
             else:
                 logger.error(
                     "Invalid scalar shape %s (pts=%s, faces=%s)",
@@ -371,12 +342,13 @@ class ExternalFaces(Algorithm):
             scalar_pvar.SetInterpolation(UsdGeomRt.Tokens.constant)
             scalar_pvar.Set(VtRt.FloatArray([0.0]))
 
-        if material := self.get_material("ScalarColor"):
-            if colors_field and colors_field in mesh.fields:
-                set_shader_input(material, "enable_coloring", Sdf.ValueTypeNames.Bool, True)
-                await set_shader_domain(material, dataset_prim, colors_field, timeCode)
-            else:
-                set_shader_input(material, "enable_coloring", Sdf.ValueTypeNames.Bool, False)
+        if shader := self.get_surface_shader("ScalarColor", "mdl"):
+            shader.CreateInput("enable_coloring", Sdf.ValueTypeNames.Bool).Set(color_scalar is not None)
+            await range_utils.compute_and_set_range(
+                shader.CreateInput("domain", Sdf.ValueTypeNames.Float2),
+                color_scalar,
+                force=self.attribute_changed(f"{self.ns}:colors"),
+            )
         else:
             logger.warning("No material found for ScalarColor")
 
@@ -475,7 +447,11 @@ class Streamlines(Algorithm):
 
         streamlines = streamlines.numpy()
 
-        scalars = streamlines.fields.get("scalar")
+        scalars = (
+            array_utils.as_numpy_array(array_utils.get_scalar_array(streamlines.fields["scalar"]))
+            if "scalar" in streamlines.fields
+            else None
+        )
         time = streamlines.fields.get("time")
         rnd = np.random.default_rng(1986).random(streamlines.curveVertexCounts.shape[0], dtype=np.float32)
 
@@ -483,7 +459,7 @@ class Streamlines(Algorithm):
         basisCurvesT.CreateWidthsAttr().Set([(width)])
         basisCurvesT.CreatePointsAttr().Set(VtRt.Vec3fArray(streamlines.points))
         basisCurvesT.CreateCurveVertexCountsAttr().Set(
-            VtRt.IntArray(streamlines.curveVertexCounts.reshape(-1, 1).astype(np.intc))
+            VtRt.IntArray(streamlines.curveVertexCounts.reshape(-1, 1).astype(np.intc, copy=False))
         )
 
         primvarsApi = UsdGeomRt.PrimvarsAPI(self.prim_rt)
@@ -494,19 +470,25 @@ class Streamlines(Algorithm):
                 VtRt.FloatArray(np.full(streamlines.points.shape[0], 0.0, dtype=np.float32).reshape(-1, 1))
             )
 
-        if material := self.get_material("ScalarColor"):
-            set_shader_input(material, "enable_coloring", Sdf.ValueTypeNames.Bool, scalars is not None)
-            if scalars is not None:
-                await set_shader_domain(material, dataset_prim, color_field_name, timeCode)
+        if shader := self.get_surface_shader("ScalarColor", "mdl"):
+            shader.CreateInput("enable_coloring", Sdf.ValueTypeNames.Bool).Set(scalars is not None)
+            scalar_range = await range_utils.compute_and_set_range(
+                shader.CreateInput("domain", Sdf.ValueTypeNames.Float2),
+                scalars,
+                force=self.attribute_changed(f"{self._ns}:colors"),
+            )
         else:
-            logger.warning("No material found for ScalarColor")
+            logger.warning("No material or surface shader found for 'ScalarColor'")
+            scalar_range = None
 
-        if material := self.get_material("AnimatedStreaks"):
-            set_shader_input(material, "enable_coloring", Sdf.ValueTypeNames.Bool, scalars is not None)
-            if scalars is not None:
-                await set_shader_domain(material, dataset_prim, color_field_name, timeCode)
-        else:
-            logger.warning("No material found for AnimatedStreaks")
+        if shader := self.get_surface_shader("AnimatedStreaks", "mdl"):
+            shader.CreateInput("enable_coloring", Sdf.ValueTypeNames.Bool).Set(scalars is not None)
+            await range_utils.compute_and_set_range(
+                shader.CreateInput("domain", Sdf.ValueTypeNames.Float2),
+                scalars,
+                precomputed_range=scalar_range,
+                force=self.attribute_changed(f"{self._ns}:colors"),
+            )
 
         if time is not None:
             primvarsApi.GetPrimvar("time").Set(VtRt.FloatArray(time.reshape(-1, 1)))

@@ -14,8 +14,8 @@ from logging import getLogger
 
 import numpy as np
 import warp as wp
-from omni.cae.algorithms.core import Algorithm, set_shader_domain, set_shader_input
-from omni.cae.data import IJKExtents, array_utils, progress, usd_utils
+from omni.cae.algorithms.core import Algorithm
+from omni.cae.data import IJKExtents, array_utils, progress, range_utils, usd_utils
 from omni.cae.data.commands import ComputeIJKExtents, ConvertToPointCloud, Voxelize
 from omni.cae.schema import cae
 from pxr import Gf, Sdf, Usd, UsdGeom
@@ -81,8 +81,8 @@ class Streamlines(Algorithm):
 
     async def get_dataset(self, timeCode: Usd.TimeCode) -> tuple[wp.Volume, float]:
         dataset_prim = usd_utils.get_target_prim(self.prim, f"{self._ns}:dataset")
-        v_field_prims = usd_utils.get_target_prims(self.prim, f"{self._ns}:velocity")
         maxResolution = usd_utils.get_attribute(self.prim, f"{self._ns}:maxResolution")
+        velocity_field_names = usd_utils.get_target_field_names(self.prim, f"{self._ns}:velocity", dataset_prim)
 
         roi_prim: Usd.Prim = usd_utils.get_target_prim(self.prim, f"{self._ns}:roi", quiet=True)
         roi = usd_utils.get_bounds(roi_prim, timeCode, quiet=True)
@@ -94,18 +94,13 @@ class Streamlines(Algorithm):
             )
             voxel_size = ijk_extents.spacing[0]
 
-        v_field_names = [usd_utils.get_field_name(dataset_prim, t) for t in v_field_prims]
-        if len(v_field_names) != 1 and len(v_field_names) != 3:
+        if len(velocity_field_names) not in (1, 3):
             raise usd_utils.QuietableException("Invalid number of velocity fields specified!")
-
-        v_assoc = cae.FieldArray(v_field_prims[0]).GetFieldAssociationAttr().Get()
-        if v_assoc != cae.Tokens.vertex and v_assoc != cae.Tokens.cell:
-            raise usd_utils.QuietableException("Invalid field association '%s' for velocity" % v_assoc)
 
         with progress.ProgressContext("Voxelizing", shift=0.1, scale=0.9):
             volume = await Voxelize.invoke(
                 dataset_prim,
-                v_field_names,
+                velocity_field_names,
                 bbox=ijk_extents.getRange(),
                 voxel_size=voxel_size,
                 device_ordinal=0,
@@ -148,21 +143,16 @@ class Streamlines(Algorithm):
 
         primvarsApi = UsdGeomRt.PrimvarsAPI(self.prim_rt)
         if scalars:
-            scalars_np = scalars.numpy()
-            scalars_range = (np.amin(scalars_np), np.amax(scalars_np))
-            primvarsApi.GetPrimvar("scalar").Set(VtRt.FloatArray(scalars_np.reshape(-1, 1)))
-
+            scalars = scalars.numpy()
+            primvarsApi.GetPrimvar("scalar").Set(VtRt.FloatArray(scalars.reshape(-1, 1)))
         else:
             primvarsApi.GetPrimvar("scalar").Set(
                 VtRt.FloatArray(np.full(paths.shape[0], 0.0, dtype=np.float32).reshape(-1, 1))
             )
 
-        if material := self.get_material("ScalarColor"):
-            if scalars:
-                await set_shader_domain(material, None, None, timeCode, domain=scalars_range)
-                set_shader_input(material, "enable_coloring", Sdf.ValueTypeNames.Bool, True)
-            else:
-                set_shader_input(material, "enable_coloring", Sdf.ValueTypeNames.Bool, False)
+        if shader := self.get_surface_shader("ScalarColor", "mdl"):
+            shader.CreateInput("enable_coloring", Sdf.ValueTypeNames.Bool).Set(scalars is not None)
+            await range_utils.compute_and_set_range(shader.CreateInput("domain", Sdf.ValueTypeNames.Float2), scalars)
         else:
             logger.warning("ScalarColor material not found")
 

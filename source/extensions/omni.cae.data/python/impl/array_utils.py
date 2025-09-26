@@ -189,6 +189,25 @@ def stack(arrays: list[FieldArrayLike]) -> IFieldArray:
         raise RuntimeError("Not implemented yet!")
 
 
+def column_stack(arrays: list[FieldArrayLike]) -> FieldArrayLike:
+
+    if len(arrays) == 0:
+        return None
+
+    if len(arrays) == 1:
+        return arrays[0]
+
+    device = get_device(arrays[0])
+
+    if not all(get_device(a) == device for a in arrays):
+        raise ValueError("All arrays must be on the same device")
+
+    if device.is_cpu:
+        return IFieldArray.from_numpy(np.column_stack(arrays))
+    else:
+        raise RuntimeError("Not implemented yet!")
+
+
 def at(array: FieldArrayLike, index) -> Any:
     device = get_device(array)
     if device.is_cpu:
@@ -292,3 +311,25 @@ def checksum(array: FieldArrayLike) -> int:
     else:
         return zlib.crc32(as_numpy_array(array).tobytes())
     # raise ValueError("Array does not support CUDA Array Interface or Array Interface!")
+
+
+def get_scalar_array(array_or_arrays: Union[FieldArrayLike, list[FieldArrayLike]]) -> FieldArrayLike:
+    """Return a 1 component array. For multipe components arrays, this returns its magnitude."""
+
+    if array_or_arrays is None:
+        raise ValueError("Input array cannot be None!")
+
+    if isinstance(array_or_arrays, list):
+        np_array = as_numpy_array(column_stack(array_or_arrays))
+    else:
+        np_array = as_numpy_array(array_or_arrays)
+
+    if np_array.ndim == 1:
+        return np_array
+    elif np_array.ndim == 2 and np_array.shape[1] == 1:
+        return np_array.ravel()
+    elif np_array.ndim == 2 and np_array.shape[1] > 1:
+        # compute magnitudes
+        return np.linalg.norm(np_array, axis=1)
+    else:
+        raise ValueError(f"Cannot convert array of shape {np_array.shape} to scalar array!")

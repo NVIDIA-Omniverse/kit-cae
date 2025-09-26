@@ -45,9 +45,10 @@ float streak_profile(float t, uniform float peak_t = 0.1f, uniform float B = 10.
 }
 
 export material AnimatedStreaks(
-    uniform float emission_intensity = 1000.0f,
-    uniform float2 domain = float2(0.0f, 1.0f),
+	uniform bool enable_coloring = true,
+    uniform float2 domain = float2(0.0f, -1.0f),
     uniform texture_2d lut = texture_2d("colormaps/gist_rainbow.png"),
+    uniform float emission_intensity = 1000.0f,
 	uniform float animation_speed = 1.0f,
 	uniform float freq = 1.0f,
 	uniform float streaks_k = 0.1f,
@@ -67,8 +68,9 @@ export material AnimatedStreaks(
 
 	  // float3 field = scene::data_lookup_float3("field", float3());
 	  // float field_mag = math::length(field);
+	  bool use_coloring = (domain.x < domain.y) && enable_coloring;
 	  float field = scene::data_lookup_float("scalar", 0.0f);
-	  float field_normalized = (field - domain.x) / (domain.y - domain.x);
+	  float field_normalized = use_coloring ? (field - domain.x) / (domain.y - domain.x) : 1.0f;
 	  float emission_from_field = 1;//math::exp(-5.0f*(1.0f-math::clamp(field_mag/max_mag, 0.0f, 1.0f)));
 
 	  float streaks = streak_profile(1.0f-local_time, streaks_k, streaks_B);
