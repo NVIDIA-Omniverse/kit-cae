@@ -411,14 +411,14 @@ class Slice(Algorithm):
             mesh_prim.CreateAttribute("nvindex:composite", Sdf.ValueTypeNames.Bool, custom=True).Set(1)
 
         # Colormap domain is set in the root layer so that it can be overridden by the user.
-        attr = prim.GetPrimAtPath("Material/Colormap").GetAttribute("domain")
-        await usd_utils.compute_and_set_range(
-            attr,
-            dataset_prim,
-            field_names,
-            timeCode=timeCode,
-            force=self.attribute_changed("omni:cae:index:slice:field"),
-        )
+        if colormap := prim.GetPrimAtPath("Material/Colormap"):
+            await usd_utils.compute_and_set_range(
+                colormap.GetAttribute("domain"),
+                dataset_prim,
+                field_names,
+                timeCode=timeCode,
+                force=self.attribute_changed("omni:cae:index:slice:field"),
+            )
 
 
 class NanoVdbSlice(Algorithm):
@@ -526,14 +526,14 @@ class NanoVdbSlice(Algorithm):
         mesh_prim.CreateAttribute("nvindex:composite", Sdf.ValueTypeNames.Bool, custom=True).Set(1)
 
         # Colormap domain is set in the root layer so that it can be overridden by the user.
-        attr = prim.GetPrimAtPath("Material/Colormap").GetAttribute("domain")
-        await usd_utils.compute_and_set_range(
-            attr,
-            dataset_prim,
-            field_names,
-            timeCode=timeCode,
-            force=self.attribute_changed("omni:cae:index:slice:field"),
-        )
+        if colormap := prim.GetPrimAtPath("Material/Colormap"):
+            await usd_utils.compute_and_set_range(
+                colormap.GetAttribute("domain"),
+                dataset_prim,
+                field_names,
+                timeCode=timeCode,
+                force=self.attribute_changed("omni:cae:index:slice:field"),
+            )
 
     async def get_structured_extents(self, timeCode: Usd.TimeCode) -> IJKExtents:
         dataset: Usd.Prim = usd_utils.get_target_prim(self.prim, "omni:cae:index:slice:dataset")
@@ -587,10 +587,14 @@ class VolumeSlice(Algorithm):
         SliceHelper.update_xform(mesh_prim, bds)
 
         # Colormap domain is set in the root layer so that it can be overridden by the user.
-        attr = prim.GetPrimAtPath("Material/Colormap").GetAttribute("domain")
-        await usd_utils.compute_and_set_range(
-            attr, dataset_prim, field_names, timeCode=timeCode, force=self.attribute_changed(f"{ns}:field")
-        )
+        if colormap := prim.GetPrimAtPath("Material/Colormap"):
+            await usd_utils.compute_and_set_range(
+                colormap.GetAttribute("domain"),
+                dataset_prim,
+                field_names,
+                timeCode=timeCode,
+                force=self.attribute_changed(f"{ns}:field"),
+            )
 
 
 class Volume(Algorithm):
@@ -622,13 +626,14 @@ class Volume(Algorithm):
         # It will be supported later.
 
         # Colormap domain is set in the root layer so that it can be overridden by the user.
-        force_range_update = self._tracker.AttributeChanged(
-            self.prim.GetAttribute(f"{ns}:field")
-        ) or self._tracker.AttributeChanged(self.prim.GetAttribute(f"{ns}:dataset"))
-        attr = prim.GetPrimAtPath("Material/Colormap").GetAttribute("domain")
-        await usd_utils.compute_and_set_range(
-            attr, dataset_prim, field_names, timeCode=timeCode, force=force_range_update
-        )
+        if colormap := prim.GetPrimAtPath("Material/Colormap"):
+            await usd_utils.compute_and_set_range(
+                colormap.GetAttribute("domain"),
+                dataset_prim,
+                field_names,
+                timeCode=timeCode,
+                force=self.attribute_changed(f"{ns}:field"),
+            )
 
 
 class NanoVdbVolume(Algorithm):
@@ -784,13 +789,14 @@ class NanoVdbVolume(Algorithm):
                 shader.CreateInput("mode", Sdf.ValueTypeNames.Int).Set(mode)
 
         # Colormap domain is set in the root layer so that it can be overridden by the user.
-        force_range_update = self._tracker.AttributeChanged(
-            self.prim.GetAttribute("omni:cae:index:nvdb:field")
-        ) or self._tracker.AttributeChanged(self.prim.GetAttribute("omni:cae:index:nvdb:dataset"))
-        attr = prim.GetPrimAtPath("Material/Colormap").GetAttribute("domain")
-        await usd_utils.compute_and_set_range(
-            attr, dataset_prim, field_names, timeCode=timeCode, force=force_range_update
-        )
+        if colormap := prim.GetPrimAtPath("Material/Colormap"):
+            await usd_utils.compute_and_set_range(
+                colormap.GetAttribute("domain"),
+                dataset_prim,
+                field_names,
+                timeCode=timeCode,
+                force=self.attribute_changed("omni:cae:index:nvdb:field"),
+            )
 
         # reset change tracker
         self._rel_tracker.ClearChanges()

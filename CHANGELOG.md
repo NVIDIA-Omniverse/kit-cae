@@ -2,6 +2,11 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.3.1]
+
+* Backwards compatibility issue introduced in 1.3.0: fix bug causing errors when volume stages
+  did not have `Material/Colormap` prim present.
+
 ## [1.3.0]
 
 ## Changes
