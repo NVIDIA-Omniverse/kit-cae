@@ -257,7 +257,7 @@ class Glyphs(Algorithm):
         primvarsApi = UsdGeomRt.PrimvarsAPI(primT.GetPrim())
 
         primT.GetPositionsAttr().Set(VtRt.Vec3fArray(points))
-        primT.GetProtoIndicesAttr().Set(VtRt.IntArray(protoIndices.reshape(-1, 1).astype(np.intc, copy=False)))
+        primT.GetProtoIndicesAttr().Set(VtRt.IntArray(protoIndices.reshape(-1, 1).astype(np.intc)))
         primT.GetOrientationsAttr().Set(VtRt.QuathArray(quaternions) if quaternions is not None else [])
 
         # have to create primvar here, creating in PXR and using here doesn't work.
@@ -300,12 +300,8 @@ class ExternalFaces(Algorithm):
         primvarsApi = UsdGeomRt.PrimvarsAPI(self.prim_rt)
 
         meshT.CreatePointsAttr().Set(VtRt.Vec3fArray(mesh.points))
-        meshT.CreateFaceVertexCountsAttr().Set(
-            VtRt.IntArray(mesh.faceVertexCounts.reshape(-1, 1).astype(np.intc, copy=False))
-        )
-        meshT.CreateFaceVertexIndicesAttr().Set(
-            VtRt.IntArray(mesh.faceVertexIndices.reshape(-1, 1).astype(np.intc, copy=False))
-        )
+        meshT.CreateFaceVertexCountsAttr().Set(VtRt.IntArray(mesh.faceVertexCounts.reshape(-1, 1).astype(np.intc)))
+        meshT.CreateFaceVertexIndicesAttr().Set(VtRt.IntArray(mesh.faceVertexIndices.reshape(-1, 1).astype(np.intc)))
         scalar_pvar = primvarsApi.GetPrimvar("scalar")
 
         if mesh.normals is not None:
@@ -459,7 +455,7 @@ class Streamlines(Algorithm):
         basisCurvesT.CreateWidthsAttr().Set([(width)])
         basisCurvesT.CreatePointsAttr().Set(VtRt.Vec3fArray(streamlines.points))
         basisCurvesT.CreateCurveVertexCountsAttr().Set(
-            VtRt.IntArray(streamlines.curveVertexCounts.reshape(-1, 1).astype(np.intc, copy=False))
+            VtRt.IntArray(streamlines.curveVertexCounts.reshape(-1, 1).astype(np.intc))
         )
 
         primvarsApi = UsdGeomRt.PrimvarsAPI(self.prim_rt)

@@ -1,6 +1,9 @@
 # Changelog
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## [1.3.2]
+
+* Fix issue on Windows when passing int arrays to UsdRt
 
 ## [1.3.1]
 
