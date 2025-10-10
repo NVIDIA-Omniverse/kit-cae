@@ -122,7 +122,7 @@ class DataSetEmitter(Algorithm):
         assert volume is not None
         vdb_data: np.ndarray = array_utils.get_nanovdb(volume).numpy().view(dtype=np.uint32)
 
-        with self.edit_context():
+        with self.edit_context:
             prim.CreateAttribute("nanoVdbVelocities", Sdf.ValueTypeNames.UIntArray, custom=True).Set(
                 Vt.UIntArray.FromNumpy(vdb_data)
             )
@@ -142,7 +142,7 @@ class DataSetEmitter(Algorithm):
                 )
             assert volume_temperature is not None
             tdb_data: np.ndarray = array_utils.get_nanovdb(volume_temperature).numpy().view(dtype=np.uint32)
-            with self.edit_context():
+            with self.edit_context:
                 prim.CreateAttribute("nanoVdbTemperatures", Sdf.ValueTypeNames.UIntArray, custom=True).Set(
                     Vt.UIntArray.FromNumpy(tdb_data)
                 )
