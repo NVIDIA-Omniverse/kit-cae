@@ -122,9 +122,10 @@ class DataSetEmitter(Algorithm):
         assert volume is not None
         vdb_data: np.ndarray = array_utils.get_nanovdb(volume).numpy().view(dtype=np.uint32)
 
-        prim.CreateAttribute("nanoVdbVelocities", Sdf.ValueTypeNames.UIntArray, custom=True).Set(
-            Vt.UIntArray.FromNumpy(vdb_data)
-        )
+        with self.edit_context():
+            prim.CreateAttribute("nanoVdbVelocities", Sdf.ValueTypeNames.UIntArray, custom=True).Set(
+                Vt.UIntArray.FromNumpy(vdb_data)
+            )
 
         if t_field_prim:
             # Since Warp doesn't support vec4 for volumes, for now we will separately voxelize color
@@ -141,9 +142,10 @@ class DataSetEmitter(Algorithm):
                 )
             assert volume_temperature is not None
             tdb_data: np.ndarray = array_utils.get_nanovdb(volume_temperature).numpy().view(dtype=np.uint32)
-            prim.CreateAttribute("nanoVdbTemperatures", Sdf.ValueTypeNames.UIntArray, custom=True).Set(
-                Vt.UIntArray.FromNumpy(tdb_data)
-            )
+            with self.edit_context():
+                prim.CreateAttribute("nanoVdbTemperatures", Sdf.ValueTypeNames.UIntArray, custom=True).Set(
+                    Vt.UIntArray.FromNumpy(tdb_data)
+                )
 
         self._rel_tracker.ClearChanges()
         return True

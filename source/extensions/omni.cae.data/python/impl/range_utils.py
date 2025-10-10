@@ -91,8 +91,7 @@ async def compute_and_set_range(
     Raises:
         QuietableException: If no arrays are provided.
     """
-    cur_val = attr.Get()
-    if force or cur_val is None or cur_val[0] > cur_val[1]:
+    if range_needs_update(attr, force):
         if precomputed_range is not None:
             min_val, max_val = precomputed_range
             logger.info(f"Using precomputed range for attribute {attr}: ({min_val}, {max_val})")
@@ -119,3 +118,19 @@ async def compute_and_set_range(
         return (min_val, max_val)
     else:
         return None
+
+
+def range_needs_update(attr: Union[Usd.Attribute, UsdRt.Attribute], force: bool) -> bool:
+    """Check if the range attribute needs to be updated.
+
+    Args:
+        attr (Union[Usd.Attribute, UsdRt.Attribute]): The attribute to check.
+        force (bool): If True, forces the update check.
+
+    Returns:
+        bool: True if the range needs to be updated, False otherwise.
+    """
+    cur_val = attr.Get()
+    if force or cur_val is None or cur_val[0] > cur_val[1]:
+        return True
+    return False

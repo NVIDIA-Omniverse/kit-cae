@@ -123,15 +123,15 @@ class NanoVdbHelper:
     MATERIAL_PATH = "Material"
     DATA_LOADER_PATH = "DataLoader"
 
-    @staticmethod
-    def get_dataset(prim: Usd.Prim) -> Usd.Prim:
+    @classmethod
+    def get_dataset(cls, prim: Usd.Prim) -> Usd.Prim:
         """Returns the dataset prim for the given NanoVDB volume prim."""
         return usd_utils.get_target_prim(prim, "omni:cae:index:nvdb:dataset", quiet=True)
 
-    @staticmethod
-    def get_field_names(prim: Usd.Prim) -> list[str]:
+    @classmethod
+    def get_field_names(cls, prim: Usd.Prim) -> list[str]:
         """Returns the field names for the given NanoVDB volume prim."""
-        return usd_utils.get_target_field_names(prim, "omni:cae:index:nvdb:field", quiet=True)
+        return usd_utils.get_target_field_names(prim, "omni:cae:index:nvdb:field", cls.get_dataset(prim), quiet=True)
 
     @staticmethod
     def define_volume(stage: Usd.Stage, path: str) -> Usd.Prim:
@@ -393,7 +393,7 @@ class Slice(Algorithm):
     async def execute_impl(self, timeCode: Usd.TimeCode) -> None:
         prim: Usd.Prim = self.prim
         dataset_prim = usd_utils.get_target_prim(prim, "omni:cae:index:slice:dataset")
-        field_names: list[str] = usd_utils.get_target_field_names(prim, "omni:cae:index:slice:field")
+        field_names: list[str] = usd_utils.get_target_field_names(prim, "omni:cae:index:slice:field", dataset_prim)
 
         mesh_prim = prim.GetPrimAtPath("Plane")
         if not mesh_prim:
@@ -489,7 +489,7 @@ class NanoVdbSlice(Algorithm):
 
         prim: Usd.Prim = self.prim
         dataset_prim: Usd.Prim = usd_utils.get_target_prim(prim, "omni:cae:index:slice:dataset")
-        field_names: list[str] = usd_utils.get_target_field_names(prim, "omni:cae:index:slice:field")
+        field_names: list[str] = usd_utils.get_target_field_names(prim, "omni:cae:index:slice:field", dataset_prim)
 
         mesh_prim = prim.GetPrimAtPath("Plane")
         if not mesh_prim:

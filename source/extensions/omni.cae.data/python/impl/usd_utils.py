@@ -332,8 +332,9 @@ async def compute_and_set_range(
 ):
     field_names = [field_name_or_names] if isinstance(field_name_or_names, str) else field_name_or_names
 
-    if precomputed_range is None:
+    if precomputed_range is None and range_utils.range_needs_update(attr, force):
         # need to get the field arrays from the dataset
+        # we only want to fetch the arrays if we need to compute the range.
         field_arrays = []
         for f in field_names:
             field_arrays.extend(await get_arrays_from_relationship(dataset, f"field:{f}", timeCode))
