@@ -10,7 +10,7 @@
 
 [package]
 title = "CAE VTK"
-version = "1.1.0"
+version = "1.2.0"
 description = "Extension that provides VTK data delegate and VTK-specific operator commands."
 category = "CAE"
 changelog = "docs/CHANGELOG.md"
@@ -22,6 +22,7 @@ readme  = "docs/README.md"  # Path (relative to the root) or content of readme m
 [dependencies]
 "omni.cae.data" = {}
 "omni.cae.vtk_libs" = {}
+"omni.cae.index" = {}
 
 [[python.module]]
 name = "omni.cae.vtk"

@@ -25,18 +25,20 @@ class Extension(IExt):
 
         # register commands
         if kit_commands := self.get_commands():
-            from . import commands
+            from . import commands, index_commands
 
             kit_commands.register_all_commands_in_module(commands)
+            kit_commands.register_all_commands_in_module(index_commands)
 
     def on_shutdown(self):
         self._registry.deregister_data_delegate(self._delegate)
         del self._delegate
 
         if kit_commands := self.get_commands():
-            from . import commands
+            from . import commands, index_commands
 
             kit_commands.unregister_module_commands(commands)
+            kit_commands.unregister_module_commands(index_commands)
 
     def get_commands(self):
         try:

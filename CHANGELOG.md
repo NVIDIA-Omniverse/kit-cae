@@ -2,6 +2,16 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.4.0]
+
+- Added support to using irregular volume rendering, i.e. Volume (IndeX), for VTK unstructured
+  datasets.
+- Fixed kit web streaming dependencies for Kit 108 in  `omni.cae_streaming.kit` app.
+
+## [1.3.4]
+
+- Fixed typo in Flow algorithms causing runtime errors
+
 ## [1.3.3]
 
 * Fixed API error in NanoVDBHelper.

@@ -16,6 +16,7 @@ import numpy as np
 from omni.cae.data.delegates import DataDelegateBase
 from omni.cae.schema import cae
 from omni.cae.schema import vtk as cae_vtk
+from omni.client import get_local_file
 from pxr import Usd
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkIOLegacy import vtkDataSetReader
@@ -55,9 +56,10 @@ class VTKDataDelegate(DataDelegateBase):
         special = primT.GetSpecialAttr().Get(time)
         arrays = []
         for f in fileNames:
-            ext = f.resolvedPath.split(".")[-1].lower()
+            fname = get_local_file(f.resolvedPath)[1]
+            ext = fname.split(".")[-1].lower()
             if ext in ["vti", "vtu"]:
-                reader = self.get_reader(str(f.resolvedPath))
+                reader = self.get_reader(fname)
                 reader.UpdateInformation()
 
                 if special != cae_vtk.Tokens.none:
@@ -74,13 +76,13 @@ class VTKDataDelegate(DataDelegateBase):
                     reader.GetCellDataArraySelection().EnableArray(arrayName)
                     assoc = cae.Tokens.cell
             elif ext == "vtk":
-                reader = self.get_reader(str(f.resolvedPath))
-                if special == cae_vtk.Tokens.none:
-                    # since we really can't tell which array is being requested, we read all
-                    reader.ReadAllScalarsOn()
-                    reader.ReadAllVectorsOn()
-                    reader.ReadAllNormalsOn()
-                    reader.ReadAllTensorsOn()
+                reader = self.get_reader(fname)
+                # since legacy VTK reader doesn't really support array selection, we will just
+                # read everything and then cache the results.
+                reader.ReadAllScalarsOn()
+                reader.ReadAllVectorsOn()
+                reader.ReadAllNormalsOn()
+                reader.ReadAllTensorsOn()
             else:
                 raise ValueError("Unrecognized extension: %s" % ext)
 

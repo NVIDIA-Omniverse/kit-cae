@@ -10,14 +10,15 @@
 
 [package]
 title = "Omni CAE Editor Streaming"
-version = "1.3.3"
+version = "1.4.0"
 description = "Configuration for streaming deployments of Omni CAE Editor"
 keywords = ["experience", "app", "dev", "streaming"]
 template_name = "omni.streaming_configuration"
 
 [dependencies]
 "omni.cae" = {}  # Application kit file
-"omni.kit.livestream.webrtc" = {}  # Livestream extension
+# Streaming and messaging functionality
+"omni.kit.livestream.app" = {}
 
 [settings.app]
 fastShutdown = true
@@ -119,7 +120,9 @@ enabled = [
 	"omni.kit.asset_converter-5.0.12",
 	"omni.kit.browser.core-2.3.16",
 	"omni.kit.browser.folder.core-1.10.10",
+	"omni.kit.livestream.app-8.0.4",
 	"omni.kit.livestream.core-8.0.2",
+	"omni.kit.livestream.messaging-1.1.1",
 	"omni.kit.livestream.webrtc-8.0.7",
 	"omni.kit.tool.asset_importer-5.0.4",
 	"omni.kit.viewport.menubar.lighting-107.3.1",
