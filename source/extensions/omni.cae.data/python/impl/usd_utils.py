@@ -6,7 +6,7 @@
 # documentation and any modifications thereto. Any use, reproduction,
 # disclosure or distribution of this material and related documentation
 # without an express license agreement from NVIDIA CORPORATION or
-#  its affiliates is strictly prohibited.
+# its affiliates is strictly prohibited.
 
 """
   Module with utilities for making it easier to work with data delegate and USD prims.
@@ -17,9 +17,12 @@ __all__ = [
     "QuietableException",
     "quietable",
     "quietable_with_default",
+    "assemble_vecN_arrays",
     "async_quietable",
     "async_quietable_with_default",
     "compute_and_set_range",
+    "get_target_field_association",
+    "get_target_field_associations",
     "get_target_paths",
     "get_target_path",
     "get_target_prim",
@@ -29,6 +32,7 @@ __all__ = [
     "get_arrays_from_relationship",
     "get_array_from_relationship",
     "get_vecN_from_relationship",
+    "get_vecN_from_relationships",
     "get_attribute",
     "get_prim_pxr",
     "get_field_name",
@@ -180,6 +184,20 @@ def get_target_prims(prim: Usd.Prim, relName: str) -> list[Usd.Prim]:
     return prims
 
 
+@quietable
+def get_target_field_association(prim: Usd.Prim, relName: str) -> str:
+    field_prim = get_target_prim(prim, relName)
+    if not field_prim.IsA(cae.FieldArray):
+        raise QuietableException(f"Target prim {field_prim} is not a FieldArray")
+    field_array = cae.FieldArray(field_prim)
+    return field_array.GetFieldAssociationAttr().Get()
+
+
+@quietable
+def get_target_field_associations(prim: Usd.Prim, relNames: list[str]) -> list[str]:
+    return [get_target_field_association(prim, relName) for relName in relNames]
+
+
 @async_quietable
 async def get_array(prim: Usd.Prim, timeCode: Usd.TimeCode = Usd.TimeCode.Default()) -> IFieldArray:
     """Given a FieldArray prim, fetch the array from the data delegate registry."""
@@ -241,16 +259,46 @@ async def get_vecN_from_relationship(
     number of components if possible.
     """
     arrays = await get_arrays_from_relationship(prim, relName, timeCode)
+    return await assemble_vecN_arrays(arrays, numComponents)
+
+
+@async_quietable
+async def assemble_vecN_arrays(arrays: list[IFieldArray], numComponents: int) -> IFieldArray:
+    """
+    Given a list of arrays, attempts to assemble them into a single multicomponent array.
+    The following cases are supported:
+    1. If there is a single array with shape (M, N) where N == numComponents, return that array.
+    2. If there is a single array with shape (M,) and numComponents == 1, return that array.
+    3. If there are numComponents arrays each with shape (M,), stack them to form an array with shape (M, N).
+    """
     if len(arrays) == 1 and arrays[0].ndim == 2 and arrays[0].shape[1] == numComponents:
         return arrays[0]
     elif len(arrays) == 1 and arrays[0].ndim == 1 and numComponents == 1:
         return arrays[0]
     elif len(arrays) == numComponents:
-        for a in arrays:
-            if a.ndim != 1:
-                raise QuietableException("When stacking arrays all arrays must be 1-dimensional (got %d)" % a.ndim)
-        return await asyncio.to_thread(array_utils.stack, arrays)  # array_utils.stack(arrays)
-    raise QuietableException(f"Failed to fetch {numComponents} components from {prim}.{relName}")
+        array = await asyncio.to_thread(array_utils.column_stack, arrays)
+        if array.ndim == 2 and array.shape[1] == numComponents:
+            return array
+        else:
+            raise QuietableException(
+                f"Failed to assemble vecN array: expected shape (_, {numComponents}), got {array.shape}"
+            )
+    raise QuietableException(f"Failed to fetch {numComponents} components")
+
+
+@async_quietable
+async def get_vecN_from_relationships(
+    prim: Usd.Prim, relNames: list[str], numComponents: int, timeCode=Usd.TimeCode.Default()
+) -> IFieldArray:
+    """
+    A convenience method. Same as get_arrays_from_relationship except returns a multicomponent array for requested
+    number of components if possible.
+    """
+    arrays = []
+    for relName in relNames:
+        arr = await get_arrays_from_relationship(prim, relName, timeCode)
+        arrays += arr
+    return await assemble_vecN_arrays(arrays, numComponents)
 
 
 @quietable

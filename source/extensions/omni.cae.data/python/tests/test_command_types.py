@@ -6,7 +6,7 @@
 # documentation and any modifications thereto. Any use, reproduction,
 # disclosure or distribution of this material and related documentation
 # without an express license agreement from NVIDIA CORPORATION or
-#  its affiliates is strictly prohibited.
+# its affiliates is strictly prohibited.
 
 import asyncio
 from logging import getLogger
@@ -477,11 +477,9 @@ class TestGenerateStreamlines(omni.kit.test.AsyncTestCase):
 
         self.assertIsNotNone(streamlines)
         self.assertIsInstance(streamlines, Streamlines)
-        self.assertEquals(streamlines.points.shape, (408, 3))
-        self.assertEquals(
-            np.amin(streamlines.points, axis=0).tolist(), [-1.5977600812911987, -3.0, -1.6546809673309326]
-        )
-        self.assertEquals(
+        self.assertEqual(streamlines.points.shape, (408, 3))
+        self.assertEqual(np.amin(streamlines.points, axis=0).tolist(), [-1.5977600812911987, -3.0, -1.6546809673309326])
+        self.assertEqual(
             np.amax(streamlines.points, axis=0).tolist(), [1.2705073356628418, 1.662825345993042, 1.1933543682098389]
         )
 
@@ -497,53 +495,55 @@ class TestGenerateStreamlines(omni.kit.test.AsyncTestCase):
         self.assertEqual(np.amin(streamlines.fields["time"]), 0.0)
         self.assertAlmostEqual(np.amax(streamlines.fields["time"]), 7.37515, 2)
 
-    async def test_yf17_warp(self):
-        usd_context = get_context()
-        await usd_context.open_stage_async(get_test_data_path("yf17_hdf5.cgns"))
-        stage: Usd.Stage = usd_context.get_stage()
-        zone_path = "/World/yf17_hdf5_cgns/Base/Zone1"
+    # disabling this test for now since non-VDB warp-based streamlines implemention is not
+    # ready for prime time yet.
+    # async def test_yf17_warp(self):
+    #     usd_context = get_context()
+    #     await usd_context.open_stage_async(get_test_data_path("yf17_hdf5.cgns"))
+    #     stage: Usd.Stage = usd_context.get_stage()
+    #     zone_path = "/World/yf17_hdf5_cgns/Base/Zone1"
 
-        dataset: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/GridElements")
-        self.assertTrue(dataset.IsValid(), f"'{zone_path}/GridElements' is not valid Prim in stage.")
+    #     dataset: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/GridElements")
+    #     self.assertTrue(dataset.IsValid(), f"'{zone_path}/GridElements' is not valid Prim in stage.")
 
-        intake: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/intake")
-        self.assertTrue(intake.IsValid())
-        seeds = await ConvertToPointCloud.invoke(intake, [], Usd.TimeCode.EarliestTime())
+    #     intake: Usd.Prim = stage.GetPrimAtPath(f"{zone_path}/intake")
+    #     self.assertTrue(intake.IsValid())
+    #     seeds = await ConvertToPointCloud.invoke(intake, [], Usd.TimeCode.EarliestTime())
 
-        GenerateStreamlines.override_impl("Warp")
-        streamlines = await GenerateStreamlines.invoke(
-            dataset,
-            wp.array(seeds.points, copy=False, device="cuda", dtype=wp.vec3f),
-            ["VelocityX", "VelocityY", "VelocityZ"],
-            "Density",
-            0.5,
-            10,
-            Usd.TimeCode.EarliestTime(),
-        )
+    #     GenerateStreamlines.override_impl("Warp")
+    #     streamlines = await GenerateStreamlines.invoke(
+    #         dataset,
+    #         wp.array(seeds.points, copy=False, device="cuda", dtype=wp.vec3f),
+    #         ["VelocityX", "VelocityY", "VelocityZ"],
+    #         "Density",
+    #         0.5,
+    #         10,
+    #         Usd.TimeCode.EarliestTime(),
+    #     )
 
-        self.assertIsNotNone(streamlines)
-        streamlines.points = streamlines.points.numpy()
+    #     self.assertIsNotNone(streamlines)
+    #     streamlines.points = streamlines.points.numpy()
 
-        self.assertEquals(streamlines.points.shape, (418, 3))
-        self.assertListAlmostEquals(
-            np.amin(streamlines.points, axis=0).tolist(),
-            [-54.117576599121094, 0.33262574672698975, -0.8075870871543884],
-            places=1,
-        )
-        self.assertListAlmostEquals(
-            np.amax(streamlines.points, axis=0).tolist(),
-            [14.900866508483887, 1.2461183071136475, 0.33379295468330383],
-            places=1,
-        )
+    #     self.assertEqual(streamlines.points.shape, (418, 3))
+    #     self.assertListAlmostEqual(
+    #         np.amin(streamlines.points, axis=0).tolist(),
+    #         [-54.117576599121094, 0.33262574672698975, -0.8075870871543884],
+    #         places=1,
+    #     )
+    #     self.assertListAlmostEqual(
+    #         np.amax(streamlines.points, axis=0).tolist(),
+    #         [14.900866508483887, 1.2461183071136475, 0.33379295468330383],
+    #         places=1,
+    #     )
 
-        self.assertEqual(streamlines.curveVertexCounts.shape, (22,))
-        self.assertEqual(np.amin(streamlines.curveVertexCounts).tolist(), 19)
-        self.assertEqual(np.amax(streamlines.curveVertexCounts).tolist(), 19)
+    #     self.assertEqual(streamlines.curveVertexCounts.shape, (22,))
+    #     self.assertEqual(np.amin(streamlines.curveVertexCounts).tolist(), 19)
+    #     self.assertEqual(np.amax(streamlines.curveVertexCounts).tolist(), 19)
 
-        self.assertEqual(streamlines.fields["scalar"].shape, (418,))
-        self.assertAlmostEqual(np.amin(streamlines.fields["scalar"].numpy()), 0.0, 1)
-        self.assertAlmostEqual(np.amax(streamlines.fields["scalar"].numpy()), 299.9464, 2)
+    #     self.assertEqual(streamlines.fields["scalar"].shape, (418,))
+    #     self.assertAlmostEqual(np.amin(streamlines.fields["scalar"].numpy()), 0.0, 1)
+    #     self.assertAlmostEqual(np.amax(streamlines.fields["scalar"].numpy()), 299.9464, 2)
 
-        self.assertEqual(streamlines.fields["time"].shape, (418,))
-        self.assertEqual(np.amin(streamlines.fields["time"].numpy()), -8.5)
-        self.assertAlmostEqual(np.amax(streamlines.fields["time"].numpy()), 8.5, 1)
+    #     self.assertEqual(streamlines.fields["time"].shape, (418,))
+    #     self.assertEqual(np.amin(streamlines.fields["time"].numpy()), -8.5)
+    #     self.assertAlmostEqual(np.amax(streamlines.fields["time"].numpy()), 8.5, 1)

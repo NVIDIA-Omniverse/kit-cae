@@ -6,12 +6,18 @@
 # documentation and any modifications thereto. Any use, reproduction,
 # disclosure or distribution of this material and related documentation
 # without an express license agreement from NVIDIA CORPORATION or
-#  its affiliates is strictly prohibited.
+# its affiliates is strictly prohibited.
 
 import omni.ui as ui
+from omni.kit.app import get_app
 from omni.kit.window.preferences import PreferenceBuilder, SettingType
 
 from .settings import SettingsKeys
+
+
+def _is_experimental_dav_enabled() -> bool:
+    manager = get_app().get_extension_manager()
+    return manager.is_extension_enabled("omni.cae.experimental.dav")
 
 
 class SettingsPage(PreferenceBuilder):
@@ -50,7 +56,7 @@ class SettingsPage(PreferenceBuilder):
                     self.create_setting_widget_combo(
                         "Voxelization Type",
                         SettingsKeys.VOXELIZATION_IMPL,
-                        ["GaussianWarp", "Flow"],
+                        ["GaussianWarp", "Flow", "DAV"] if _is_experimental_dav_enabled() else ["GaussianWarp", "Flow"],
                         setting_is_index=False,
                         tooltip="Voxelization implementation to use.",
                     )
@@ -85,7 +91,7 @@ class SettingsPage(PreferenceBuilder):
                     self.create_setting_widget_combo(
                         "Streamline Type",
                         SettingsKeys.STREAMLINE_IMPL,
-                        ["VTK", "Warp"],
+                        ["VTK", "Warp", "DAV"] if _is_experimental_dav_enabled() else ["VTK", "Warp"],
                         setting_is_index=False,
                         tooltip="Streamline implementation to use.",
                     )

@@ -1,13 +1,13 @@
 <project toolsVersion="5.6">
 
   <dependency name="nv-usd" linkPath="../_build/usd-deps/nv-usd/${config}">
-    <package name="usd.py312.${platform}.stock.release" version="0.25.02.kit.7-gl.15528+9af008b1" />
+    <package name="usd.py312.${platform}.stock.release" version="0.25.02.kit.8-gl.16788+c1c423f2" />
   </dependency>
 
   <dependency name="python" linkPath="../_build/usd-deps/python" >
-    <package name="python" version="3.12.11+nv1-linux-x86_64" platforms="manylinux_2_35_x86_64" />
-    <package name="python" version="3.12.11+nv1-linux-aarch64" platforms="manylinux_2_35_aarch64" />
-    <package name="python" version="3.12.11+nv1-${platform}" platforms="windows-x86_64" />
+    <package name="python" version="3.12.12+nv1-linux-x86_64" platforms="manylinux_2_35_x86_64" />
+    <package name="python" version="3.12.12+nv1-linux-aarch64" platforms="manylinux_2_35_aarch64" />
+    <package name="python" version="3.12.12+nv1-${platform}" platforms="windows-x86_64" />
   </dependency>
 
 </project>

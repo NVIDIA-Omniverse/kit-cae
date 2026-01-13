@@ -77,24 +77,28 @@ This sample includes extensions that use external Python packages to demonstrate
 When trying out these components, you must manually download the required pip package archives for the sample to use.
 For example, when using the VTK-based application variant, ensure the VTK pip package is already downloaded.
 
-To download these packages, use the following commands:
+To download these packages, use the following commands. You can replace the path to `pip_archives` to be a any
+location where you want the archives to be downloaded on your system. Always use absolute paths for the download location
+to avoid issues.
 
 ```sh
 # On Windows
-repo.bat pip_download --dest <archive-dir> -r ./tools/deps/requirements.txt
+repo.bat pip_download --dest C:/temp/pip_archives -r ./tools/deps/requirements.txt
 
 # On Linux
-./repo.sh pip_download --dest <archive-dir> -r ./tools/deps/requirements.txt
+./repo.sh pip_download --dest /tmp/pip_archives -r ./tools/deps/requirements.txt
 ```
 
-After downloading the required packages, launch the application and pass the `<archive-dir>` on the command line as follows:
+After downloading the required packages, launch the application and pass the download location on the command line as follows.
+
+**NOTE: PLEASE NOTE THE `[` and `]` WHEN PASSING THE DOWNLOAD LOCATION TO `--/exts/omni.kit.pipapi/archiveDirs` COMMAND LINE ARGUMENT.**
 
 ```sh
-# On Windows
-repo.bat launch -n omni.cae_vtk.kit -- --/exts/omni.kit.pipapi/archiveDirs=[<archive-dir>]
+# On Windows; PLEASE DON'T FORGET THE `[` AND `]` AROUND THE PATH. THEY ARE REQUIRED.
+repo.bat launch -n omni.cae_vtk.kit -- --/exts/omni.kit.pipapi/archiveDirs=[C:/temp/pip_archives]
 
-# On Linux
-./repo.sh launch -n omni.cae_vtk.kit -- --/exts/omni.kit.pipapi/archiveDirs=[<archive-dir>]
+# On Linux; PLEASE DON'T FORGET THE `[` AND `]` AROUND THE PATH. THEY ARE REQUIRED.
+./repo.sh launch -n omni.cae_vtk.kit -- --/exts/omni.kit.pipapi/archiveDirs=[/tmp/pip_archives]
 ```
 
 This step is only needed when launching for the first time (or after a cache cleanup). The necessary packages are then

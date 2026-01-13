@@ -6,7 +6,7 @@
 # documentation and any modifications thereto. Any use, reproduction,
 # disclosure or distribution of this material and related documentation
 # without an express license agreement from NVIDIA CORPORATION or
-#  its affiliates is strictly prohibited.
+# its affiliates is strictly prohibited.
 
 import zlib
 from logging import getLogger
@@ -152,7 +152,7 @@ def get_nanovdb(volume: wp.Volume) -> wp.array:
 
     buf = ctypes.c_void_p(0)
     size = ctypes.c_uint64(0)
-    volume.runtime.core.volume_get_buffer_info(volume.id, ctypes.byref(buf), ctypes.byref(size))
+    volume.runtime.core.wp_volume_get_buffer_info(volume.id, ctypes.byref(buf), ctypes.byref(size))
 
     def deleter(_1, _2):
         vol = volume

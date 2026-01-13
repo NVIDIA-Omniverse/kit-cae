@@ -1,3 +1,17 @@
+########################################################################################################################
+# Example:
+########################################################################################################################
+
+#
+# [[dependency]]                           # Toml way to define array of objects.
+# python = "../../_build/target-deps/python"  # Path to python used to install. Absolute or relative to this config.
+# packages = ["numpy"]                     # Array of packages to install, they all will be passed directly to pip.
+# target = "../../_build/target-deps/numpy"   # Folder to install into.   Absolute or relative to this config.
+# platforms = ["windows-x86_64"]           # Platform(s) to filter, default is ["*"].
+# download_only = true                     # Do pip download instead of install, gets a whl file that can be installed later.
+#
+
+# Another sample
 # [[dependency]]
 # python = "../../_build/target-deps/python"
 # packages = [

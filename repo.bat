@@ -10,6 +10,11 @@ rem disclosure or distribution of this material and related documentation
 rem without an express license agreement from NVIDIA CORPORATION or
 rem  its affiliates is strictly prohibited.
 
+:: Set OMNI_REPO_ROOT early so `repo` bootstrapping can target the repository
+:: root when writing out Python dependencies.
+:: Use SETLOCAL and ENDLOCAL to constrain these variables to this batch file.
+:: Use ENABLEDELAYEDEXPANSION to evaluate the value of PM_PACKAGES_ROOT
+:: at execution time.
 SETLOCAL ENABLEDELAYEDEXPANSION
 set OMNI_REPO_ROOT="%~dp0"
 

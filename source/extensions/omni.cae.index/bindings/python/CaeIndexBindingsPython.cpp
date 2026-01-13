@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: LicenseRef-NvidiaProprietary
 //
 // NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
@@ -81,6 +81,44 @@ pybind11::array::ShapeContainer getShape(const nv::index::IIrregular_volume_subs
     case Attribute_type::ATTRIB_TYPE_UINT16_4:
     case Attribute_type::ATTRIB_TYPE_FLOAT32_4:
         return { params.nb_attrib_values, 4u };
+
+    default:
+        throw std::runtime_error("Invalid attribute type");
+    }
+}
+
+pybind11::array::StridesContainer getStrides(const nv::index::IIrregular_volume_subset::Attribute_parameters& params)
+{
+    using Attribute_type = nv::index::IIrregular_volume_subset::Attribute_type;
+    switch (params.type)
+    {
+    case Attribute_type::ATTRIB_TYPE_UINT8:
+        return { sizeof(uint8_t) };
+    case Attribute_type::ATTRIB_TYPE_UINT16:
+        return { sizeof(uint16_t) };
+    case Attribute_type::ATTRIB_TYPE_FLOAT32:
+        return { sizeof(float) };
+
+    case Attribute_type::ATTRIB_TYPE_UINT8_2:
+        return { 2 * sizeof(uint8_t), sizeof(uint8_t) };
+    case Attribute_type::ATTRIB_TYPE_UINT16_2:
+        return { 2 * sizeof(uint16_t), sizeof(uint16_t) };
+    case Attribute_type::ATTRIB_TYPE_FLOAT32_2:
+        return { 2 * sizeof(float), sizeof(float) };
+
+    case Attribute_type::ATTRIB_TYPE_UINT8_3:
+        return { 3 * sizeof(uint8_t), sizeof(uint8_t) };
+    case Attribute_type::ATTRIB_TYPE_UINT16_3:
+        return { 3 * sizeof(uint16_t), sizeof(uint16_t) };
+    case Attribute_type::ATTRIB_TYPE_FLOAT32_3:
+        return { 3 * sizeof(float), sizeof(float) };
+
+    case Attribute_type::ATTRIB_TYPE_UINT8_4:
+        return { 4 * sizeof(uint8_t), sizeof(uint8_t) };
+    case Attribute_type::ATTRIB_TYPE_UINT16_4:
+        return { 4 * sizeof(uint16_t), sizeof(uint16_t) };
+    case Attribute_type::ATTRIB_TYPE_FLOAT32_4:
+        return { 4 * sizeof(float), sizeof(float) };
 
     default:
         throw std::runtime_error("Invalid attribute type");
@@ -194,7 +232,10 @@ PYBIND11_MODULE(_omni_cae_index, m)
             [](Mesh_storage& self, const Mesh_parameters& params)
             {
                 py::capsule capsule([]() {});
-                return py::array(py::dtype::of<mi::Float32>(), { params.nb_vertices, 3u }, &self.vertices->x, capsule);
+                std::array<py::ssize_t, 2> shape = { params.nb_vertices, 3u };
+                std::array<py::ssize_t, 2> strides = { 3 * sizeof(mi::Float32), sizeof(mi::Float32) };
+                return py::array(
+                    py::dtype::of<mi::Float32>(), shape, strides, static_cast<void*>(&self.vertices->x), capsule);
             },
             "The vertex array.")
         .def(
@@ -202,7 +243,8 @@ PYBIND11_MODULE(_omni_cae_index, m)
             [](Mesh_storage& self, const Mesh_parameters& params)
             {
                 py::capsule capsule([]() {});
-                return py::array(py::dtype::of<mi::Uint32>(), params.nb_face_vtx_indices, self.face_vtx_indices, capsule);
+                return py::array(py::dtype::of<mi::Uint32>(), { params.nb_face_vtx_indices }, { sizeof(mi::Uint32) },
+                                 self.face_vtx_indices, capsule);
             },
             "The face-vertex index array.")
         .def(
@@ -210,7 +252,9 @@ PYBIND11_MODULE(_omni_cae_index, m)
             [](Mesh_storage& self, const Mesh_parameters& params)
             {
                 py::capsule capsule([]() {});
-                return py::array(py::dtype::of<mi::Uint32>(), { params.nb_faces, 2u }, self.faces, capsule);
+                std::array<py::ssize_t, 2> shape = { params.nb_faces, 2u };
+                std::array<py::ssize_t, 2> strides = { 2 * sizeof(mi::Uint32), sizeof(mi::Uint32) };
+                return py::array(py::dtype::of<mi::Uint32>(), shape, strides, static_cast<void*>(self.faces), capsule);
             },
             "The face array.")
         .def(
@@ -218,8 +262,8 @@ PYBIND11_MODULE(_omni_cae_index, m)
             [](Mesh_storage& self, const Mesh_parameters& params)
             {
                 py::capsule capsule([]() {});
-                return py::array(
-                    py::dtype::of<mi::Uint32>(), params.nb_cell_face_indices, self.cell_face_indices, capsule);
+                return py::array(py::dtype::of<mi::Uint32>(), { params.nb_cell_face_indices }, { sizeof(mi::Uint32) },
+                                 self.cell_face_indices, capsule);
             },
             "The cell face indices array.")
         .def(
@@ -227,7 +271,9 @@ PYBIND11_MODULE(_omni_cae_index, m)
             [](Mesh_storage& self, const Mesh_parameters& params)
             {
                 py::capsule capsule([]() {});
-                return py::array(py::dtype::of<mi::Uint32>(), { params.nb_cells, 2u }, self.cells, capsule);
+                std::array<py::ssize_t, 2> shape = { params.nb_cells, 2u };
+                std::array<py::ssize_t, 2> strides = { 2 * sizeof(mi::Uint32), sizeof(mi::Uint32) };
+                return py::array(py::dtype::of<mi::Uint32>(), shape, strides, static_cast<void*>(self.cells), capsule);
             },
             "The cell array.")
         /**/;
@@ -271,7 +317,7 @@ PYBIND11_MODULE(_omni_cae_index, m)
             [](Attribute_storage& self, const Attribute_parameters& params)
             {
                 py::capsule capsule([]() {});
-                return py::array(getDType(params), getShape(params), self.attrib_values, capsule);
+                return py::array(getDType(params), getShape(params), getStrides(params), self.attrib_values, capsule);
             },
             "The attribute array.")
         /**/;

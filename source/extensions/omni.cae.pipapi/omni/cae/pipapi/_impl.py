@@ -6,7 +6,7 @@
 # documentation and any modifications thereto. Any use, reproduction,
 # disclosure or distribution of this material and related documentation
 # without an express license agreement from NVIDIA CORPORATION or
-#  its affiliates is strictly prohibited.
+# its affiliates is strictly prohibited.
 
 from importlib import import_module
 from logging import getLogger

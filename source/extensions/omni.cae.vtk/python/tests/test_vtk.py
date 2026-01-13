@@ -6,7 +6,7 @@
 # documentation and any modifications thereto. Any use, reproduction,
 # disclosure or distribution of this material and related documentation
 # without an express license agreement from NVIDIA CORPORATION or
-#  its affiliates is strictly prohibited.
+# its affiliates is strictly prohibited.
 
 import pathlib
 
@@ -40,8 +40,8 @@ class Test(omni.kit.test.AsyncTestCase):
         await omni.usd.get_context().attach_stage_async(stage)
         array = self._registry.get_field_array(arrayVTK.GetPrim())
         self.assertIsNotNone(array, "Failed to load array")
-        self.assertEquals(array.shape[0], 9261, "Incorrect array size")
-        self.assertEquals(array.ndim, 1, "Incorrect array dimensions")
+        self.assertEqual(array.shape[0], 9261, "Incorrect array size")
+        self.assertEqual(array.ndim, 1, "Incorrect array dimensions")
 
         omni.usd.get_context().close_stage()
         del stage
