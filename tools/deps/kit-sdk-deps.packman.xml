@@ -24,6 +24,5 @@
   <dependency name="pybind11" linkPath="../../_build/target-deps/pybind11" />
   <dependency name="fmt" linkPath="../../_build/target-deps/fmt" />
   <dependency name="python" linkPath="../../_build/target-deps/python" />
-
   <dependency name="premake" linkPath="../../_build/host-deps/premake" />
 </project>

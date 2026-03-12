@@ -1,0 +1,27 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+[package]
+# DON'T FORGET TO REPLACE THE VERSION WITH THE KIT VERSION
+# WHEN COPYING THIS FILE TO THE KIT VERSION SUB FOLDER
+# OTHERWISE THE SYMLINKS WILL NOT WORK
+target.kit = ["{{ version }}"]
+
+[dependencies]
+# Kit-Kernel specific base editor.
+"kit_base_editor" = {}
+"omni.cae.bundle" = {}
+
+[settings.app.exts]
+folders.'++' = [  # Search paths for extensions.
+	"${app}/../exts",
+    "${app}/../apps",
+	"${app}/../extscache/"
+]

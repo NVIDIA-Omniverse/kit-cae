@@ -8,4 +8,12 @@
 # without an express license agreement from NVIDIA CORPORATION or
 # its affiliates is strictly prohibited.
 
-from .impl.cache import get, put, remove
+from .impl.cache import PrimWatch, get, put, put_ex, remove
+
+__all__ = [
+    "get",
+    "put",
+    "remove",
+    "PrimWatch",
+    "put_ex",
+]

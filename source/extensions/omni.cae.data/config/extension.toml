@@ -10,7 +10,7 @@
 
 [package]
 title = "Omni CAE Data"
-version = "1.2.0"  # Semantic Versioning is used: https://semver.org/
+version = "2.0.0"  # Semantic Versioning is used: https://semver.org/
 description = "Core extension that provides the CAE data delegate API and infrastructure for reading CAE field arrays."
 category = "internal"  # How to categorize this in the Extension Manager
 changelog = "docs/CHANGELOG.md"
@@ -32,31 +32,44 @@ repository = "https://github.com/NVIDIA-Omniverse/kit-cae"  # URL of the extensi
 "omni.client.lib" = {}
 
 [settings]
-# enable/disable caching; when enabled, all field array read in from
-# data delegates are cached for future use
-persistent.exts."omni.cae.data".enableCache = true
+# Enable legacy UI elements (requires restart)
+# When disabled, legacy context menus and settings groups are hidden
+persistent.exts."omni.cae.data".enableLegacyUI = false
 
-# enable/disable intermediate caching; when enabled, intermediate
-# results are cached.
-persistent.exts."omni.cae.data".enableIntermediateCache = true
+# Enable legacy stages support (requires restart)
+# When disabled, omni.cae.algorithms.core extension will not process legacy stages
+persistent.exts."omni.cae.data".enableLegacyStages = true
 
+# Cache mode: controls when field arrays are cached
+# Options: "disabled" (no caching), "always" (cache all fields), "static-fields" (cache only non-time-varying fields)
+persistent.exts."omni.cae.data".cacheMode = "always"
+
+# When enabled, converts all 64-bit field arrays to corresponding 32-bit type
+persistent.exts."omni.cae.data".downConvert64Bit = true
+
+# (LEGACY)
 # Default voxel grid resolution to use when creating new prims that will use voxelization.
 persistent.exts."omni.cae.data".defaultMaxVoxelGridResolution = 128
 
+# (LEGACY)
 # choose which voxelization implemenetation to use
 # options are "GaussianWarp", or "Flow"
 persistent.exts."omni.cae.data".voxelizationImpl = "GaussianWarp"
 
+# (LEGACY)
 # maximum number of points to attempt to voxelize in on batch
 # if number of points is more, than multiple batches are used
 persistent.exts."omni.cae.data".warpVoxelizationBatchSize = 250000000
 
+# (LEGACY)
 # radius factor for voxelization with Warp
 persistent.exts."omni.cae.data".warpVoxelizationRadiusFactor = 1.0
 
+# (LEGACY)
 # set maximum number of blocks with using Flow for voxelization
 persistent.exts."omni.cae.data".flowVoxelizationMaxBlocks = 102400
 
+# (LEGACY)
 # choose which implementation to use for Streamlines
 # options are "VTK" or "Warp"
 persistent.exts."omni.cae.data".streamlinesImpl = "VTK"
@@ -89,8 +102,9 @@ cpp_api = [
 [[test]]
 dependencies = [
     "omni.cae.testing",
-    "omni.cae.npz",
-    "omni.cae.cgns",
+    "omni.cae.delegate.npz",
+    "omni.cae.delegate.cgns",
+    "omni.cae.delegate.vtk",
     "omni.cae.vtk",
     "omni.cae.sids",
 ]

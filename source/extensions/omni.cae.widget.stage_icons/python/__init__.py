@@ -14,6 +14,9 @@ from pathlib import Path
 
 from carb.settings import get_settings
 from omni.ext import IExt
+from omni.kit.widget.stage import StageColumnDelegateRegistry
+
+from .delegates import CaeNameColumnDelegate
 
 
 class Extension(IExt):
@@ -34,6 +37,15 @@ class Extension(IExt):
         for prim_type, filename in icons.items():
             stage_icons.set(prim_type, filename)
             self._prim_types.append(prim_type)
+
+        # We want to override the Name column delegate to add our icons. This is necessary
+        # since NameColumnDelegate doesn't support overriding icons based on applied API schemas
+        # so we use this non-public API to register our own delegate and replace the existing one.
+        # MAY STOP WORKING WITHOUT NOTICE! USE AT YOUR OWN RISK!
+        r = StageColumnDelegateRegistry()
+        if "Name" in r._delegates:
+            del r._delegates["Name"]
+        self._delegate = r.register_column_delegate("Name", CaeNameColumnDelegate)
 
     def on_shutdown(self):
         from omni.kit.widget.stage import StageIcons

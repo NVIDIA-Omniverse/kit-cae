@@ -12,6 +12,7 @@ import logging
 import threading
 from time import sleep
 
+import carb.settings
 import numpy as np
 import omni.kit.app
 import omni.kit.test
@@ -80,7 +81,7 @@ class TestOmniCaeDataDelegate(omni.kit.test.AsyncTestCase):
 
         await omni.usd.get_context().attach_stage_async(stage)
 
-        data0 = np.random.default_rng(1212).normal(loc=10, scale=2, size=(1024, 3))
+        data0 = np.random.default_rng(1212).normal(loc=10, scale=2, size=(1024, 3)).astype(np.float32)
         logger.info(f"data0: {data0}")
         delegate = TestDataDelegate(self._ext_id, data0)
         self._registry.register_data_delegate(delegate)
@@ -139,3 +140,101 @@ class TestOmniCaeDataDelegate(omni.kit.test.AsyncTestCase):
         self._registry.deregister_data_delegate(delegate)
         omni.usd.get_context().close_stage()
         del stage
+
+    async def test_cache_mode(self):
+        """Test that cacheMode setting controls caching behavior"""
+        settings = carb.settings.get_settings()
+        cache_mode_key = "/persistent/exts/omni.cae.data/cacheMode"
+
+        # Save original setting value
+        original_mode = settings.get_as_string(cache_mode_key)
+
+        try:
+            # Create a test delegate
+            data0 = np.random.default_rng(1212).normal(loc=10, scale=2, size=(1024, 3)).astype(np.float32)
+            delegate = TestDataDelegate(self._ext_id, data0)
+            self._registry.register_data_delegate(delegate)
+
+            # Test 1: "disabled" mode - no caching should occur
+            settings.set_string(cache_mode_key, "disabled")
+            stage = Usd.Stage.CreateInMemory()
+            fieldArray0 = cae.FieldArray.Define(stage, "/Root/Array0")
+            await omni.usd.get_context().attach_stage_async(stage)
+
+            # First call should retrieve data
+            result1 = self._registry.get_field_array(fieldArray0.GetPrim(), Usd.TimeCode.EarliestTime())
+            self.assertIsNotNone(result1)
+
+            # Second call should NOT be cached (disabled mode)
+            self.assertFalse(self._registry.is_field_array_cached(fieldArray0.GetPrim(), Usd.TimeCode.EarliestTime()))
+
+            omni.usd.get_context().close_stage()
+            del stage
+
+            # Test 2: "always" mode - caching should occur for all fields
+            settings.set_string(cache_mode_key, "always")
+            stage = Usd.Stage.CreateInMemory()
+            fieldArray1 = cae.FieldArray.Define(stage, "/Root/Array1")
+            await omni.usd.get_context().attach_stage_async(stage)
+
+            # First call should retrieve data
+            result2 = self._registry.get_field_array(fieldArray1.GetPrim(), Usd.TimeCode.EarliestTime())
+            self.assertIsNotNone(result2)
+
+            # Second call should be cached (always mode)
+            self.assertTrue(self._registry.is_field_array_cached(fieldArray1.GetPrim(), Usd.TimeCode.EarliestTime()))
+
+            # Verify cached data is returned
+            result3 = self._registry.get_field_array(fieldArray1.GetPrim(), Usd.TimeCode.EarliestTime())
+            self.assertIsNotNone(result3)
+            self.assertTrue(np.array_equal(result2, result3))
+
+            omni.usd.get_context().close_stage()
+            del stage
+
+            # Test 3: "static-fields" mode - caching only for fields without time samples
+            settings.set_string(cache_mode_key, "static-fields")
+            stage = Usd.Stage.CreateInMemory()
+
+            # Create a field array without time samples (static)
+            fieldArrayStatic = cae.FieldArray.Define(stage, "/Root/ArrayStatic")
+            await omni.usd.get_context().attach_stage_async(stage)
+
+            # First call should retrieve data
+            result4 = self._registry.get_field_array(fieldArrayStatic.GetPrim(), Usd.TimeCode.EarliestTime())
+            self.assertIsNotNone(result4)
+
+            # Should be cached (static field, no time samples)
+            self.assertTrue(
+                self._registry.is_field_array_cached(fieldArrayStatic.GetPrim(), Usd.TimeCode.EarliestTime())
+            )
+
+            omni.usd.get_context().close_stage()
+            del stage
+
+            # Create a field array with time samples (time-varying)
+            stage = Usd.Stage.CreateInMemory()
+            fieldArrayTimeVarying = cae.FieldArray.Define(stage, "/Root/ArrayTimeVarying")
+            # Add a time-varying attribute
+            attr = fieldArrayTimeVarying.GetPrim().CreateAttribute("testAttr", Sdf.ValueTypeNames.Float)
+            attr.Set(10.0, Usd.TimeCode(0.0))
+            attr.Set(20.0, Usd.TimeCode(1.0))
+            await omni.usd.get_context().attach_stage_async(stage)
+
+            # First call should retrieve data
+            result5 = self._registry.get_field_array(fieldArrayTimeVarying.GetPrim(), Usd.TimeCode.EarliestTime())
+            self.assertIsNotNone(result5)
+
+            # Should NOT be cached (time-varying field in static-fields mode)
+            self.assertFalse(
+                self._registry.is_field_array_cached(fieldArrayTimeVarying.GetPrim(), Usd.TimeCode.EarliestTime())
+            )
+
+            omni.usd.get_context().close_stage()
+            del stage
+
+            self._registry.deregister_data_delegate(delegate)
+
+        finally:
+            # Restore original setting
+            settings.set_string(cache_mode_key, original_mode)

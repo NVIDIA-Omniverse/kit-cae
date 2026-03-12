@@ -27,6 +27,25 @@ filter {}
 kit = require("_repo/deps/repo_kit_tools/kit-template/premake5-kit")
 kit.setup_all({ cppdialect = "C++17" })
 
+-- Also discover legacy extensions (relocated from source/extensions, not renamed)
+for _, ext in ipairs(os.matchdirs(root.."/source/legacy_extensions/*")) do
+    if os.isfile(ext.."/premake5.lua") then
+        include(ext)
+    end
+end
+
+-- if sources/extensions_nvinternal exists, include extensions under it.
+if os.isdir(root.."/source/extensions_nvinternal") then
+  for _, ext in ipairs(os.matchfiles(root.."/source/extensions_nvinternal/**/premake5.lua")) do
+      if os.isfile(ext) then
+          include (ext)
+      end
+  end
+end
+
+-- Build USD schemas (loaded from generated premake files)
+dofile("source/schemas/premake5.lua")
+
 
 -- Registries config for testing
 repo_build.prebuild_copy {

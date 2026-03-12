@@ -10,13 +10,19 @@
 
 [package]
 title = "Omni CAE Testing"
-version = "1.0.0"
+version = "1.1.0"
 description = "Testing utilities for Omni CAE"
 category = "Internal"
 changelog = "docs/CHANGELOG.md"
 icon = "data/icon.png"
 keywords = ["kit", "cae", "testing"]
 readme  = "docs/README.md"
+
+[dependencies]
+"omni.kit.commands" = {}
+"omni.kit.viewport.utility" = {}
+"omni.usd" = {}
+"omni.warp.core" = {}
 
 [[python.module]]  # Main python module this extension provides, it will be publicly available as "import omni.cae.testing"
 name = "omni.cae.testing"

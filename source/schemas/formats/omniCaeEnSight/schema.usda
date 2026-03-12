@@ -1,0 +1,211 @@
+#usda 1.0
+(
+    """
+        Schema for EnSight data.
+    """
+    subLayers = [
+        # This is mainly needed for definition of UsdTyped.
+        @../../shared/omniCae/schema.usda@
+    ]
+)
+
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+over "GLOBAL" (
+    customData = {
+        string libraryName = "omniCaeEnSight"
+        string libraryPath = "omniCaeEnSight"
+        string libraryPrefix = "OmniCaeEnSight"
+        bool useLiteralIdentifier = true
+    }
+)
+{
+}
+
+class CaeEnSightGoldGeoFieldArray "CaeEnSightGoldGeoFieldArray" (
+    inherits = </CaeFieldArray>
+    customData = {
+        string className = "GoldGeoFieldArray"
+    }
+)
+{
+    uniform token type (
+        allowedTokens = [ "coordinateX", "coordinateY", "coordinateZ", "connectivity", "elementNodeCounts",
+                          "elementFaceCounts", "faceNodeCounts", "faceConnectivity"]
+        doc = "Specifies the type of data this field array represents."
+        displayName = "Type"
+        displayGroup = "EnSight Gold Field Array [Geo]"
+    )
+
+    uniform int partId (
+        doc = "Specifies the part id."
+        displayName = "Part Id"
+        displayGroup = "EnSight Gold Field Array [Geo]"
+    )
+
+    uniform int pieceId  = -1 (
+        doc = "Specifies the piece id."
+        displayName = "Piece Id"
+        displayGroup = "EnSight Gold Field Array [Geo]"
+    )
+}
+
+class CaeEnSightGoldVarFieldArray "CaeEnSightGoldVarFieldArray" (
+    inherits = </CaeFieldArray>
+    customData = {
+        string className = "GoldVarFieldArray"
+    }
+)
+{
+    uniform token type (
+        allowedTokens = [ "scalar", "vector", "tensor", "tensor9" ]
+        doc = "Specifies the type of data this field array represents."
+        displayName = "Type"
+        displayGroup = "EnSight Gold Field Array [Var]"
+    )
+
+    uniform int partId (
+        doc = "Specifies the part id."
+        displayName = "Part Id"
+        displayGroup = "EnSight Gold Field Array [Var]"
+    )
+
+    uniform int pieceId  = -1 (
+        doc = "Specifies the piece id."
+        displayName = "Piece Id"
+        displayGroup = "EnSight Gold Field Array [Var]"
+    )
+
+    asset[] geoFileNames = [] (
+        doc = """Specifies the assets for the geometry files. With multiple assets
+            are specified then they are treated as spatial partitions of the same
+            dataset. Temporal partitions may be specified by animating this attribute
+            i.e. using time codes.
+            """
+        displayName = "Geometry File Names"
+        displayGroup = "EnSight Gold Field Array [Var]"
+    )
+}
+
+class "CaeEnSightUnstructuredPieceAPI" (
+    inherits = </APISchemaBase>
+    doc = "Defines a dataset that represents a piece of an EnSight dataset."
+    customData = {
+        string className = "UnstructuredPieceAPI"
+        token apiSchemaType = "singleApply"
+    }
+)
+{
+    rel cae:ensight:piece:connectivity (
+        doc = "Specifies the CaeFieldArray that must be treated as the connectivity."
+        displayName = "Connectivity"
+        displayGroup = "EnSight Unstructured Piece"
+        customData = {
+            string apiName = "connectivity"
+        }
+    )
+
+    uniform token cae:ensight:piece:elementType (
+        allowedTokens = [ "point", "bar2", "bar3", "tria3", "tria6", "quad4", "quad8",
+                          "tetra4", "tetra10", "pyramid5", "pyramid13", "penta6", "penta15", "hexa8", "hexa20",
+                          "nsided", "nfaced"]
+        doc = "Specifies the element type."
+        displayName = "Element Type"
+        displayGroup = "EnSight Unstructured Piece"
+        customData = {
+            string apiName = "elementType"
+        }
+    )
+}
+
+class "CaeEnSightNSidedPieceAPI" (
+    inherits = </APISchemaBase>
+    doc = "Defines a dataset that represents an EnSight nsided piece."
+    customData = {
+        string className = "NSidedPieceAPI"
+        token apiSchemaType = "singleApply"
+    }
+)
+{
+    rel cae:ensight:piece:elementNodeCounts (
+        doc = "Specifies the CaeFieldArray that must be treated as the element node counts."
+        displayName = "Element Node Counts"
+        displayGroup = "EnSight NSided Piece"
+        customData = {
+            string apiName = "elementNodeCounts"
+        }
+    )
+}
+
+class "CaeEnSightNFacedPieceAPI" (
+    inherits = </APISchemaBase>
+    doc = "Defines a dataset that represents an EnSight nfaced piece."
+    customData = {
+        string className = "NFacedPieceAPI"
+        token apiSchemaType = "singleApply"
+    }
+)
+{
+    rel cae:ensight:piece:elementFaceCounts (
+        doc = "Specifies the CaeFieldArray that must be treated as the element face counts."
+        displayName = "Element Face Counts"
+        displayGroup = "EnSight NFaced Piece"
+        customData = {
+            string apiName = "elementFaceCounts"
+        }
+    )
+
+    rel cae:ensight:piece:faceNodeCounts (
+        doc = "Specifies the CaeFieldArray that must be treated as the face node counts."
+        displayName = "Face Node Counts"
+        displayGroup = "EnSight NFaced Piece"
+        customData = {
+            string apiName = "faceNodeCounts"
+        }
+    )
+}
+
+class "CaeEnSightUnstructuredPartAPI" (
+    inherits = </APISchemaBase>
+    doc = "Defines a dataset that represents an EnSight Gold unstructured part."
+    customData = {
+        string className = "UnstructuredPartAPI"
+        token apiSchemaType = "singleApply"
+    }
+)
+{
+    uniform int cae:ensight:part:id (
+        doc = "Specifies the part id."
+        displayName = "Part Id"
+        displayGroup = "EnSight Gold Unstructured Part"
+        customData = {
+            string apiName = "id"
+        }
+    )
+
+    rel cae:ensight:part:coordinates (
+        doc = "Specifies the coordinates for this part."
+        displayName = "Coordinates"
+        displayGroup = "EnSight Gold Unstructured Part"
+        customData = {
+            string apiName = "coordinates"
+        }
+    )
+
+    rel cae:ensight:part:pieces (
+        doc = "Specifies the pieces that make up this part."
+        displayName = "Pieces"
+        displayGroup = "EnSight Gold Unstructured Part"
+        customData = {
+            string apiName = "pieces"
+        }
+    )
+}

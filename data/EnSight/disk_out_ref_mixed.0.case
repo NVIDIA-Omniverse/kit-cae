@@ -1,0 +1,12 @@
+FORMAT
+type: ensight gold
+
+
+GEOMETRY
+model: disk_out_ref_mixed.0.00000.geo
+
+VARIABLE
+scalar per node: Temp_n_n_n disk_out_ref_mixed.0.00000_n.Temp_n_n
+vector per node: V_n_n_n disk_out_ref_mixed.0.00000_n.V_n_n
+scalar per element: Temp_n_n_c disk_out_ref_mixed.0.00000_c.Temp_n_n
+vector per element: V_n_n_c disk_out_ref_mixed.0.00000_c.V_n_n

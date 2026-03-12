@@ -1,0 +1,5 @@
+<project toolsVersion="5.0">
+  <dependency name="repo_cae_tools" linkPath="../../_repo/deps/repo_cae_tools">
+    <source path="../../tools/repo_cae_tools" />
+  </dependency>
+</project>

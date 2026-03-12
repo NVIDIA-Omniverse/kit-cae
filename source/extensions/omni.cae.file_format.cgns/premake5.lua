@@ -33,7 +33,7 @@ project("omni.cae.file_format.cgns.plugin")
     staticruntime "Off"
 
     add_usd({ "sdf", "vt", "usd", "usdGeom" })
-    add_cae_usd_schemas({"omniCae", "omniCaeSids"})
+    add_cae_usd_schemas({"omniCae", "omniCaeCgns", "omniCaeSids"})
     add_cgns()
 
     filter { "system:windows" }

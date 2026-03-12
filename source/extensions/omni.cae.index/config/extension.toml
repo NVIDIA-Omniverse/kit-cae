@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: LicenseRef-NvidiaProprietary
 #
 # NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
@@ -8,10 +8,14 @@
 # without an express license agreement from NVIDIA CORPORATION or
 # its affiliates is strictly prohibited.
 
+[core]
+# IndeX components are not reloadable
+reloadable = false
+
 [package]
-version = "1.1.0"
+version = "1.0.0"
 title = "CAE IndeX"
-description = "Extension for IndeX support for CAE data delegage."
+description = "Extension providing IndeX Python bindings and generic Python-based importers and compute tasks."
 category = "CAE"
 readme  = "docs/README.md"
 keywords = ["kit", "cae"]
@@ -19,21 +23,13 @@ changelog = "docs/CHANGELOG.md"
 icon = "data/icon.png"
 
 [dependencies]
-"omni.cae.algorithms.core" = {}
 "omni.cae.data" = {}
-"omni.cae.schema" = {}
-"omni.client" = {}
-"omni.kit.commands" = {optional = true}
 "omni.rtx.index_composite" = {}
 "omni.usd" = {}
 "omni.usd.core" = {}
 
 [[python.module]]
 name = "omni.cae.index"
-
-[settings]
-rtx.index.compositeEnabled = 0
-nvindex.plugins = "+base_importer,openvdb_integration"
 
 [[native.plugin]]
 path = "bin/*.plugin"

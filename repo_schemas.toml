@@ -1,0 +1,318 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+[repo_schema]
+# Enable the schema generation tool
+enabled = true
+
+[repo_usd]
+usd_root = "${root}/_build/target-deps/usd/%{config}"
+usd_python_root = "${root}/_build/target-deps/python"
+generate_plugin_buildfiles = true
+plugin_buildfile_format = "premake"
+generate_root_buildfile = false
+
+[repo_usd.plugin.omniCae]
+plugin_dir = "${root}/source/schemas/shared/omniCae"
+schema_file = "${root}/source/schemas/shared/omniCae/schema.usda"
+generate_dir = "${root}/_build/generated/schemas/omniCae"
+install_root = "${root}/_build/%{platform}/%{config}/schemas"
+library_prefix = "OmniCae"
+include_dir = "include/omniCae"
+resources_dir = "plugins/OmniCae/resources"
+module_dir = "OmniCae"
+lib_dir = "lib"
+bin_dir = "bin"
+usd_lib_dependencies = [
+    "arch",
+    "tf",
+    "vt",
+    "sdf",
+    "usd",
+    "python"
+]
+
+[repo_usd.plugin.omniCaeSids]
+plugin_dir = "${root}/source/schemas/shared/omniCaeSids"
+schema_file = "${root}/source/schemas/shared/omniCaeSids/schema.usda"
+generate_dir = "${root}/_build/generated/schemas/omniCaeSids"
+install_root = "${root}/_build/%{platform}/%{config}/schemas"
+library_prefix = "OmniCaeSids"
+include_dir = "include/omniCaeSids"
+resources_dir = "plugins/OmniCaeSids/resources"
+module_dir = "OmniCaeSids"
+lib_dir = "lib"
+bin_dir = "bin"
+usd_lib_dependencies = [
+    "arch",
+    "tf",
+    "vt",
+    "sdf",
+    "usd",
+    "python"
+]
+
+[repo_usd.plugin.omniCaeVtk]
+plugin_dir = "${root}/source/schemas/formats/omniCaeVtk"
+schema_file = "${root}/source/schemas/formats/omniCaeVtk/schema.usda"
+generate_dir = "${root}/_build/generated/schemas/omniCaeVtk"
+install_root = "${root}/_build/%{platform}/%{config}/schemas"
+library_prefix = "OmniCaeVtk"
+include_dir = "include/omniCaeVtk"
+resources_dir = "plugins/OmniCaeVtk/resources"
+module_dir = "OmniCaeVtk"
+lib_dir = "lib"
+bin_dir = "bin"
+usd_lib_dependencies = [
+    "arch",
+    "tf",
+    "vt",
+    "sdf",
+    "usd",
+    "python"
+]
+
+additional_library_dirs = [
+    "${root}/_build/%{platform}/%{config}/schemas/lib"
+]
+additional_libs = [
+    "omniCae"
+]
+depends_on = [
+    "omniCae"
+]
+
+[repo_usd.plugin.omniCaeEnSight]
+plugin_dir = "${root}/source/schemas/formats/omniCaeEnSight"
+schema_file = "${root}/source/schemas/formats/omniCaeEnSight/schema.usda"
+generate_dir = "${root}/_build/generated/schemas/omniCaeEnSight"
+install_root = "${root}/_build/%{platform}/%{config}/schemas"
+library_prefix = "OmniCaeEnSight"
+include_dir = "include/omniCaeEnSight"
+resources_dir = "plugins/OmniCaeEnSight/resources"
+module_dir = "OmniCaeEnSight"
+lib_dir = "lib"
+bin_dir = "bin"
+usd_lib_dependencies = [
+    "arch",
+    "tf",
+    "vt",
+    "sdf",
+    "usd",
+    "python",
+]
+
+additional_library_dirs = [
+    "${root}/_build/%{platform}/%{config}/schemas/lib"
+]
+additional_libs = [
+    "omniCae"
+]
+depends_on = [
+    "omniCae"
+]
+
+[repo_usd.plugin.omniCaeViz]
+schema_file = "${root}/source/schemas/shared/omniCaeViz/schema.usda"
+library_prefix = "OmniCaeViz"
+generate_dir = "${root}/_build/generated/schemas/omniCaeViz"
+plugin_dir = "${root}/source/schemas/shared/omniCaeViz"
+install_root = "${root}/_build/%{platform}/%{config}/schemas"
+include_dir = "include/omniCaeViz"
+resources_dir = "plugins/OmniCaeViz/resources"
+module_dir = "OmniCaeViz"
+lib_dir = "lib"
+bin_dir = "bin"
+usd_lib_dependencies = [
+    "arch",
+    "tf",
+    "vt",
+    "sdf",
+    "usd",
+    "usdGeom",
+    "usdVol",
+    "python"
+]
+additional_include_dirs = [
+    "${root}/_build/generated"
+]
+
+[repo_usd.plugin.omniCaeOpenFoam]
+plugin_dir = "${root}/source/schemas/formats/omniCaeOpenFoam"
+schema_file = "${root}/source/schemas/formats/omniCaeOpenFoam/schema.usda"
+generate_dir = "${root}/_build/generated/schemas/omniCaeOpenFoam"
+install_root = "${root}/_build/%{platform}/%{config}/schemas"
+library_prefix = "OmniCaeOpenFoam"
+include_dir = "include/omniCaeOpenFoam"
+resources_dir = "plugins/OmniCaeOpenFoam/resources"
+module_dir = "OmniCaeOpenFoam"
+lib_dir = "lib"
+bin_dir = "bin"
+usd_lib_dependencies = [
+    "arch",
+    "tf",
+    "vt",
+    "sdf",
+    "usd",
+    "python"
+]
+additional_library_dirs = [
+    "${root}/_build/%{platform}/%{config}/schemas/lib"
+]
+additional_libs = [
+    "omniCae"
+]
+depends_on = [
+    "omniCae"
+]
+
+[repo_usd.plugin.omniCaeNumPy]
+plugin_dir = "${root}/source/schemas/formats/omniCaeNumPy"
+schema_file = "${root}/source/schemas/formats/omniCaeNumPy/schema.usda"
+generate_dir = "${root}/_build/generated/schemas/omniCaeNumPy"
+install_root = "${root}/_build/%{platform}/%{config}/schemas"
+library_prefix = "OmniCaeNumPy"
+include_dir = "include/omniCaeNumPy"
+resources_dir = "plugins/OmniCaeNumPy/resources"
+module_dir = "OmniCaeNumPy"
+lib_dir = "lib"
+bin_dir = "bin"
+usd_lib_dependencies = [
+    "arch",
+    "tf",
+    "vt",
+    "sdf",
+    "usd",
+    "python"
+]
+additional_library_dirs = [
+    "${root}/_build/%{platform}/%{config}/schemas/lib"
+]
+additional_libs = [
+    "omniCae"
+]
+depends_on = [
+    "omniCae"
+]
+
+[repo_usd.plugin.omniCaeNvdb]
+plugin_dir = "${root}/source/schemas/formats/omniCaeNvdb"
+schema_file = "${root}/source/schemas/formats/omniCaeNvdb/schema.usda"
+generate_dir = "${root}/_build/generated/schemas/omniCaeNvdb"
+install_root = "${root}/_build/%{platform}/%{config}/schemas"
+library_prefix = "OmniCaeNvdb"
+include_dir = "include/omniCaeNvdb"
+resources_dir = "plugins/OmniCaeNvdb/resources"
+module_dir = "OmniCaeNvdb"
+lib_dir = "lib"
+bin_dir = "bin"
+usd_lib_dependencies = [
+    "arch",
+    "tf",
+    "vt",
+    "sdf",
+    "usd",
+    "python"
+]
+additional_library_dirs = [
+    "${root}/_build/%{platform}/%{config}/schemas/lib"
+]
+additional_libs = [
+    "omniCae"
+]
+depends_on = [
+    "omniCae"
+]
+
+[repo_usd.plugin.omniCaeHdf5]
+plugin_dir = "${root}/source/schemas/formats/omniCaeHdf5"
+schema_file = "${root}/source/schemas/formats/omniCaeHdf5/schema.usda"
+generate_dir = "${root}/_build/generated/schemas/omniCaeHdf5"
+install_root = "${root}/_build/%{platform}/%{config}/schemas"
+library_prefix = "OmniCaeHdf5"
+include_dir = "include/omniCaeHdf5"
+resources_dir = "plugins/OmniCaeHdf5/resources"
+module_dir = "OmniCaeHdf5"
+lib_dir = "lib"
+bin_dir = "bin"
+usd_lib_dependencies = [
+    "arch",
+    "tf",
+    "vt",
+    "sdf",
+    "usd",
+    "python"
+]
+additional_library_dirs = [
+    "${root}/_build/%{platform}/%{config}/schemas/lib"
+]
+additional_libs = [
+    "omniCae"
+]
+depends_on = [
+    "omniCae"
+]
+
+[repo_usd.plugin.omniCaeTrimesh]
+plugin_dir = "${root}/source/schemas/formats/omniCaeTrimesh"
+schema_file = "${root}/source/schemas/formats/omniCaeTrimesh/schema.usda"
+generate_dir = "${root}/_build/generated/schemas/omniCaeTrimesh"
+install_root = "${root}/_build/%{platform}/%{config}/schemas"
+library_prefix = "OmniCaeTrimesh"
+include_dir = "include/omniCaeTrimesh"
+resources_dir = "plugins/OmniCaeTrimesh/resources"
+module_dir = "OmniCaeTrimesh"
+lib_dir = "lib"
+bin_dir = "bin"
+usd_lib_dependencies = [
+    "arch",
+    "tf",
+    "vt",
+    "sdf",
+    "usd",
+    "python"
+]
+additional_library_dirs = [
+    "${root}/_build/%{platform}/%{config}/schemas/lib"
+]
+additional_libs = [
+    "omniCae"
+]
+depends_on = [
+    "omniCae"
+]
+
+[repo_usd.plugin.omniCaeCgns]
+plugin_dir = "${root}/source/schemas/formats/omniCaeCgns"
+schema_file = "${root}/source/schemas/formats/omniCaeCgns/schema.usda"
+generate_dir = "${root}/_build/generated/schemas/omniCaeCgns"
+install_root = "${root}/_build/%{platform}/%{config}/schemas"
+library_prefix = "OmniCaeCgns"
+include_dir = "include/omniCaeCgns"
+resources_dir = "plugins/OmniCaeCgns/resources"
+module_dir = "OmniCaeCgns"
+lib_dir = "lib"
+bin_dir = "bin"
+usd_lib_dependencies = [
+    "arch",
+    "tf",
+    "vt",
+    "sdf",
+    "usd",
+    "python"
+]
+additional_library_dirs = [
+    "${root}/_build/%{platform}/%{config}/schemas/lib"
+]
+additional_libs = [
+    "omniCae"
+]
+depends_on = [
+    "omniCae"
+]

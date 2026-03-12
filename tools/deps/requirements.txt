@@ -1,3 +1,5 @@
-# This file is used to install the dependencies for the project.
+# Optional pip dependencies. Install with: ./repo.sh pip_download
+# See docs/Build.md for which features require which packages.
 vtk==9.4
-h5py==3.13
+h5py==3.16.0
+lz4==4.4.5

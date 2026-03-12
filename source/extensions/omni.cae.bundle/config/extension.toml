@@ -1,0 +1,138 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+[package]
+version = "2.0.0"
+title = "CAE Extension Bundle"
+description = "Bundle of all CAE extensions, dependencies, and settings for Kit-CAE applications"
+category = "CAE"
+keywords = ["cae", "bundle"]
+
+changelog = "docs/CHANGELOG.md"
+readme = "docs/README.md"
+icon = "data/icon.png"
+
+[dependencies]
+
+# Kit SDK dependencies beyond the base editor
+"omni.kit.widget.layers" = {}           # Layer widget
+"omni.kit.window.extensions" = {}       # Extensions window
+"omni.anim.window.timeline" = {}        # Timeline widget
+"omni.kit.window.script_editor" = {}    # Script editor
+"omni.kit.window.usd_paths" = {}        # USD paths editor
+"omni.kit.window.movie_capture" = {}    # Movie capture window
+"omni.videoencoding" = {}               # Video encoding (mp4 support)
+"omni.kit.property.layer" = {}			# Layer property editor
+
+# Kit-CAE extensions
+"omni.cae.schema" = {order = -100}      # all USD schemas should be loaded with order = -100
+"omni.cae.data" = {}
+"omni.cae.file_format.cgns" = {}
+"omni.cae.delegate.cgns" = {}
+"omni.cae.delegate.ensight" = {}
+"omni.cae.delegate.hdf5" = {}
+"omni.cae.delegate.npz" = {}
+"omni.cae.delegate.nvdb" = {}
+"omni.cae.delegate.openfoam" = {}
+"omni.cae.delegate.trimesh" = {}
+"omni.cae.sids" = {}
+"omni.cae.importer.cgns" = {}
+"omni.cae.importer.npz" = {}
+"omni.cae.importer.ensight" = {}
+"omni.cae.importer.openfoam" = {}
+
+# CAE Algorithms
+"omni.cae.algorithms.core" = {}
+"omni.cae.index" = {}
+"omni.cae.flow" = {}
+"omni.cae.algorithms.warp" = {}
+
+# CAE Viz (Algorithms 2.0)
+"omni.cae.viz" = {}
+
+# UI
+"omni.cae.context_menu" = {}
+"omni.cae.property.bundle" = {}
+"omni.cae.widget.stage_icons" = {}
+
+# Testing
+"omni.cae.testing" = {}
+
+# Utility
+"omni.cae.exVars" = {}
+
+[[python.module]]
+name = "omni.cae.bundle"
+
+[[python.module]]
+name = "omni.cae.scripts"
+
+[settings]
+# Allow specified resolution to dictate.
+app.viewport.defaults.fillViewport = false
+
+# disable DLSS
+rtx-transient.dlssg.enabled = false
+
+# Extend the options to add "Add MDL File" option.
+exts."omni.kit.material.library".ui_show_list = ["OmniPBR", "OmniGlass", "OmniSurface", "USD Preview Surface", "Add MDL File"]
+
+# IndeX specific settings.
+rtx.index.overrideSubdivisionMode = "kd_tree"
+rtx.index.overrideSubdivisionPartCount = 1
+rtx.index.compositeEnabled = 1
+
+# This is necessary for usdrt-based algorithms in `omni.cae.algorithms.*`
+rtx.hydra.readTransformsFromFabricInRenderDelegate = true
+
+# FLOW specific settings: these are critical.
+exts."omni.flowusd".voxelize_velocity_vec4 = false
+exts."omni.flowusd".voxelize_velocity_float = true
+
+# Streamline/Flow disocclusion settings: improves rendering when simulations
+# use 1m per unit. These settings may be removed once the renderer handles this
+# natively.
+rtx.occlusionDetection.enabled = true
+rtx.aovConverter.disocclusionScale = 2000000
+rtx.disocclusionDetection.conservativeSurfaceDetection = false
+rtx.disocclusionDetection.depthThreshold = 0.1
+rtx.post.dlss.execMode = 1
+
+
+[settings.persistent]
+app.viewport.Viewport.Viewport0.resolution.0 = 1920
+app.viewport.Viewport.Viewport0.resolution.1 = 1080
+
+[documentation]
+pages = [
+    "docs/README.md",
+    "docs/CHANGELOG.md",
+]
+
+[[test]]
+name = "startup"
+stdoutFailPatterns.exclude = [
+    # Warning coming from `omni.vdb_timesample_editor-0.2.0` with Kit version 108.0.0
+    "*SyntaxWarning*"
+]
+
+[[test]]
+args = [
+    "--/exts/omni.kit.viewport.ready/activity_progress/enabled=false",
+    "--/exts/omni.kit.viewport.ready/background_color=4289506321",
+    "--/app/window/width=512",
+    "--/app/window/height=512",
+    "--/app/window/dpiScaleOverride=1.0",
+    "--/app/window/scaleToMonitor=false",
+]
+stdoutFailPatterns.exclude = [
+    # Warning coming from `omni.vdb_timesample_editor-0.2.0` with Kit version 108.0.0
+    "*SyntaxWarning*"
+]

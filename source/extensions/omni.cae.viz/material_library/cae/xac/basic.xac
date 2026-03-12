@@ -1,0 +1,132 @@
+// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+//
+// NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+// property and proprietary rights in and to this material, related
+// documentation and any modifications thereto. Any use, reproduction,
+// disclosure or distribution of this material and related documentation
+// without an express license agreement from NVIDIA CORPORATION or
+//  its affiliates is strictly prohibited.
+
+NV_IDX_XAC_VERSION_1_0
+
+
+using namespace nv::index::xac;
+
+// When sampling NanoVDB in a surface shader, this needs to match the NanoVDB data
+// using vdb_grid_type = float;
+// using vdb_grid_type = nanovdb::Fp8;
+// using vdb_grid_type = nanovdb::Fp16;
+// using vdb_grid_type = nanovdb::FpN;
+
+// When sampling NanoVDB in a surface shader, this controls the filtering
+// auto const vdb_filter_mode = VDB_volume_filter_mode::NEAREST;
+auto const vdb_filter_mode = VDB_volume_filter_mode::TRILINEAR;
+// auto const vdb_filter_mode = VDB_volume_filter_mode::TRIQUADRATIC;
+// auto const vdb_filter_mode = VDB_volume_filter_mode::TRICUBIC;
+
+#define PROGRAM_MODE_FLOAT 0
+#define PROGRAM_MODE_VEC3F 1
+
+
+struct Params
+{
+    float3 voxel_size = make_float3(1.0f, 1.0f, 1.0f);
+    int mode = PROGRAM_MODE_FLOAT; // default to vector mode
+    int2 attrib_idx = make_int2(0, -1); // current, next (-1 = no interpolation)
+    float3 time_codes = make_float3(0.0f, 0.0f, 0.0f); // current, next, raw
+};
+
+// Sample overload for NanoVDB volumes
+NV_IDX_DEVICE_INLINE
+float sample(const uint attrib_idx, const VDB_volume& volume, const Sample_info_vdb& sample_info, const Params& params)
+{
+    const float3 sample_position =
+        transform_point(volume.get_scene_to_object_transform(), sample_info.scene_position) / params.voxel_size - make_float3(0.5f, 0.5f, 0.5f);
+
+    if (params.mode == PROGRAM_MODE_FLOAT)
+    {
+        // generate a volume sampler: filter and compression mode needs to be specified explicitly
+        const auto sampler = volume.template generate_sampler<float, vdb_filter_mode, float>(attrib_idx);
+        return sampler.fetch_sample(sample_position);
+    }
+    else if (params.mode == PROGRAM_MODE_VEC3F)
+    {
+        const auto sampler = volume.template generate_sampler<float3, vdb_filter_mode, nanovdb::Vec3f>(attrib_idx);
+        const float3 val = sampler.fetch_sample(sample_position);
+        return length(val);
+    }
+    else
+        return 0.0f; // unsupported mode
+}
+
+// Sample overload for Irregular volumes
+NV_IDX_DEVICE_INLINE
+float sample(uint attrib_idx, const Irregular_volume& volume, const Sample_info_irregular_volume& sample_info, const Params& params)
+{
+    // sample the irregular volume at the current position
+    if (params.mode == PROGRAM_MODE_FLOAT)
+    {
+        return volume.fetch_attribute<float>(attrib_idx, sample_info.sample_cell_info);
+    }
+    else if (params.mode == PROGRAM_MODE_VEC3F)
+    {
+        const float3 val = volume.fetch_attribute<float3>(attrib_idx, sample_info.sample_cell_info);
+        return length(val);
+    }
+    else
+        return 0.0f; // unsupported mode
+}
+
+class Volume_sample_program
+{
+    NV_IDX_VOLUME_SAMPLE_PROGRAM
+    Params m_params;
+public:
+    NV_IDX_DEVICE_INLINE_MEMBER
+    void initialize()
+    {
+        // bind the parameters
+        m_params = *state.bind_parameter_buffer<Params>(0);
+    }
+
+    NV_IDX_DEVICE_INLINE_MEMBER
+    int execute(
+        const Sample_info_self& sample_info,
+              Sample_output&    sample_output)
+    {
+        // get reference to the volume and its colormap
+        const auto& volume = state.self;
+        const Colormap& colormap = state.self.get_colormap();
+
+        // sample the volume at the current position using the first attribute index
+        float s0 = sample(int(m_params.attrib_idx.x), volume, sample_info, m_params);
+
+        // apply field interpolation if next attribute index is valid and different
+        if (m_params.attrib_idx.y >= 0 && m_params.attrib_idx.y != m_params.attrib_idx.x)
+        {
+            // sample the next time step using the second attribute index
+            float s1 = sample(int(m_params.attrib_idx.y), volume, sample_info, m_params);
+
+            // calculate interpolation factor
+            // time_codes: x = current, y = next, z = raw
+            float t = 0.0f;
+            if (m_params.time_codes.y > m_params.time_codes.x)
+            {
+                t = (m_params.time_codes.z - m_params.time_codes.x) / (m_params.time_codes.y - m_params.time_codes.x);
+                t = clamp(t, 0.0f, 1.0f);
+            }
+
+            // linearly interpolate between time steps
+            s0 = (1.0f - t) * s0 + t * s1;
+        }
+
+        // apply the colormap
+        const float4 sample_color = colormap.lookup(s0);
+
+        // store the output color
+        sample_output.set_color(sample_color);
+
+        return NV_IDX_PROG_OK;
+    }
+};

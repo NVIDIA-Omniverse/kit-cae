@@ -9,14 +9,18 @@
 # its affiliates is strictly prohibited.
 
 __all__ = [
-    "get_enable_cache",
-    "get_enable_intermediate_cache",
+    "get_cache_mode",
+    "get_default_max_voxel_grid_resolution",
+    "get_downconvert_64bit",
+    "get_flow_voxelization_max_blocks",
+    "get_streamline_impl",
     "get_voxelization_impl",
     "get_warp_voxelization_batch_size",
-    "get_flow_voxelization_max_blocks",
-    "get_default_max_voxel_grid_resolution",
     "get_warp_voxelization_radius_factor",
-    "get_streamline_impl",
+    "is_legacy_stages_enabled",
+    "is_legacy_ui_enabled",
+    "override_setting",
+    "SettingsKeys",
 ]
 
 
@@ -24,8 +28,10 @@ from carb.settings import get_settings
 
 
 class SettingsKeys:
-    ENABLE_CACHE = "/persistent/exts/omni.cae.data/enableCache"
-    ENABLE_INTERMEDIATE_CACHE = "/persistent/exts/omni.cae.data/enableIntermediateCache"
+    ENABLE_LEGACY_UI = "/persistent/exts/omni.cae.data/enableLegacyUI"
+    ENABLE_LEGACY_STAGES = "/persistent/exts/omni.cae.data/enableLegacyStages"
+    CACHE_MODE = "/persistent/exts/omni.cae.data/cacheMode"
+    DOWN_CONVERT_64BIT = "/persistent/exts/omni.cae.data/downConvert64Bit"
     VOXELIZATION_IMPL = "/persistent/exts/omni.cae.data/voxelizationImpl"
     WARP_VOXELIZATION_BATCH_SIZE = "/persistent/exts/omni.cae.data/warpVoxelizationBatchSize"
     WARP_VOXELIZATION_RADIUS_FACTOR = "/persistent/exts/omni.cae.data/warpVoxelizationRadiusFactor"
@@ -33,13 +39,24 @@ class SettingsKeys:
     DEFAULT_MAX_VOXEL_GRID_RESOLUTION = "/persistent/exts/omni.cae.data/defaultMaxVoxelGridResolution"
     STREAMLINE_IMPL = "/persistent/exts/omni.cae.data/streamlinesImpl"
 
+    # Non-persistent warp config overrides (set in kit .toml / launch args, not persisted)
+    WARP_SKIP_BLACKWELL_PTX_OVERRIDE = "/exts/omni.cae.data/warp/skipBlackwellPtxOverride"
+    WARP_MODE = "/exts/omni.cae.data/warp/mode"
+    WARP_VERIFY_FP = "/exts/omni.cae.data/warp/verifyFp"
+    WARP_VERIFY_CUDA = "/exts/omni.cae.data/warp/verifyCuda"
+    WARP_VERBOSE = "/exts/omni.cae.data/warp/verbose"
+    WARP_VERBOSE_WARNINGS = "/exts/omni.cae.data/warp/verboseWarnings"
+    WARP_PTX_TARGET_ARCH = "/exts/omni.cae.data/warp/ptxTargetArch"
+    WARP_MAX_UNROLL = "/exts/omni.cae.data/warp/maxUnroll"
+    WARP_CUDA_OUTPUT = "/exts/omni.cae.data/warp/cudaOutput"
 
-def get_enable_cache() -> bool:
-    return get_settings().get_as_bool(SettingsKeys.ENABLE_CACHE)
+
+def get_cache_mode() -> str:
+    return get_settings().get_as_string(SettingsKeys.CACHE_MODE)
 
 
-def get_enable_intermediate_cache() -> bool:
-    return get_settings().get_as_bool(SettingsKeys.ENABLE_INTERMEDIATE_CACHE)
+def get_downconvert_64bit() -> bool:
+    return get_settings().get_as_bool(SettingsKeys.DOWN_CONVERT_64BIT)
 
 
 def get_voxelization_impl() -> str:
@@ -64,3 +81,60 @@ def get_warp_voxelization_radius_factor() -> float:
 
 def get_streamline_impl() -> str:
     return get_settings().get_as_string(SettingsKeys.STREAMLINE_IMPL)
+
+
+def is_legacy_ui_enabled() -> bool:
+    """Check if legacy UI elements should be shown (requires restart to take effect)."""
+    return get_settings().get_as_bool(SettingsKeys.ENABLE_LEGACY_UI)
+
+
+def is_legacy_stages_enabled() -> bool:
+    """Check if legacy stages support is enabled (requires restart to take effect)."""
+    return get_settings().get_as_bool(SettingsKeys.ENABLE_LEGACY_STAGES)
+
+
+class override_setting:
+    """
+    Context manager to temporarily override a setting and restore it on exit.
+
+    Parameters
+    ----------
+    setting_key : str
+        The setting key to override (can use SettingsKeys constants)
+    value : any
+        The value to set
+
+    Usage
+    -----
+    with override_setting(SettingsKeys.DOWN_CONVERT_64BIT, False):
+        # Setting is False here
+        assert not get_downconvert_64bit()
+    # Setting is restored to original value here
+
+    # Can also be used with string keys
+    with override_setting("/persistent/exts/omni.cae.data/downConvert64Bit", False):
+        # work with the overridden setting
+        pass
+    """
+
+    def __init__(self, setting_key: str, value):
+        self.setting_key = setting_key
+        self.new_value = value
+        self.old_value = None
+        self.settings = get_settings()
+
+    def __enter__(self):
+        # Save the current value
+        self.old_value = self.settings.get(self.setting_key)
+        # Set the new value
+        self.settings.set(self.setting_key, self.new_value)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Restore the old value
+        if self.old_value is not None:
+            self.settings.set(self.setting_key, self.old_value)
+        else:
+            # If there was no previous value, destroy the setting
+            self.settings.destroy_item(self.setting_key)
+        return False

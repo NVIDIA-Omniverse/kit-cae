@@ -10,7 +10,7 @@
 
 [package]
 # Semantic Versionning is used: https://semver.org/
-version = "1.0.0"
+version = "2.0.0"
 
 # The title and description fields are primarly for displaying extension info in UI
 title = "CAE Context Menu"
@@ -34,6 +34,7 @@ icon = "data/icon.png"
 
 [dependencies]
 "omni.cae.schema" = {}
+"omni.flowusd" = {}
 "omni.kit.commands" = {}
 "omni.kit.widget.context_menu" = {}
 "omni.ui" = {}
@@ -41,8 +42,6 @@ icon = "data/icon.png"
 "omni.cae.algorithms.core" = {}
 "omni.cae.index" = {}
 "omni.cae.flow" = {}
-"omni.cae.vtk" = {optional = true}
-"omni.cae.algorithms.warp" = {optional = true }
 
 # Main python module this extension provides, it will be publicly available as "import omni.example.hello".
 [[python.module]]

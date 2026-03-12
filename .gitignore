@@ -17,6 +17,19 @@ PACKAGE-DEPS.yaml
 # packman .user config
 *.packman.xml.user
 
+# Generated packman XML files from templates (managed by select_kit_version tool)
+tools/deps/kit-sdk.packman.xml
+tools/deps/kit-cae-deps.packman.xml
+
+# Kit selection state file (managed by select_kit_version tool)
+.kit_selection.json
+
+# Generated app files/symlinks from templates (managed by select_kit_version tool)
+source/apps/default_stream.kit
+source/apps/kit_base_editor.kit
+source/apps/kit_cae_editor.kit
+source/apps/kit_cae_streaming.kit
+
 # kit user config
 deps/**/user.toml
 
@@ -40,3 +53,6 @@ deps/**/user.toml
 /logs
 
 data/*.usda
+
+# Format tool cache
+.lastformat

@@ -8,6 +8,8 @@
 # without an express license agreement from NVIDIA CORPORATION or
 # its affiliates is strictly prohibited.
 
+from .test_array_utils import *
+from .test_cache import *
 from .test_command_types import *
 from .test_data_delegate import *
 from .test_field_array import *

@@ -45,3 +45,12 @@ async def execute(suffix, prim: Usd.Prim, **kwargs):
             return (await result) if inspect.isawaitable(result) else result
 
     raise NotImplementedError(f"Failed to execute command '{suffix}' on {prim}.")
+
+
+async def execute_command(command_name: str, **kwargs):
+    status, result = commands.execute(command_name, **kwargs)
+    if not status:
+        raise QuietableException(f"Failed to execute command '{command_name}'")
+    if inspect.isawaitable(result):
+        return status, await result
+    return status, result

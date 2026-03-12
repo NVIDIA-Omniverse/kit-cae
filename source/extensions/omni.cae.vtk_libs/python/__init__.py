@@ -9,13 +9,3 @@
 # its affiliates is strictly prohibited.
 
 __all__ = []
-
-from logging import getLogger
-
-from omni.cae.pipapi import pip_install
-
-logger = getLogger(__name__)
-
-
-# Install the vtk package if not already available
-pip_install(package="vtk", version="9.4", module="vtkmodules.vtkCommonDataModel", required=True)

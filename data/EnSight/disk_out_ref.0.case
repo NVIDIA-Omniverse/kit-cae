@@ -1,0 +1,15 @@
+FORMAT
+type: ensight gold
+
+
+GEOMETRY
+model: disk_out_ref.0.00000.geo
+
+VARIABLE
+scalar per node: AsH3_n disk_out_ref.0.00000_n.AsH3
+scalar per node: CH4_n disk_out_ref.0.00000_n.CH4
+scalar per node: GaMe3_n disk_out_ref.0.00000_n.GaMe3
+scalar per node: H2_n disk_out_ref.0.00000_n.H2
+scalar per node: Pres_n disk_out_ref.0.00000_n.Pres
+scalar per node: Temp_n disk_out_ref.0.00000_n.Temp
+vector per node: V_n disk_out_ref.0.00000_n.V

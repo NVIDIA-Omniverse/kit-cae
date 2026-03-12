@@ -1,0 +1,12 @@
+<project toolsVersion="5.0">
+  <!-- Only edit this file to pull kit-sdk depencies needed for building USD schemas. -->
+  <!-- Import Kit SDK all-deps xml file to steal some deps from it: -->
+  <import path="${root}/_build/${platform_target}/${config}/kit/dev/all-deps.packman.xml">
+    <filter include="python" />
+    <filter include="premake" />
+    <filter include="usd-${config}" linkPath="${root}/_build/target-deps/usd/${config}" />
+  </import>
+
+  <dependency name="python" linkPath="${root}/_build/target-deps/python" />
+  <dependency name="premake" linkPath="${root}/_build/host-deps/premake" />
+</project>

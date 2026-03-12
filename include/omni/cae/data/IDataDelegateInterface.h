@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: LicenseRef-NvidiaProprietary
 //
 // NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
@@ -6,7 +6,7 @@
 // documentation and any modifications thereto. Any use, reproduction,
 // disclosure or distribution of this material and related documentation
 // without an express license agreement from NVIDIA CORPORATION or
-//  its affiliates is strictly prohibited.
+// its affiliates is strictly prohibited.
 
 #pragma once
 
@@ -22,6 +22,7 @@ namespace data
 class IDataDelegateRegistry;
 class IFieldArrayUtils;
 class IFileUtils;
+class IUsdUtils;
 
 /**
  * Carbonite plugin interface for accessing the Data Delegate infrastructure.
@@ -33,10 +34,12 @@ class IFileUtils;
  *      - Added IDataDelegateRegistry::isFieldArrayCached().
  * - v0.3:
  *     - Added getFileUtils() to access IFileUtils singleton.
+ * - v0.4:
+ *     - Added getUsdUtils() to access IUsdUtils singleton.
  */
 struct IDataDelegateInterface
 {
-    CARB_PLUGIN_INTERFACE("omni::cae::data::IDataDelegateInterface", 0, 3)
+    CARB_PLUGIN_INTERFACE("omni::cae::data::IDataDelegateInterface", 0, 4)
 
     /**
      * Gets access the IDataDelegateRegistry singleton.
@@ -52,6 +55,11 @@ struct IDataDelegateInterface
      * Gets access to the IFileUtils singleton.
      */
     IFileUtils*(CARB_ABI* getFileUtils)() = 0;
+
+    /**
+     * Gets access to the IUsdUtils singleton.
+     */
+    IUsdUtils*(CARB_ABI* getUsdUtils)() = 0;
 };
 
 } // namespace data

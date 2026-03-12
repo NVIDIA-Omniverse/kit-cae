@@ -1,0 +1,58 @@
+#usda 1.0
+(
+    """
+        Simple CAE (.scae) format-specific field array schema.
+    """
+    subLayers = [
+        @../../shared/omniCae/schema.usda@
+    ]
+)
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+over "GLOBAL" (
+    customData = {
+        string libraryName = "omniCaeScae"
+        string libraryPath = "omniCaeScae"
+        string libraryPrefix = "OmniCaeScae"
+        bool useLiteralIdentifier = true
+    }
+)
+{
+}
+
+class CaeScaeFieldArray "CaeScaeFieldArray" (
+    inherits = </CaeFieldArray>
+    doc = "Defines a Simple CAE field array stored in a .scae manifest and binary payload."
+    customData = {
+        string className = "ScaeFieldArray"
+    }
+)
+{
+    string arrayName = "" (
+        doc = "Specifies the array name in the .scae manifest."
+        displayName = "Array Name"
+        displayGroup = "Scae Field Array"
+    )
+
+    uniform string slice = "" (
+        doc = """Specifies the slicing/index expression to use to extract data from the array.
+        Python format string is accepted. the `ts` identifier can be used to replace with the
+        value of attribute `ts`."""
+        displayName = "Slice"
+        displayGroup = "Scae Field Array"
+    )
+
+    int ts = -1 (
+        doc = """Specifies a time-sampled attribute value that can be used in the `slice` format expressions."""
+        displayName = "ts"
+        displayGroup = "Scae Field Array"
+    )
+}

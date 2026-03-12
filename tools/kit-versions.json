@@ -1,0 +1,114 @@
+{
+  "common": {
+    "templates": [
+      {
+        "src": "${root}/tools/deps/kit-cae-deps.packman.xml.template",
+        "dest": "${root}/tools/deps/kit-cae-deps.packman.xml"
+      },
+      {
+        "src": "${root}/tools/deps/kit-sdk.packman.xml.template",
+        "dest": "${root}/tools/deps/kit-sdk.packman.xml"
+      }
+    ]
+  },
+  "versions": {
+    "109.0.3": {
+        "variables": {
+          "KIT_VERSION_TAG": "109.0.3+production.263267.62477c11",
+          "INDEX_HEADERS_TAG": "380600.2218"
+        },
+        "templates": [
+          {
+            "src": "${root}/templates/109.0.3/apps/kit_base_editor/kit_base_editor.kit",
+            "dest": "${root}/source/apps/kit_base_editor.kit"
+          },
+          {
+            "src": "${root}/templates/109.0.3/apps/streaming_configs/default_stream.kit",
+            "dest": "${root}/source/apps/default_stream.kit"
+          },
+          {
+            "src": "${root}/templates/109.0.3/kit_cae/kit_cae_editor.kit",
+            "dest": "${root}/source/apps/kit_cae_editor.kit"
+          },
+          {
+            "src": "${root}/templates/109.0.3/kit_cae/kit_cae_streaming.kit",
+            "dest": "${root}/source/apps/kit_cae_streaming.kit"
+          }
+        ]
+    },
+    "109.0.2": {
+        "variables": {
+          "KIT_VERSION_TAG": "109.0.2+production.256998.bb24931b",
+          "INDEX_HEADERS_TAG": "380600.2218"
+        },
+        "templates": [
+          {
+            "src": "${root}/templates/109.0.2/apps/kit_base_editor/kit_base_editor.kit",
+            "dest": "${root}/source/apps/kit_base_editor.kit"
+          },
+          {
+            "src": "${root}/templates/109.0.2/apps/streaming_configs/default_stream.kit",
+            "dest": "${root}/source/apps/default_stream.kit"
+          },
+          {
+            "src": "${root}/templates/109.0.2/kit_cae/kit_cae_editor.kit",
+            "dest": "${root}/source/apps/kit_cae_editor.kit"
+          },
+          {
+            "src": "${root}/templates/109.0.2/kit_cae/kit_cae_streaming.kit",
+            "dest": "${root}/source/apps/kit_cae_streaming.kit"
+          }
+        ]
+    },
+
+    "109.0.1": {
+        "variables": {
+          "KIT_VERSION_TAG": "109.0.1+feature.252186.7a5e71a7",
+          "INDEX_HEADERS_TAG": "380600.2218"
+        },
+        "templates": [
+          {
+            "src": "${root}/templates/109.0.1/apps/kit_base_editor/kit_base_editor.kit",
+            "dest": "${root}/source/apps/kit_base_editor.kit"
+          },
+          {
+            "src": "${root}/templates/109.0.1/apps/streaming_configs/default_stream.kit",
+            "dest": "${root}/source/apps/default_stream.kit"
+          },
+          {
+            "src": "${root}/templates/109.0.1/kit_cae/kit_cae_editor.kit",
+            "dest": "${root}/source/apps/kit_cae_editor.kit"
+          },
+          {
+            "src": "${root}/templates/109.0.1/kit_cae/kit_cae_streaming.kit",
+            "dest": "${root}/source/apps/kit_cae_streaming.kit"
+          }
+        ]
+    },
+    "108.0.0": {
+        "variables": {
+          "KIT_VERSION_TAG": "108.0.0+feature.221586.5941509b",
+          "INDEX_HEADERS_TAG": "380600.2218"
+        },
+        "templates": [
+          {
+            "src": "${root}/templates/108.0.0/apps/kit_base_editor/kit_base_editor.kit",
+            "dest": "${root}/source/apps/kit_base_editor.kit"
+          },
+          {
+            "src": "${root}/templates/108.0.0/apps/streaming_configs/default_stream.kit",
+            "dest": "${root}/source/apps/default_stream.kit"
+          },
+          {
+            "src": "${root}/templates/108.0.0/kit_cae/kit_cae_editor.kit",
+            "dest": "${root}/source/apps/kit_cae_editor.kit"
+          },
+          {
+            "src": "${root}/templates/108.0.0/kit_cae/kit_cae_streaming.kit",
+            "dest": "${root}/source/apps/kit_cae_streaming.kit"
+          }
+        ]
+    }
+  },
+  "default": "109.0.3"
+}

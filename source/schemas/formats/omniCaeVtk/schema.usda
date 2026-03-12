@@ -1,0 +1,328 @@
+#usda 1.0
+(
+    """
+        Schema for VTK data.
+    """
+    subLayers = [
+        # This is mainly needed for definition of UsdTyped.
+        @../../shared/omniCae/schema.usda@
+    ]
+)
+
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+over "GLOBAL" (
+    customData = {
+        string libraryName = "omniCaeVtk"
+        string libraryPath = "omniCaeVtk"
+        string libraryPrefix = "OmniCaeVtk"
+        bool useLiteralIdentifier = true
+    }
+)
+{
+}
+
+class CaeVtkFieldArray "CaeVtkFieldArray" (
+    inherits = </CaeFieldArray>
+    doc = "Defines a VTK data array"
+    customData = {
+        string className = "FieldArray"
+    }
+)
+{
+    string arrayName = "" (
+        doc = "Specifies the name for the array in the Vtk file."
+        displayName = "Array Name"
+        displayGroup = "VTK Field Array"
+    )
+
+    uniform token special = "none" (
+        allowedTokens = [
+            "none",
+            "points",
+            "connectivity_offsets",
+            "connectivity_array",
+            "cell_types",
+            "verts_connectivity_offsets",
+            "verts_connectivity_array",
+            "lines_connectivity_offsets",
+            "lines_connectivity_array",
+            "polys_connectivity_offsets",
+            "polys_connectivity_array",
+            "strips_connectivity_offsets",
+            "strips_connectivity_array",
+            "polyhedron_faces_offsets",
+            "polyhedron_faces_connectivity_array",
+            "polyhedron_face_locations_offsets",
+            "polyhedron_face_locations_connectivity_array",
+        ]
+        doc = "Specifies if the array is special array."
+        displayName = "Special"
+        displayGroup = "VTK Field Array"
+    )
+}
+
+
+class "CaeVtkUnstructuredGridAPI" (
+    inherits = </APISchemaBase>
+    doc = """Defines a dataset that follows vtkUnstructuredGrid data model."""
+    customData = {
+        string className = "UnstructuredGridAPI"
+        token apiSchemaType = "singleApply"
+    }
+)
+{
+    rel cae:vtk:points (
+        doc = "Specifies the CaeFieldArray that must be treated as points."
+        displayName = "Points"
+        displayGroup = "VTK Unstructured Grid"
+        customData = {
+            string apiName = "points"
+        }
+    )
+
+    rel cae:vtk:connectivityOffsets (
+        doc = "Specifies the CaeFieldArray that must be treated as connectivity offsets."
+        displayName = "Connectivity Offsets"
+        displayGroup = "VTK Unstructured Grid"
+        customData = {
+            string apiName = "connectivityOffsets"
+        }
+    )
+
+    rel cae:vtk:connectivityArray (
+        doc = "Specifies the CaeFieldArray that must be treated as connectivity array."
+        displayName = "Connectivity Array"
+        displayGroup = "VTK Unstructured Grid"
+        customData = {
+            string apiName = "connectivityArray"
+        }
+    )
+
+    rel cae:vtk:cellTypes (
+        doc = "Specifies the CaeFieldArray that must be treated as cell types."
+        displayName = "Cell Types"
+        displayGroup = "VTK Unstructured Grid"
+        customData = {
+            string apiName = "cellTypes"
+        }
+    )
+
+    rel cae:vtk:polyhedronFacesOffsets (
+        doc = "Specifies the CaeFieldArray that must be treated as polyhedron faces offsets specification."
+        displayName = "Polyhedron Faces Offsets"
+        displayGroup = "VTK Unstructured Grid"
+        customData = {
+            string apiName = "polyhedronFacesOffsets"
+        }
+    )
+
+    rel cae:vtk:polyhedronFacesConnectivityArray (
+        doc = "Specifies the CaeFieldArray that must be treated as polyhedron faces connectivity specification."
+        displayName = "Polyhedron Faces Connectivity Array"
+        displayGroup = "VTK Unstructured Grid"
+        customData = {
+            string apiName = "polyhedronFacesConnectivityArray"
+        }
+    )
+
+    rel cae:vtk:polyhedronFaceLocationsOffsets (
+        doc = "Specifies the CaeFieldArray that must be treated as polyhedron face locations offsets specification."
+        displayName = "Polyhedron Face Locations Offsets"
+        displayGroup = "VTK Unstructured Grid"
+        customData = {
+            string apiName = "polyhedronFaceLocationsOffsets"
+        }
+    )
+
+    rel cae:vtk:polyhedronFaceLocationsConnectivityArray (
+        doc = "Specifies the CaeFieldArray that must be treated as polyhedron face locations connectivity specification."
+        displayName = "Polyhedron Face Locations Connectivity Array"
+        displayGroup = "VTK Unstructured Grid"
+        customData = {
+            string apiName = "polyhedronFaceLocationsConnectivityArray"
+        }
+    )
+}
+
+class "CaeVtkStructuredGridAPI" (
+    inherits = </APISchemaBase>
+    doc = """Defines a dataset that follows vtkStructuredGrid data model."""
+    customData = {
+        string className = "StructuredGridAPI"
+        token apiSchemaType = "singleApply"
+    }
+)
+{
+    rel cae:vtk:points (
+        doc = "Specifies the CaeFieldArray that must be treated as points."
+        displayName = "Points"
+        displayGroup = "VTK Structured Grid"
+        customData = {
+            string apiName = "points"
+        }
+    )
+
+    uniform int3 cae:vtk:minExtent = (0, 0, 0) (
+        doc = "Specifies the minimum extent of the structured grid."
+        displayName = "Minimum Extent"
+        displayGroup = "VTK Structured Grid"
+        customData = {
+            string apiName = "minExtent"
+        }
+    )
+
+    uniform int3 cae:vtk:maxExtent = (0, 0, 0) (
+        doc = "Specifies the maximum extent of the structured grid."
+        displayName = "Maximum Extent"
+        displayGroup = "VTK Structured Grid"
+        customData = {
+            string apiName = "maxExtent"
+        }
+    )
+}
+
+class "CaeVtkImageDataAPI" (
+    inherits = </APISchemaBase>
+    doc = """Defines a dataset that follows vtkImageData data model."""
+    customData = {
+        string className = "ImageDataAPI"
+        token apiSchemaType = "singleApply"
+    }
+)
+{
+    uniform float3 cae:vtk:origin = (0.0, 0.0, 0.0) (
+        doc = "Specifies the origin of the image data."
+        displayName = "Origin"
+        displayGroup = "VTK Image Data"
+        customData = {
+            string apiName = "origin"
+        }
+    )
+
+    uniform float3 cae:vtk:spacing = (1.0, 1.0, 1.0) (
+        doc = "Specifies the spacing of the image data."
+        displayName = "Spacing"
+        displayGroup = "VTK Image Data"
+        customData = {
+            string apiName = "spacing"
+        }
+    )
+
+    uniform int3 cae:vtk:minExtent = (0, 0, 0) (
+        doc = "Specifies the minimum extent of the image data."
+        displayName = "Min Extent"
+        displayGroup = "VTK Image Data"
+        customData = {
+            string apiName = "minExtent"
+        }
+    )
+
+    uniform int3 cae:vtk:maxExtent = (0, 0, 0) (
+        doc = "Specifies the maximum extent of the image data."
+        displayName = "Max Extent"
+        displayGroup = "VTK Image Data"
+        customData = {
+            string apiName = "maxExtent"
+        }
+    )
+}
+
+class "CaeVtkPolyDataAPI" (
+    inherits = </APISchemaBase>
+    doc = """Defines a dataset that follows vtkPolyData data model."""
+    customData = {
+        string className = "PolyDataAPI"
+        token apiSchemaType = "singleApply"
+    }
+)
+{
+    rel cae:vtk:points (
+        doc = "Specifies the CaeFieldArray that must be treated as points."
+        displayName = "Points"
+        displayGroup = "VTK Poly Data"
+        customData = {
+            string apiName = "points"
+        }
+    )
+
+    rel cae:vtk:vertsConnectivityOffsets (
+        doc = "Specifies the CaeFieldArray that must be treated as verts connectivity offsets."
+        displayName = "Verts Connectivity Offsets"
+        displayGroup = "VTK Poly Data"
+        customData = {
+            string apiName = "vertsConnectivityOffsets"
+        }
+    )
+
+    rel cae:vtk:vertsConnectivityArray (
+        doc = "Specifies the CaeFieldArray that must be treated as verts connectivity array."
+        displayName = "Verts Connectivity Array"
+        displayGroup = "VTK Poly Data"
+        customData = {
+            string apiName = "vertsConnectivityArray"
+        }
+    )
+
+    rel cae:vtk:linesConnectivityOffsets (
+        doc = "Specifies the CaeFieldArray that must be treated as lines connectivity offsets."
+        displayName = "Lines Connectivity Offsets"
+        displayGroup = "VTK Poly Data"
+        customData = {
+            string apiName = "linesConnectivityOffsets"
+        }
+    )
+
+    rel cae:vtk:linesConnectivityArray (
+        doc = "Specifies the CaeFieldArray that must be treated as lines connectivity array."
+        displayName = "Lines Connectivity Array"
+        displayGroup = "VTK Poly Data"
+        customData = {
+            string apiName = "linesConnectivityArray"
+        }
+    )
+
+    rel cae:vtk:polysConnectivityOffsets (
+        doc = "Specifies the CaeFieldArray that must be treated as polys connectivity offsets."
+        displayName = "Polys Connectivity Offsets"
+        displayGroup = "VTK Poly Data"
+        customData = {
+            string apiName = "polysConnectivityOffsets"
+        }
+    )
+
+    rel cae:vtk:polysConnectivityArray (
+        doc = "Specifies the CaeFieldArray that must be treated as polys connectivity array."
+        displayName = "Polys Connectivity Array"
+        displayGroup = "VTK Poly Data"
+        customData = {
+            string apiName = "polysConnectivityArray"
+        }
+    )
+
+   rel cae:vtk:stripsConnectivityOffsets (
+        doc = "Specifies the CaeFieldArray that must be treated as strips connectivity offsets."
+        displayName = "Strips Connectivity Offsets"
+        displayGroup = "VTK Poly Data"
+        customData = {
+            string apiName = "stripsConnectivityOffsets"
+        }
+    )
+
+    rel cae:vtk:stripsConnectivityArray (
+        doc = "Specifies the CaeFieldArray that must be treated as strips connectivity array."
+        displayName = "Strips Connectivity Array"
+        displayGroup = "VTK Poly Data"
+        customData = {
+            string apiName = "stripsConnectivityArray"
+        }
+    )
+}

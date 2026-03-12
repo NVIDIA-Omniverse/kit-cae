@@ -6,16 +6,23 @@
 // documentation and any modifications thereto. Any use, reproduction,
 // disclosure or distribution of this material and related documentation
 // without an express license agreement from NVIDIA CORPORATION or
-//  its affiliates is strictly prohibited.
+// its affiliates is strictly prohibited.
 
 #define PYBIND11_DETAILED_ERROR_MESSAGES
 
 #include <carb/BindingsPythonUtils.h>
+#include <carb/logging/Log.h>
 
 #include <mi/math/bbox.h>
+#include <nv/index/idistributed_compute_destination_buffer.h>
+#include <nv/index/idistributed_data_subset.h>
 #include <nv/index/iirregular_volume_subset.h>
+#include <nv/index/ivdb_subset.h>
+#include <omni/cae/data/IFieldArray.h>
 #include <pybind11/numpy.h>
 #include <pybind11/operators.h>
+
+#include <cuda_runtime.h>
 
 namespace py = pybind11;
 
@@ -25,9 +32,65 @@ PYBIND11_DECLARE_HOLDER_TYPE(T, mi::base::Handle<T>, true);
 namespace
 {
 
+size_t getSizeInBytes(const omni::cae::data::IFieldArray* array)
+{
+    if (array)
+    {
+        auto shape = array->getShape();
+        return std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1), std::multiplies<size_t>{}) *
+               omni::cae::data::getElementSize(array->getElementType());
+    }
+    return 0u;
+}
+
 
 using BboxFloat32 = mi::math::Bbox<mi::Float32, 3>;
 using BboxInt32 = mi::math::Bbox<mi::Sint32, 3>;
+
+mi::Uint32 attribute_type_size(const nv::index::IIrregular_volume_subset::Attribute_type& type)
+{
+    mi::Uint32 sz = 0;
+    switch (type)
+    {
+    case nv::index::IIrregular_volume_subset::ATTRIB_TYPE_UINT8:
+        sz = sizeof(mi::Uint8);
+        break;
+    case nv::index::IIrregular_volume_subset::ATTRIB_TYPE_UINT8_2:
+        sz = 2 * sizeof(mi::Uint8);
+        break;
+    case nv::index::IIrregular_volume_subset::ATTRIB_TYPE_UINT8_3:
+        sz = 3 * sizeof(mi::Uint8);
+        break;
+    case nv::index::IIrregular_volume_subset::ATTRIB_TYPE_UINT8_4:
+        sz = 4 * sizeof(mi::Uint8);
+        break;
+    case nv::index::IIrregular_volume_subset::ATTRIB_TYPE_UINT16:
+        sz = sizeof(mi::Uint16);
+        break;
+    case nv::index::IIrregular_volume_subset::ATTRIB_TYPE_UINT16_2:
+        sz = 2 * sizeof(mi::Uint16);
+        break;
+    case nv::index::IIrregular_volume_subset::ATTRIB_TYPE_UINT16_3:
+        sz = 3 * sizeof(mi::Uint16);
+        break;
+    case nv::index::IIrregular_volume_subset::ATTRIB_TYPE_UINT16_4:
+        sz = 4 * sizeof(mi::Uint16);
+        break;
+    case nv::index::IIrregular_volume_subset::ATTRIB_TYPE_FLOAT32:
+        sz = sizeof(mi::Float32);
+        break;
+    case nv::index::IIrregular_volume_subset::ATTRIB_TYPE_FLOAT32_2:
+        sz = 2 * sizeof(mi::Float32);
+        break;
+    case nv::index::IIrregular_volume_subset::ATTRIB_TYPE_FLOAT32_3:
+        sz = 3 * sizeof(mi::Float32);
+        break;
+    case nv::index::IIrregular_volume_subset::ATTRIB_TYPE_FLOAT32_4:
+        sz = 4 * sizeof(mi::Float32);
+        break;
+    }
+    return sz;
+}
 
 auto getDType(const nv::index::IIrregular_volume_subset::Attribute_parameters& params)
 {
@@ -322,8 +385,16 @@ PYBIND11_MODULE(_omni_cae_index, m)
             "The attribute array.")
         /**/;
 
+    // Declare base class first - REQUIRED for inheritance to work in pybind11
+    // Using mi::base::Handle as holder type - prevents pybind11 from calling delete on MI interfaces
+    using nv::index::IDistributed_data_subset;
+    py::class_<IDistributed_data_subset, mi::base::Handle<IDistributed_data_subset>>(m, "IDistributed_data_subset")
+        /**/;
+
+    // Declare derived class with base class - this tells pybind11 about the inheritance
     using IIrregular_volume_subset = nv::index::IIrregular_volume_subset;
-    py::class_<IIrregular_volume_subset>(m, "IIrregular_volume_subset")
+    py::class_<IIrregular_volume_subset, IDistributed_data_subset, mi::base::Handle<IIrregular_volume_subset>>(
+        m, "IIrregular_volume_subset")
         .def(
             "generate_mesh_storage",
             [](IIrregular_volume_subset* self, const Mesh_parameters& params)
@@ -350,6 +421,161 @@ PYBIND11_MODULE(_omni_cae_index, m)
                 return storage;
             },
             "Generate and initialize an instance of irregular volume attribute set storage.")
+        .def(
+            "get_attribute_parameters",
+            [](IIrregular_volume_subset* self, mi::Uint32 index) -> Attribute_parameters
+            {
+                py::gil_scoped_release g;
+                Attribute_parameters params;
+                if (!self->get_attribute_parameters(index, params))
+                {
+                    throw std::runtime_error("Failed to get attribute parameters.");
+                }
+                return params;
+            },
+            "Get the attribute parameters for the given index.")
+
+        .def(
+            "get_attribute",
+            [](IIrregular_volume_subset* self, mi::Uint32 index) -> Attribute_storage
+            {
+                py::gil_scoped_release g;
+                Attribute_storage storage;
+                if (!self->get_attribute(index, storage))
+                {
+                    throw std::runtime_error("Failed to get attribute storage.");
+                }
+                return storage;
+            },
+            "Get the attribute storage for the given index.")
+        .def(
+            "sync_device_storage",
+            [](IIrregular_volume_subset* self, mi::Uint32 index)
+            {
+                py::gil_scoped_release g;
+                Attribute_storage host_storage;
+                if (!self->get_attribute(index, host_storage))
+                {
+                    throw std::runtime_error("Failed to get attribute storage.");
+                }
+                Attribute_storage device_storage;
+                if (!self->get_active_attribute_device_storage(index, device_storage))
+                {
+                    throw std::runtime_error("Failed to get active attribute device storage.");
+                }
+
+                Attribute_parameters params;
+                if (!self->get_attribute_parameters(index, params))
+                {
+                    throw std::runtime_error("Failed to get attribute parameters.");
+                }
+
+                auto nb_bytes = mi::Size(params.nb_attrib_values) * attribute_type_size(params.type);
+                cudaMemcpy(device_storage.attrib_values, host_storage.attrib_values, nb_bytes, cudaMemcpyHostToDevice);
+            },
+            "Sync the device storage for the given index.")
+        /**/;
+
+    using IVDB_subset = nv::index::IVDB_subset;
+    using IVDB_subset_device = nv::index::IVDB_subset_device;
+    py::class_<IVDB_subset, IDistributed_data_subset, mi::base::Handle<IVDB_subset>>(m, "IVDB_subset")
+        .def(
+            "get_device_subset",
+            [](IVDB_subset* self) -> mi::base::Handle<IVDB_subset_device>
+            {
+                py::gil_scoped_release g;
+                auto handle = mi::base::make_handle(self->get_device_subset());
+                if (!handle)
+                {
+                    throw std::runtime_error("Failed to get device subset.");
+                }
+                return handle;
+            },
+            "Get the device subset.")
+        /**/;
+
+    using omni::cae::data::IFieldArray;
+    py::class_<IVDB_subset_device, mi::base::Handle<IVDB_subset_device>>(m, "IVDB_subset_device")
+        .def(
+            "get_device_id",
+            [](IVDB_subset_device* self) -> mi::Uint32
+            {
+                py::gil_scoped_release g;
+                return self->get_device_id();
+            },
+            "Get the device id.")
+        .def(
+            "adopt_field_array",
+            [](IVDB_subset_device* self, mi::Uint32 index, carb::ObjectPtr<IFieldArray> field_array)
+            {
+                py::gil_scoped_release g;
+
+                /// TODO: copy to correct device, if needed
+                if (!self->adopt_grid_buffer(
+                        index, const_cast<void*>(field_array->getData()), getSizeInBytes(field_array.get())))
+                {
+                    throw std::runtime_error("Failed to adopt field array.");
+                }
+            },
+            "Adopt the field array.")
+        /**/;
+    using nv::index::IData_subset_factory;
+    py::class_<IData_subset_factory>(m, "IData_subset_factory")
+        .def(
+            "create_irregular_volume_subset",
+            [](IData_subset_factory* self) -> mi::base::Handle<IIrregular_volume_subset>
+            {
+                py::gil_scoped_release g;
+                auto subset = mi::base::make_handle(self->create_data_subset<nv::index::IIrregular_volume_subset>());
+                if (!subset)
+                {
+                    throw std::runtime_error("Failed to create irregular volume subset.");
+                }
+                return subset;
+            },
+            "Create an empty irregular volume subset.")
+        /**/;
+
+    using nv::index::IDistributed_compute_destination_buffer;
+    using nv::index::IDistributed_compute_destination_buffer_irregular_volume;
+    using nv::index::IDistributed_compute_destination_buffer_VDB;
+
+
+    py::class_<IDistributed_compute_destination_buffer>(m, "IDistributed_compute_destination_buffer")
+        /**/;
+
+    py::class_<IDistributed_compute_destination_buffer_irregular_volume, IDistributed_compute_destination_buffer>(
+        m, "IDistributed_compute_destination_buffer_irregular_volume")
+        .def(
+            "get_distributed_data_subset",
+            [](IDistributed_compute_destination_buffer_irregular_volume* self) -> mi::base::Handle<IIrregular_volume_subset>
+            {
+                py::gil_scoped_release g;
+                auto handle = mi::base::make_handle(self->get_distributed_data_subset());
+                if (!handle)
+                {
+                    throw std::runtime_error("Failed to get distributed data subset for irregular volume.");
+                }
+                return handle;
+            },
+            "Get the distributed data subset ().")
+        /**/;
+
+    py::class_<IDistributed_compute_destination_buffer_VDB, IDistributed_compute_destination_buffer>(
+        m, "IDistributed_compute_destination_buffer_VDB")
+        .def(
+            "get_distributed_data_subset",
+            [](IDistributed_compute_destination_buffer_VDB* self) -> mi::base::Handle<IVDB_subset>
+            {
+                py::gil_scoped_release g;
+                auto handle = mi::base::make_handle(self->get_distributed_data_subset());
+                if (!handle)
+                {
+                    throw std::runtime_error("Failed to get distributed data subset for vdb.");
+                }
+                return handle;
+            },
+            "Get the distributed data subset.")
         /**/;
 }
 

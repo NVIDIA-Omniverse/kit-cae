@@ -9,7 +9,8 @@
 --  its affiliates is strictly prohibited.
 
 function add_cae_usd_schemas(libs)
-    local schemaRoot = "%{root}/_build/target-deps/omni-cae/%{config}"
+    -- Schemas are built via premake into the standard build output directory
+    local schemaRoot = "%{root}/_build/%{platform}/%{config}/schemas"
     includedirs { schemaRoot.."/include" }
     libdirs { schemaRoot.."/lib" }
     for _, lib in ipairs(libs) do
@@ -18,25 +19,46 @@ function add_cae_usd_schemas(libs)
 end
 
 function copy_cae_schema(schema, ext)
-    local schemaRoot = "%{root}/_build/target-deps/omni-cae/%{config}"
+    -- Schemas are built via premake into the standard build output directory
+    local schemaRoot = "%{root}/_build/%{platform}/%{config}/schemas"
     local libname = schema:sub(1, 1):lower()..schema:sub(2)
 
-    repo_build.prebuild_copy {
-        { schemaRoot.."/plugins/"..schema, ext.target_dir.."/plugins/"..schema},
-        { schemaRoot.."/"..schema.."/**", ext.target_dir.."/"..schema},
+    -- Use postbuildcommands since schemas are built in the same premake pass
+    -- and prebuild_copy won't work (files don't exist yet at prebuild time)
+    postbuildcommands {
+        "{MKDIR} "..ext.target_dir.."/plugins",
     }
 
-    repo_build.prebuild_copy (
-        { schemaRoot.."/lib/${lib_prefix}"..libname.."${lib_ext}", ext.target_dir.."/lib" }, "linux"
-    )
+    -- {COPYDIR} has different semantics per platform (premake issue #1232):
+    --   Linux (cp -rf):  creates basename(src)/ inside dst/ when dst exists
+    --   Windows (xcopy): copies CONTENTS of src/ flat into dst/
+    -- So on Windows we must include the schema name in the destination path
+    filter { "system:linux" }
+        postbuildcommands {
+            "{COPYDIR} "..schemaRoot.."/plugins/"..schema.." "..ext.target_dir.."/plugins",
+            "{COPYDIR} "..schemaRoot.."/"..schema.." "..ext.target_dir,
+        }
+    filter { "system:windows" }
+        postbuildcommands {
+            "{COPYDIR} "..schemaRoot.."/plugins/"..schema.." "..ext.target_dir.."/plugins/"..schema,
+            "{COPYDIR} "..schemaRoot.."/"..schema.." "..ext.target_dir.."/"..schema,
+        }
+    filter {}
 
-    repo_build.prebuild_copy (
-        { schemaRoot.."/bin/${lib_prefix}"..libname.."${lib_ext}", ext.target_dir.."/bin" }, "windows"
-    )
-
-    repo_build.prebuild_copy (
-        { schemaRoot.."/lib/${lib_prefix}"..libname.."${staticlib_ext}", ext.target_dir.."/lib" }, "windows"
-    )
+    -- Copy native libraries ({COPYFILE} has consistent behavior cross-platform)
+    filter { "system:linux" }
+        postbuildcommands {
+            "{MKDIR} "..ext.target_dir.."/lib",
+            "{COPYFILE} "..schemaRoot.."/lib/lib"..libname..".so "..ext.target_dir.."/lib/lib"..libname..".so",
+        }
+    filter { "system:windows" }
+        postbuildcommands {
+            "{MKDIR} "..ext.target_dir.."/bin",
+            "{MKDIR} "..ext.target_dir.."/lib",
+            "{COPYFILE} "..schemaRoot.."/bin/"..libname..".dll "..ext.target_dir.."/bin/"..libname..".dll",
+            "{COPYFILE} "..schemaRoot.."/lib/"..libname..".lib "..ext.target_dir.."/lib/"..libname..".lib",
+        }
+    filter {}
 end
 
 function add_omni_client_library()

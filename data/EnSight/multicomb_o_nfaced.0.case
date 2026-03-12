@@ -1,0 +1,10 @@
+FORMAT
+type: ensight gold
+
+
+GEOMETRY
+model: multicomb_o_nfaced.0.00000.geo
+
+VARIABLE
+scalar per node: Density_n multicomb_o_nfaced.0.00000_n.Density
+vector per node: Momentum_n multicomb_o_nfaced.0.00000_n.Momentum

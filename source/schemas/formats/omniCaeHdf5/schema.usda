@@ -1,0 +1,44 @@
+#usda 1.0
+(
+    """
+        HDF5-specific CAE field array schema.
+    """
+    subLayers = [
+        @../../shared/omniCae/schema.usda@
+    ]
+)
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+over "GLOBAL" (
+    customData = {
+        string libraryName = "omniCaeHdf5"
+        string libraryPath = "omniCaeHdf5"
+        string libraryPrefix = "OmniCaeHdf5"
+        bool useLiteralIdentifier = true
+    }
+)
+{
+
+}
+
+class CaeHdf5FieldArray "CaeHdf5FieldArray" (
+    inherits = </CaeFieldArray>
+    customData = {
+        string className = "Hdf5FieldArray"
+    }
+)
+{
+    string hdf5Path = "" (
+        doc = "Specifies the path to the HDF5 dataset."
+        displayName = "HDF5 Path"
+        displayGroup = "HDF5 Field Array"
+    )
+}

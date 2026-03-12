@@ -1,0 +1,788 @@
+#usda 1.0
+(
+    """
+        This file describes API schemas for CAE visualization primitives.
+    """
+    subLayers = [
+        @usd/schema.usda@,
+        @usdGeom/schema.usda@,
+        @usdVol/schema.usda@,
+    ]
+)
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+over "GLOBAL" (
+    customData = {
+        string libraryName = "omniCaeViz"
+        string libraryPath = "omniCaeViz"
+        string libraryPrefix = "OmniCaeViz"
+        bool useLiteralIdentifier = true
+    }
+)
+{
+
+}
+
+class "CaeVizOperatorAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "OperatorAPI"
+    }
+    doc = """Single-apply API schema that marks a prim as a Kit-CAE visualization operator.
+    Only prims with this API applied are recognized and executed by the omni.cae.viz runtime."""
+)
+{
+    bool cae:viz:operator:enabled = false (
+        doc = "When false, the operator is skipped by the runtime."
+        displayGroup = "Operator"
+        displayName = "Enabled"
+        customData = {
+            token apiName = "enabled"
+        }
+    )
+
+    token cae:viz:operator:device = "auto" (
+        doc = "Specifies the compute device for operator execution. 'auto' selects the optimal device."
+        allowedTokens = ["auto", "cpu", "cuda:0", "cuda:1", "cuda:2", "cuda:3"]
+        displayGroup = "Operator"
+        displayName = "Compute Device"
+        customData = {
+            token apiName = "device"
+        }
+    )
+}
+
+class "CaeVizOperatorDebuggingAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "OperatorDebuggingAPI"
+    }
+    doc = """Single-apply API schema that extends a prim with OperatorAPI to add properties
+    for debugging and performance tracking. These properties are experimental and may change
+    to accommodate new debugging use-cases."""
+)
+{
+    bool cae:viz:operatorDebugging:enableTiming = false (
+        doc = "When true, enables timing log generation for this operator."
+        displayGroup = "Operator [Debugging]"
+        displayName = "Enable Timing"
+        customData = {
+            token apiName = "enableTiming"
+        }
+    )
+}
+
+class "CaeVizOperatorDependenciesAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "OperatorDependenciesAPI"
+    }
+    doc = """Single-apply API schema that can be used to indicate dependencies on an Operator.
+    This should be considered experimental for now as we evaluate the use-cases for specifying
+    such dependencies."""
+)
+{
+    rel cae:viz:operatorDependencies:dependents (
+        displayGroup = "Operator [Dependencies]"
+        displayName = "Dependents"
+        doc = """Specifies the prims that are dependents of this operator."""
+        customData = {
+            token apiName = "dependents"
+        }
+    )
+}
+
+class "CaeVizOperatorTemporalAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "OperatorTemporalAPI"
+    }
+    doc = """Applies to a prim with OperatorAPI to add extra properties for controlling temporal
+    execution of the operator."""
+)
+{
+    bool cae:viz:temporal:enableFieldInterpolation = false (
+        doc = """Specifies whether to enable field interpolation across time samples.
+        When enabled, the operator will interpolate field data between time samples
+        based on the current time, allowing for smoother temporal transitions.
+
+        Operators may impose restrictions on when field interpolation can be used,
+        such as requiring that input datasets have multiple time samples available or have immutable topology.
+        """
+        displayGroup = "Operator [Temporal]"
+        displayName = "Enable Field Interpolation"
+        customData = {
+            token apiName = "enableFieldInterpolation"
+        }
+    )
+
+    bool cae:viz:temporal:useLockedTime = false (
+        displayGroup = "Operator [Temporal]"
+        displayName = "Use Locked Time"
+        doc = """When true, the operator executes at the specified 'lockedTime' rather than the current time.
+        This is useful for debugging or when consistent results are needed across frames."""
+        customData = {
+            token apiName = "useLockedTime"
+        }
+    )
+
+    double cae:viz:temporal:lockedTime = 0.0 (
+        displayGroup = "Operator [Temporal]"
+        displayName = "Locked Time"
+        doc = """Specifies the time at which to execute the operator when "useLockedTime" is true."""
+        customData = {
+            token apiName = "lockedTime"
+        }
+    )
+
+#   int cae:viz:temporal:timeWindow = 2 (
+#       displayGroup = "Operator [Temporal]"
+#       displayName = "Time Window"
+#       doc = "Specifies the time sample window when field interpolation is enabled."
+#       customData = {
+#           token apiName = "timeWindow"
+#       }
+#   )
+}
+
+# ---------------------------------------------------------------------------------------------------------
+# ------- DATASET SPECIFIC APIS ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
+
+class "CaeVizDatasetSelectionAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "multipleApply"
+        string className = "DatasetSelectionAPI"
+        token propertyNamespacePrefix = "cae:viz:dataset_selection"
+    }
+    doc = """Multiple-apply API schema for choosing a CaeDataSet as input for an operator.
+    The instance name indicates the dataset's role to the operator. For example, an operator
+    may use the "source" instance name to indicate the dataset to be operated upon."""
+)
+{
+    rel target (
+        doc = "Relationship to dataset. Must target a CaeDataSet prim."
+        displayName = "Dataset"
+        displayGroup = "Dataset Selection"
+    )
+}
+
+class "CaeVizDatasetTransformingAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "multipleApply"
+        string className = "DatasetTransformingAPI"
+        token propertyNamespacePrefix = "cae:viz:dataset_transforming"
+    }
+    doc = """Multiple-apply API schema for controlling how the dataset is transformed
+    before processing by the operator. The instance name helps identify which dataset
+    selection (typically specified by applying CaeVizDatasetSelectionAPI) the
+    transforming parameters apply to."""
+)
+{
+    # TODO: not sure what I want here yet
+    uniform bool useGlobalTransform = false (
+        doc = "Specifies whether to use the global transform of the dataset."
+        displayGroup = "Dataset Transforming"
+        displayName = "Use Global Transform"
+    )
+}
+
+class "CaeVizDatasetVoxelizationAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "multipleApply"
+        string className = "DatasetVoxelizationAPI"
+        token propertyNamespacePrefix = "cae:viz:dataset_voxelization"
+    }
+    doc = """Multiple-apply API schema for controlling how the dataset is voxelized
+    before processing by the operator. When applied, the selected dataset is
+    voxelized into a regular volume before processing. The voxelization parameters
+    can be controlled via the attributes of this API. The instance name helps identify
+    which dataset selection (typically specified by applying CaeVizDatasetSelectionAPI) the
+    voxelization parameters apply to."""
+)
+{
+    uniform token voxelSizeMode = "maxResolution" (
+        doc = """Specifies whether to use "maxResolution" or "voxelSize" for determining
+        the voxel size for the target NanoVDB."""
+        allowedTokens = ["maxResolution", "voxelSize"]
+        displayName = "Mode"
+        displayGroup = "Dataset Voxelization"
+    )
+
+    uniform float3 voxelSize = (1.0, 1.0, 1.0) (
+        doc = """Specifies the voxel size for the target NanoVDB. Used when "voxelSizeMode" is set to "voxelSize"."""
+        displayName = "Voxel Size"
+        displayGroup = "Dataset Voxelization"
+    )
+
+    uniform int maxResolution = 128 (
+        doc = """Specifies the maximum resolution in any direction for the voxelization grid. This is used to compute voxel size
+        when 'mode' is set to "maxResolution"."""
+        displayName = "Max Resolution"
+        displayGroup = "Dataset Voxelization"
+    )
+
+    rel roi (
+        doc = "Specifies the prim whose bounds should be used as the region of interest (ROI) to target for the volume rendering."
+        displayName = "Region-of-interest (ROI)"
+        displayGroup = "Dataset Voxelization"
+    )
+
+    uniform int inflateBounds = 0 (
+        doc = "If greater than 0, specifies the percentage by which to inflate the data bounds before voxelization."
+        displayGroup = "Dataset Voxelization"
+        displayName = "Inflate Bounds (%)"
+    )
+}
+
+class "CaeVizDatasetGaussianSplattingAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "multipleApply"
+        string className = "DatasetGaussianSplattingAPI"
+        token propertyNamespacePrefix = "cae:viz:dataset_gaussian_splatting"
+    }
+    doc = """Multiple-apply API schema for controlling how the dataset is processed
+    using Gaussian splatting before voxelization for processing by the operator.
+    When applied, the selected dataset is processed to convert it to a Gaussian point cloud.
+    The splatting parameters can be controlled via the  attributes of this API.
+    The instance name helps identify which dataset selection
+    (typically specified by applying CaeVizDatasetSelectionAPI) the
+    Gaussian splatting parameters apply to."""
+)
+{
+    uniform float radiusFactor = 1.0 (
+        doc = """Specifies the radius for inference with the Gaussian kernel. It is treated as a mutliplier
+        for the voxel size."""
+        displayGroup = "Gaussian Splatting"
+        displayName = "Radius Factor"
+    )
+
+    uniform float sharpness = 1.0 (
+        doc = "Specifies the sharpness for the Gaussian kernel."
+        displayGroup = "Gaussian Splatting"
+        displayName = "Sharpness"
+    )
+}
+
+class "CaeVizDatasetTemporalTraitsAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "multipleApply"
+        string className = "DatasetTemporalTraitsAPI"
+        token propertyNamespacePrefix = "cae:viz:dataset_temporal_traits"
+    }
+    doc = """Multiple-apply API schema for describing the temporal traits of a dataset.
+    This can be used by operators to determine whether temporal interpolation can be used or to
+    optimize execution based on the dataset's temporal properties. The instance name helps identify which dataset selection
+    (typically specified by applying CaeVizDatasetSelectionAPI) the temporal traits apply to."""
+)
+{
+    uniform token topology = "undefined" (
+        doc = """Specifies the temporal traits of the dataset's topology. Can be "static" if the topology
+        is guaranteed to be the same across all time samples, "varying" if the topology may change across
+        time samples, or "undefined" if unknown."""
+        allowedTokens = ["undefined", "static", "varying"]
+        displayGroup = "Temporal Traits"
+        displayName = "Topology"
+    )
+
+    uniform token geometry = "undefined" (
+        doc = """Specifies the temporal traits of the dataset's geometry. Can be "static" if the geometry
+        is guaranteed to be the same across all time samples, "varying" if the geometry may change across
+        time samples, or "undefined" if unknown."""
+        allowedTokens = ["undefined", "static", "varying"]
+        displayGroup = "Temporal Traits"
+        displayName = "Geometry"
+    )
+}
+
+# ---------------------------------------------------------------------------------------------------------
+# ------- FIELD SPECIFIC APIS -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
+
+class "CaeVizFieldSelectionAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        string className = "FieldSelectionAPI"
+        token apiSchemaType = "multipleApply"
+        token propertyNamespacePrefix = "cae:viz:field_selection"
+    }
+    doc = """Multiple-apply API schema for selecting a field from a dataset.
+    The instance name indicates the field's role to the operator. For example, an operator
+    may use the "velocities" instance name to indicate the velocity field to be used."""
+)
+{
+    rel target (
+        doc = """Relationship to field. Can target multiple fields. They are all used according to the "mode" attribute."""
+        displayGroup = "Field Selection"
+        displayName = "Field(s)"
+    )
+
+    uniform token mode = "unchanged" (
+        doc = """Specifies how to interpret multiple fields.
+        Can be "unchanged" to leave source field data as is, "vector_magnitude" to compute the vector
+        magnitude from components (no effect on scalar fields), or "selected_component" to use only
+        the component specified by "componentIndex"."""
+        allowedTokens = ["unchanged", "vector_magnitude", "selected_component"]
+        displayGroup = "Field Selection"
+        displayName = "Mode"
+    )
+
+    uniform uint componentIndex = 0 (
+        doc = """Specifies the component index to use when mode is "selected_component"."""
+        displayGroup = "Field Selection"
+        displayName = "Component Index"
+    )
+}
+
+class "CaeVizFieldMappingAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        string className = "FieldMappingAPI"
+        token apiSchemaType = "multipleApply"
+        token propertyNamespacePrefix = "cae:viz:field_mapping"
+    }
+    doc = """Multiple-apply API schema for controlling how a field's numeric range is mapped
+    before processing by the operator. The instance name helps identify which field
+    selection (typically specified by applying CaeVizFieldSelectionAPI) the
+    mapping parameters apply to."""
+)
+{
+    uniform float2 range = (0.1, 1.0) (
+        doc = "Specifies the output range after scaling."
+        displayGroup = "Field Mapping"
+        displayName = "Range"
+    )
+
+    uniform float2 domain = (0.0, -1.0) (
+        doc = "Specifies the input domain for scaling. An invalid range indicates auto-compute from data."
+        displayGroup = "Field Mapping"
+        displayName = "Domain"
+    )
+}
+
+class "CaeVizFieldThresholdingAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        string className = "FieldThresholdingAPI"
+        token apiSchemaType = "multipleApply"
+        token propertyNamespacePrefix = "cae:viz:field_thresholding"
+    }
+    doc = """Multiple-apply API schema for controlling how a field is thresholded
+    before processing by the operator. The instance name helps identify which field
+    selection (typically specified by applying CaeVizFieldSelectionAPI) the
+    thresholding parameters apply to."""
+)
+{
+    uniform float2 threshold = (0.0, 1.0) (
+        doc = "Specifies the threshold range."
+        displayGroup = "Field Voxelization"
+        displayName = "Threshold"
+    )
+
+    uniform bool useLowerThreshold = true (
+        doc = "Specifies whether to use the lower threshold."
+        displayGroup = "Field Voxelization"
+        displayName = "Use Lower Threshold"
+    )
+
+    uniform bool useUpperThreshold = true (
+        doc = "Specifies whether to use the upper threshold."
+        displayGroup = "Field Voxelization"
+        displayName = "Use Upper Threshold"
+    )
+
+    uniform float scalarFillValue = 0.0 (
+        doc = "Specifies the fill value to use as the background value for the NanoVDB volume. This is used for scalar fields."
+        displayGroup = "Field Voxelization"
+        displayName = "Scalar Fill Value"
+    )
+
+    uniform float3 vectorFillValue = (0.0, 0.0, 0.0) (
+        doc = "Specifies the fill value to use as the background value for the NanoVDB volume. This is used for vector fields."
+        displayGroup = "Field Voxelization"
+        displayName = "Vector Fill Value"
+    )
+}
+
+# ---------------------------------------------------------------------------------------------------------
+# ------- ALGORITHM APIS ----------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
+class "CaeVizFacesAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "FacesAPI"
+        token[] apiSchemaCanOnlyApplyTo = ["UsdGeomMesh"]
+    }
+    doc = """API schema when applied to UsdGeomMesh indicates that
+    the UsdGeomMesh prim represents faces for the dataset
+    targeted by the 'cae:viz:source:target' relationship.
+
+    The 'colors' instance of the CaeVizFieldSelectionAPI is used to
+    specify the color field for the faces.
+
+    Additional instances of CaeVizFieldSelectionAPI can be applied to
+    the UsdGeomMesh prim to specify other fields to pass as primvars. The instance
+    name for each is used as the name of the primvar.
+    """
+)
+{
+    uniform bool cae:viz:faces:externalOnly = true (
+        doc = "Specifies whether to extract external faces alone; otherwise all faces for elements/cells will be extracted."
+        displayName = "External Only"
+        displayGroup = "Faces"
+        customData = {
+            token apiName = "externalOnly"
+        }
+    )
+}
+
+class "CaeVizStreamlinesAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "StreamlinesAPI"
+        token[] apiSchemaCanOnlyApplyTo = ["UsdGeomBasisCurves"]
+    }
+    doc = """API schema when applied to UsdGeomBasisCurves indicates that
+    the UsdGeomBasisCurves prim represents streamlines for the dataset
+    targeted by the 'cae:viz:source:target' relationship seeded at points
+    from dataset targeted by the 'cae:viz:seeds:target' relationship.
+
+    The "velocities" instance of the CaeVizFieldSelectionAPI is used to
+    specify the velocity field for the streamlines.
+
+    The "colors" instance of the CaeVizFieldSelectionAPI is used to
+    specify the color field for the streamlines.
+
+    The "widths" instance of the CaeVizFieldSelectionAPI is used to
+    specify the width field for the streamlines.
+
+    Additional instances of CaeVizFieldSelectionAPI can be applied to
+    the UsdGeomBasisCurves prim to specify other fields to pass as primvars. The instance name
+    for each is used as the name of the primvar.
+    """
+)
+{
+    uniform float cae:viz:streamlines:minStepSize = 0.01 (
+        doc = "Specifies the minimum step size for streamline integration."
+        displayName = "Min Step Size"
+        displayGroup = "Streamlines"
+        customData = {
+            token apiName = "minStepSize"
+        }
+    )
+
+    uniform float cae:viz:streamlines:maxStepSize = 0.5 (
+        doc = "Specifies the maximum step size for streamline integration."
+        displayName = "Max Step Size"
+        displayGroup = "Streamlines"
+        customData = {
+            token apiName = "maxStepSize"
+        }
+    )
+
+    uniform float cae:viz:streamlines:initialStepSize = 0.2 (
+        doc = "Specifies the initial step size for streamline integration."
+        displayName = "Initial Step Size"
+        displayGroup = "Streamlines"
+        customData = {
+            token apiName = "initialStepSize"
+        }
+    )
+
+    uniform int cae:viz:streamlines:maxSteps = 150 (
+        doc = "Specifies the maximum number of steps for streamline integration."
+        displayName = "Max Steps"
+        displayGroup = "Streamlines"
+        customData = {
+            token apiName = "maxSteps"
+        }
+    )
+
+    uniform token cae:viz:streamlines:direction = "both" (
+        doc = "Specifies the integration direction for streamlines. Can be 'forward', 'backward', or 'both'."
+        allowedTokens = ["forward", "backward", "both"]
+        displayName = "Direction"
+        displayGroup = "Streamlines"
+        customData = {
+            token apiName = "direction"
+        }
+    )
+
+    uniform float cae:viz:streamlines:threshold = 1e-7 (
+        doc = "Specifies the velocity threshold below which integration will stop."
+        displayName = "Velocity Threshold"
+        displayGroup = "Streamlines"
+        customData = {
+            token apiName = "threshold"
+        }
+    )
+
+    uniform float cae:viz:streamlines:tolerance = 1e-3 (
+        doc = "Specifies the tolerance for adaptive step size control."
+        displayName = "Tolerance"
+        displayGroup = "Streamlines"
+        customData = {
+            token apiName = "tolerance"
+        }
+    )
+
+    uniform float cae:viz:streamlines:width = 0.02 (
+        doc = """Specifies the default width for streamlines. This is used when no width field is specified
+        via the 'widths' instance of CaeVizFieldSelectionAPI."""
+        displayName = "Width"
+        displayGroup = "Streamlines"
+        customData = {
+            token apiName = "width"
+        }
+    )
+}
+
+
+class "CaeVizPointsAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "PointsAPI"
+        token[] apiSchemaCanOnlyApplyTo = ["UsdGeomPoints"]
+    }
+    doc = """Single-apply API schema when applied to UsdGeomPoints indicates that the prim
+    represents points for the dataset targeted by the "source" instance of CaeVizDatasetSelectionAPI.
+
+    The "colors" instance of CaeVizFieldSelectionAPI specifies the field to use for coloring the points.
+    This is passed as "primvar:colors" to the shader.
+
+    The "widths" instance specifies the width field to use for the points.
+
+    Additional instances of CaeVizFieldSelectionAPI can specify other fields as primvars,
+    using the instance name as the primvar name."""
+)
+{
+    uniform int cae:viz:points:maxCount = 10000000 (
+        doc = "Specifies the maximum number of points to render. Use 0 to indicate all points."
+        displayName = "Max Count"
+        displayGroup = "Points"
+        customData = {
+            token apiName = "maxCount"
+        }
+    )
+
+    uniform float cae:viz:points:width = 0.02 (
+        doc = "Specifies the default constant width to use for points."
+        displayName = "Width"
+        displayGroup = "Points"
+        customData = {
+            token apiName = "width"
+        }
+    )
+
+    uniform bool cae:viz:points:useCellPoints = true (
+        doc = "When true, only points used by the cells in the dataset are processed."
+        displayName = "Use Cell Points"
+        displayGroup = "Points"
+        customData = {
+            token apiName = "useCellPoints"
+        }
+    )
+}
+
+class "CaeVizGlyphsAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "GlyphsAPI"
+        token[] apiSchemaCanOnlyApplyTo = ["UsdGeomPointInstancer"]
+    }
+    doc = """API schema when applied to UsdGeomPointInstancer indicates that the
+    UsdGeomPointInstancer prim represents glyphs for the dataset targeted by the
+    'cae:viz:source:target' relationship.
+
+    The "colors" instance of CaeVizFieldSelectionAPI specifies the field to use for coloring the glyphs.
+    This is passed as "primvar:colors" to the shader.
+
+    The "scales" instance specifies the scale field to use for scaling the glyphs.
+
+    The "orientations" instance specifies the orientation field. "orientationsMode" attribute
+    controls how to interpret the orientation field (as quaternions or euler angles).
+
+    Additional instances of CaeVizFieldSelectionAPI can specify other fields as primvars,
+    using the instance name as the primvar name."""
+)
+{
+    uniform token cae:viz:glyphs:orientationsMode = "eulerAngles" (
+        doc = "Specifies how to interpret the orientation field. Can be 'quaternion' or 'eulerAngles'."
+        allowedTokens = ["quaternion", "eulerAngles"]
+        displayName = "Orientations Mode"
+        displayGroup = "Glyphs"
+        customData = {
+            token apiName = "orientationsMode"
+        }
+    )
+
+    uniform int cae:viz:glyphs:maxCount = 10000000 (
+        doc = "Specifies the maximum number of glyphs to render. Use 0 to indicate all glyphs."
+        displayName = "Max Count"
+        displayGroup = "Glyphs"
+        customData = {
+            token apiName = "maxCount"
+        }
+    )
+
+    uniform bool cae:viz:glyphs:useCellPoints = true (
+        doc = "When true, only points used by the cells in the dataset are processed."
+        displayName = "Use Cell Points"
+        displayGroup = "Glyphs"
+        customData = {
+            token apiName = "useCellPoints"
+        }
+    )
+
+    uniform float cae:viz:glyphs:scale = 1.0 (
+        doc = "Default constant scale factor to use no field selection is specified for `scales`"
+        displayName = "Scale"
+        displayGroup = "Glyphs"
+        customData = {
+            token apiName = "scale"
+        }
+    )
+}
+
+class "CaeVizIndeXVolumeAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "IndeXVolumeAPI"
+        token[] apiSchemaCanOnlyApplyTo = ["UsdVolVolume"]
+    }
+    doc = """Single-apply API schema when applied to UsdVolVolume indicates that the prim
+    represents a volume dataset to be rendered using NVIDIA IndeX."""
+)
+{
+}
+
+# ---------------------------------------------------------------------------------------------------------
+# ------- ALGORITHM DERIVATIVES APIS -----------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
+
+class "CaeVizRescaleRangeAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "multipleApply"
+        string className = "RescaleRangeAPI"
+        token propertyNamespacePrefix = "cae:viz:rescale_range"
+    }
+    doc = """Multiple-apply API schema for controlling how numeric ranges are rescaled based on computed field ranges."""
+)
+{
+    uniform token rescaleMode = "clamp" (
+        doc = """Specifies how to rescale numeric ranges. Can be "disable" to skip rescaling,
+        "clamp" to clamp within bounds, or "grow" to expand bounds."""
+        allowedTokens = ["disable", "clamp", "grow"]
+        displayGroup = "Rescale Range"
+        displayName = "Rescale Mode"
+    )
+
+    rel includes (
+        doc = "Specifies the target properties to reset based on the field range."
+        displayGroup = "Rescale Range"
+        displayName = "Includes (Range)"
+    )
+
+    rel minIncludes (
+        doc = "Specifies the target properties to reset to min value based on the field range."
+        displayGroup = "Rescale Range"
+        displayName = "Includes (Min)"
+    )
+
+    rel maxIncludes (
+        doc = "Specifies the target properties to reset to max value based on the field range."
+        displayGroup = "Rescale Range"
+        displayName = "Includes (Max)"
+    )
+
+    rel enableIncludes (
+        doc = "Specifies the target properties to toggle based on whether the field is present."
+        displayGroup = "Rescale Range"
+        displayName = "Includes (Enable)"
+    )
+}
+
+class "CaeVizConfigureXACShaderAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "multipleApply"
+        string className = "ConfigureXACShaderAPI"
+        token propertyNamespacePrefix = "cae:viz:configure_xac_shader"
+    }
+    doc = """Multiple-apply API schema for configuring XAC shader properties based on field characteristics."""
+)
+{
+    rel voxelSizeIncludes (
+        doc = "Specifies the target properties to set based on the voxel size (if any)."
+        displayGroup = "Configure XAC Shader"
+        displayName = "Voxel Size (Properties)"
+    )
+
+    rel sampleModeIncludes (
+        doc = "Specifies the target properties to set based on the field type (0 for float and 1 for float3)."
+        displayGroup = "Configure XAC Shader"
+        displayName = "Sample Mode (Properties)"
+    )
+
+    rel attribIdxIncludes (
+        doc = "Specifies the target properites to set based on the attribute indices to process for current frame."
+        displayGroup = "Configure XAC Shader"
+        displayName = "Attrib Idx (Properties)"
+    )
+
+    rel timeCodesIncludes (
+        doc = "Specifies the target properites to set based on the active time codes to process for current frame."
+        displayGroup = "Configure XAC Shader"
+        displayName = "Time Codes (Properties)"
+    )
+}
+
+class "CaeVizConfigureFlowEnvironmentAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "multipleApply"
+        string className = "ConfigureFlowEnvironmentAPI"
+        token propertyNamespacePrefix = "cae:viz:configure_flow_environment"
+    }
+    doc = """Multiple-apply schema applied to an emitter to configure simulation paramters based on the data from
+    the selected source"""
+)
+{
+    uniform token rescaleMode = "exact" (
+        allowedTokens = ["disable", "exact", "minimum", "maximum"]
+        displayGroup = "Configure Flow Environment"
+        displayName = "Rescale Mode"
+        doc = """Specifies how to set the desity cell size. "exact" means set it to the value determined,
+        while "min" and "max" can be used to set to cell size to minimum or maximum comparing with the current value
+        of the property."""
+    )
+
+    rel densityCellSizeIncludes (
+        doc = "Specifies the target properties to set based on the voxel size."
+        displayGroup = "Configure Flow Environment"
+        displayName = "Density Cell Size (Properties)"
+    )
+}

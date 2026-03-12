@@ -16,6 +16,7 @@ from repoman_bootstrapper import repoman_bootstrap
 REPO_ROOT = os.path.join(os.path.dirname(os.path.normpath(__file__)), "../..")
 REPO_DEPS_FILE = Path(REPO_ROOT) / "tools/deps/repo-deps.packman.xml"
 OPT_DEPS_FILE = Path(REPO_ROOT) / "tools/deps/repo-deps-nv.packman.xml"
+CAE_DEPS_FILE = Path(REPO_ROOT) / "tools/deps/repo-deps-cae.packman.xml"
 REPO_CACHE_FILE = os.path.join(REPO_ROOT, "repo-cache.json")
 
 
@@ -26,7 +27,7 @@ def bootstrap():
     Pull with packman from repo.packman.xml and add them all to python sys.path to enable importing.
     """
     with contextlib.redirect_stdout(io.StringIO()):
-        for file in [REPO_DEPS_FILE, OPT_DEPS_FILE]:
+        for file in [REPO_DEPS_FILE, OPT_DEPS_FILE, CAE_DEPS_FILE]:
             if file.is_file():
                 deps = packmanapi.pull(file.as_posix())
 

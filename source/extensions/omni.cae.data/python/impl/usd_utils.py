@@ -35,12 +35,20 @@ __all__ = [
     "get_vecN_from_relationships",
     "get_attribute",
     "get_prim_pxr",
+    "get_prim_rt",
+    "get_instances",
     "get_field_name",
     "get_target_field_name",
     "get_target_field_names",
     "get_prim_at_path",
+    "get_stage_id",
     "get_bounds",
     "get_bracketing_time_codes",
+    "get_bracketing_time_samples_for_prim",
+    "get_bracketing_time_samples_for_data_set_prim",
+    "get_related_data_prims",
+    "snap_time_code_to_prim",
+    "snap_time_code_to_prims",
     "get_time_sample",
     "get_time_samples",
     "get_next_time_sample",
@@ -62,7 +70,7 @@ from pxr import Gf, Sdf, Tf, Usd, UsdGeom, UsdUtils
 from usdrt import Rt
 from usdrt import Usd as UsdRt
 
-from .. import get_data_delegate_registry
+from .. import get_data_delegate_interface, get_data_delegate_registry
 from . import array_utils, cache, progress, range_utils
 from .bindings import IFieldArray
 
@@ -151,6 +159,25 @@ def get_target_paths(prim: Usd.Prim, relName: str) -> list[Sdf.Path]:
     if not targets:
         raise QuietableException("Missing targets on '%s" % rel)
     return targets
+
+
+def get_stage_id(stage: Usd.Stage) -> int:
+    """
+    Get the stage ID for a USD stage.
+
+    Args:
+        stage: The USD stage
+
+    Returns:
+        The stage ID as a long int
+
+    Raises:
+        QuietableException: If the stage is invalid
+    """
+    if not stage:
+        raise QuietableException("Invalid stage")
+    cache = UsdUtils.StageCache.Get()
+    return cache.GetId(stage).ToLongInt()
 
 
 @quietable
@@ -361,11 +388,13 @@ def get_prim_at_path(stage: Usd.Stage, path: str):
 
 @quietable_with_default(Gf.Range3d())
 def get_bounds(prim: Usd.Prim, timeCode=Usd.TimeCode.Default()) -> Gf.Range3d:
+
     if not prim or not prim.IsA(UsdGeom.Boundable):
         raise QuietableException("Prim is not boundable")
 
-    boundable = UsdGeom.Boundable(prim)
-    bounds: Gf.BBox3d = boundable.ComputeLocalBound(timeCode, UsdGeom.Tokens.default_)
+    bounds_cache = UsdGeom.BBoxCache(timeCode, [UsdGeom.Tokens.default_, UsdGeom.Tokens.render])
+    bounds_cache.SetTime(timeCode)
+    bounds: Gf.BBox3d = bounds_cache.ComputeLocalBound(prim)
     return bounds.ComputeAlignedRange()
 
 
@@ -390,6 +419,223 @@ async def compute_and_set_range(
         field_arrays = None
 
     return await range_utils.compute_and_set_range(attr, field_arrays, precomputed_range, force=force)
+
+
+def get_bracketing_time_samples_for_prim(prim: Usd.Prim, time: float) -> tuple[float, float, bool]:
+    """
+    Get bracketing time samples for a given prim using the C++ implementation.
+
+    This function wraps the C++ getBracketingTimeSamplesForPrim implementation which
+    recursively traverses prims and relationships to find time samples.
+
+    Args:
+        prim: The UsdPrim to query
+        time: The time value to query
+
+    Returns:
+        tuple: (lower, upper, has_time_samples) - The lower and upper bracketing time samples,
+               and a boolean indicating if time samples exist. When no time samples exist,
+               returns EarliestTime for both lower and upper.
+    """
+    earliest_time = Usd.TimeCode.EarliestTime().GetValue()
+
+    if not prim or not prim.IsValid():
+        return (earliest_time, earliest_time, False)
+
+    stage = prim.GetStage()
+    if not stage:
+        return (earliest_time, earliest_time, False)
+
+    # Get stage ID from cache
+    stage_id = get_stage_id(stage)
+    prim_path = str(prim.GetPath())
+
+    # Get C++ interface and call the method
+    interface = get_data_delegate_interface()
+    usd_utils_cpp = interface.get_usd_utils()
+    return usd_utils_cpp.get_bracketing_time_samples_for_prim(stage_id, prim_path, time)
+
+
+def get_bracketing_time_samples_for_data_set_prim(
+    prim: Usd.Prim, time: float, traverse_field_relationships: bool = True
+) -> tuple[float, float, bool]:
+    """
+    Get bracketing time samples for a DataSet prim with optional control over field relationship traversal.
+
+    This function wraps the C++ getBracketingTimeSamplesForDataSetPrim implementation which
+    recursively traverses prims and relationships to find time samples, with the option to
+    include or exclude field:* relationships.
+
+    Args:
+        prim: The DataSet UsdPrim to query (should be an OmniCaeDataSet prim)
+        time: The time value to query
+        traverse_field_relationships: If True, traverse field:* relationships; if False, skip them.
+                                      Defaults to True to match get_bracketing_time_samples_for_prim behavior.
+
+    Returns:
+        tuple: (lower, upper, has_time_samples) - The lower and upper bracketing time samples,
+               and a boolean indicating if time samples exist. When no time samples exist,
+               returns EarliestTime for both lower and upper.
+    """
+    earliest_time = Usd.TimeCode.EarliestTime().GetValue()
+
+    if not prim or not prim.IsValid():
+        return (earliest_time, earliest_time, False)
+
+    stage = prim.GetStage()
+    if not stage:
+        return (earliest_time, earliest_time, False)
+
+    # Get stage ID from cache
+    stage_id = get_stage_id(stage)
+    prim_path = str(prim.GetPath())
+
+    # Get C++ interface and call the method
+    interface = get_data_delegate_interface()
+    usd_utils_cpp = interface.get_usd_utils()
+    return usd_utils_cpp.get_bracketing_time_samples_for_data_set_prim(
+        stage_id, prim_path, time, traverse_field_relationships
+    )
+
+
+def get_related_data_prims(prim: Usd.Prim, transitive: bool = True, include_self: bool = True) -> list[Usd.Prim]:
+    """
+    Get all related DataSet and FieldArray prims for a given prim.
+
+    This function traverses relationships from the input prim and collects all related prims
+    that are either CaeDataSet or CaeFieldArray types. This is useful for cache invalidation
+    tracking where changes to related data prims should invalidate cached results.
+
+    Args:
+        prim: The starting prim (typically a DataSet or FieldArray)
+        transitive: If True, recursively traverse relationship targets; if False, only return
+                   immediate relationship targets
+        include_self: If True, include the input prim in the result set; if False, only return
+                     related prims
+
+    Returns:
+        List of related DataSet and FieldArray prims
+
+    Example:
+        >>> dataset = cae.DataSet.Define(stage, "/Root/DataSet")
+        >>> field1 = cae.FieldArray.Define(stage, "/Root/DataSet/Field1")
+        >>> field2 = cae.FieldArray.Define(stage, "/Root/DataSet/Field2")
+        >>> dataset.GetPrim().CreateRelationship("field:Field1").AddTarget(field1.GetPrim().GetPath())
+        >>> dataset.GetPrim().CreateRelationship("field:Field2").AddTarget(field2.GetPrim().GetPath())
+        >>> # Get all related prims (including the dataset itself)
+        >>> prims = get_related_data_prims(dataset.GetPrim(), transitive=True, include_self=True)
+        >>> # prims will contain: [dataset, field1, field2]
+        >>> # Get only the field relationships (exclude self)
+        >>> fields = get_related_data_prims(dataset.GetPrim(), transitive=False, include_self=False)
+        >>> # fields will contain: [field1, field2]
+    """
+    if not prim or not prim.IsValid():
+        return []
+
+    stage = prim.GetStage()
+    assert stage is not None, "Stage is None"
+    stage_id = get_stage_id(stage)
+    prim_path = str(prim.GetPath())
+
+    interface = get_data_delegate_interface()
+    utils = interface.get_usd_utils()
+    result_paths = utils.get_related_data_prims(stage_id, prim_path, transitive, include_self)
+
+    # Convert paths back to prims
+    result_prims = []
+    for path_str in result_paths:
+        result_prim = stage.GetPrimAtPath(path_str)
+        if result_prim.IsValid():
+            result_prims.append(result_prim)
+
+    return result_prims
+
+
+def snap_time_code_to_prim(
+    prim: Usd.Prim, time_code: Usd.TimeCode, traverse_field_relationships: bool = True
+) -> Usd.TimeCode:
+    """
+    Snap a time code down to the closest lower time sample for a given prim.
+
+    This function always snaps DOWN to the highest time sample that is <= the query time.
+    If no time sample exists <= the query time, returns the first (lowest) available time sample.
+
+    Args:
+        prim: The DataSet UsdPrim to query (should be an OmniCaeDataSet prim)
+        time_code: The time code to snap
+        traverse_field_relationships: If True, traverse field:* relationships; if False, skip them.
+                                      Defaults to True.
+
+    Returns:
+        Usd.TimeCode: The snapped time code (always <= query time if possible).
+                      If no time samples exist, returns EarliestTime.
+    """
+    if not prim or not prim.IsValid():
+        return Usd.TimeCode.EarliestTime()
+
+    time_value = time_code.GetValue()
+    lower, upper, has_time_samples = get_bracketing_time_samples_for_data_set_prim(
+        prim, time_value, traverse_field_relationships
+    )
+
+    if not has_time_samples:
+        return Usd.TimeCode.EarliestTime()
+
+    # Always return the lower bracketing time sample (the one <= query time)
+    # This ensures we always snap down
+    return Usd.TimeCode(lower)
+
+
+def snap_time_code_to_prims(
+    prims: list[Usd.Prim], time_code: Usd.TimeCode, traverse_field_relationships: bool = True
+) -> Usd.TimeCode:
+    """
+    Snap a time code down to the closest lower time sample across multiple prims.
+
+    This function calls snap_time_code_to_prim for each prim to get the snapped time for each,
+    then finds the closest lower time code from the set of snapped times.
+
+    Args:
+        prims: List of DataSet UsdPrims to query (should be OmniCaeDataSet prims)
+        time_code: The time code to snap
+        traverse_field_relationships: If True, traverse field:* relationships; if False, skip them.
+                                      Defaults to True.
+
+    Returns:
+        Usd.TimeCode: The snapped time code (always <= query time if possible).
+                      If no prims have time samples, returns EarliestTime.
+    """
+    if not prims:
+        return Usd.TimeCode.EarliestTime()
+
+    time_value = time_code.GetValue()
+    snapped_times = []
+
+    # Snap each prim individually
+    for prim in prims:
+        if not prim or not prim.IsValid():
+            continue
+
+        snapped_tc = snap_time_code_to_prim(prim, time_code, traverse_field_relationships)
+        if snapped_tc != Usd.TimeCode.EarliestTime():
+            snapped_times.append(snapped_tc.GetValue())
+
+    if not snapped_times:
+        return Usd.TimeCode.EarliestTime()
+
+    # Build sorted list of all snapped times
+    sorted_times = sorted(snapped_times)
+
+    # Find the highest time sample that is <= time_value (snap down)
+    i = bisect.bisect_right(sorted_times, time_value)
+
+    if i == 0:
+        # All snapped times are > time_value, return the first (lowest) one
+        return Usd.TimeCode(sorted_times[0])
+
+    # Get the previous element (the highest one <= time_value)
+    # This is the closest lower time sample
+    return Usd.TimeCode(sorted_times[i - 1])
 
 
 def get_bracketing_time_codes(prim: Usd.Prim, timeCode: Usd.TimeCode) -> tuple[Usd.TimeCode, Usd.TimeCode]:
@@ -548,6 +794,22 @@ def get_time_samples(prim: Usd.Prim) -> list[Usd.TimeCode]:
     return [Usd.TimeCode(x) for x in sorted(list(times))]  # sorted list of time samples
 
 
+def get_instances(prim: Usd.Prim, api_schema_name: str) -> list[str]:
+    """
+    Given a prim and a multiple-apply API schema name, return the list of instance names
+    for the prim that match the given API schema name.
+
+    This is only multiple-apply API schemas. For others, this will simply return an empty list.
+    """
+    registry = Usd.SchemaRegistry()
+    instances = []
+    for applied_schema in prim.GetAppliedSchemas():
+        schema_name, instance_name = registry.GetTypeNameAndInstance(applied_schema)
+        if instance_name and schema_name == api_schema_name:
+            instances.append(instance_name)
+    return instances
+
+
 @quietable
 def set_attribute(
     attr: Usd.Attribute, array: IFieldArray, timeCode: Usd.TimeCode = Usd.TimeCode.Default(), xform=None
@@ -568,6 +830,26 @@ def set_attribute(
         logger.debug("[set_attribute]: Set %s at %s [checksum=%s]", attr, timeCode, checksum)
         return True
     return False
+
+
+def get_prim_rt(prim: Usd.Prim) -> UsdRt.Prim:
+    if not prim:
+        return None
+
+    stage = prim.GetStage()
+    cache = UsdUtils.StageCache.Get()
+    id = cache.GetId(stage)
+
+    stage_ref = ChangeTracker._rt_stage_weakref_map.get(id)
+    stage_rt = stage_ref() if stage_ref is not None else None
+    if stage_rt is None:
+        stage_rt = UsdRt.Stage.Attach(id.ToLongInt())
+        ChangeTracker._rt_stage_weakref_map[id] = weakref.ref(stage_rt)
+
+    rt_prim = stage_rt.GetPrimAtPath(str(prim.GetPath()))
+    if not rt_prim:
+        raise QuietableException(f"Failed to get UsdRt prim for {prim}")
+    return rt_prim
 
 
 class ChangeTracker:

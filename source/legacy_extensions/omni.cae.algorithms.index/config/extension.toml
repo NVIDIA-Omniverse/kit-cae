@@ -1,0 +1,53 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+[core]
+# IndeX components are not reloadable
+reloadable = false
+
+[package]
+version = "1.2.0"
+title = "CAE IndeX Algorithms"
+description = "Extension providing IndeX-based CAE visualization algorithms and commands."
+category = "CAE"
+readme  = "docs/README.md"
+keywords = ["kit", "cae"]
+changelog = "docs/CHANGELOG.md"
+icon = "data/icon.png"
+
+[dependencies]
+"omni.cae.algorithms.core" = {}
+"omni.cae.data" = {}
+"omni.cae.index" = {}
+"omni.cae.schema" = {}
+"omni.client" = {}
+"omni.kit.commands" = {optional = true}
+"omni.rtx.index_composite" = {}
+"omni.usd" = {}
+"omni.usd.core" = {}
+
+[[python.module]]
+name = "omni.cae.algorithms.index"
+
+[settings]
+rtx.index.compositeEnabled = 0
+nvindex.plugins = "+base_importer,openvdb_integration"
+
+[[native.plugin]]
+path = "bin/*.plugin"
+recursive = false
+
+[documentation]
+pages = [
+    "docs/Overview.md",
+    "docs/CHANGELOG.md",
+]
+cpp_api = [
+]

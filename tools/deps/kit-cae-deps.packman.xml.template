@@ -1,0 +1,19 @@
+<project toolsVersion="5.0">
+  <!-- Put all extension specific dependencies in this file. -->
+  <!-- Edit this section to pull extension specific dependencies -->
+  <dependency name="cgns" linkPath="${root}/_build/target-deps/cgns" tags="non-redist">
+     <package name="cgns" version="4.5.1-0-${platform_target_abi}-dynamic-release" />
+  </dependency>
+
+  <dependency name="hdf5" linkPath="${root}/_build/target-deps/hdf5">
+    <package name="hdf5" version="2.1.0-0-${platform_target_abi}-dynamic-release" />
+  </dependency>
+
+  <dependency name="index-for-omniverse-headers" linkPath="${root}/_build/target-deps/nvindex">
+    <package name="index-for-omniverse-headers" version="@@INDEX_HEADERS_TAG@@" />
+  </dependency>
+
+  <dependency name="cuda" linkPath="${root}/_build/target-deps/cuda">
+    <package name="cuda" version="11.8.0-3-${platform_target}-release" />
+  </dependency>
+</project>

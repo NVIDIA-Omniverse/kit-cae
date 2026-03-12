@@ -14,13 +14,25 @@ import os.path
 from logging import getLogger
 
 import omni.ext
-from pxr import Plug
+from pxr import Plug, Usd  # noqa: F401 -- Usd import ensures base class wrappers exist for schema modules
 
 logger = getLogger(__name__)
 
 
 def _load_usd_plugins():
-    schemas = ["OmniCae", "OmniCaeSids", "OmniCaeVtk", "OmniCaeEnSight"]
+    schemas = [
+        "OmniCae",
+        "OmniCaeSids",
+        "OmniCaeViz",
+        "OmniCaeNumPy",
+        "OmniCaeNvdb",
+        "OmniCaeHdf5",
+        "OmniCaeCgns",
+        "OmniCaeVtk",
+        "OmniCaeEnSight",
+        "OmniCaeOpenFoam",
+        "OmniCaeTrimesh",
+    ]
 
     def get_parent_dir(path, level=1):
         for i in range(level):

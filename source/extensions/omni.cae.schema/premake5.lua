@@ -12,15 +12,14 @@ local ext = get_current_extension_info()
 
 project_ext (ext)
 
+-- NOTE: Do NOT use dependson for schema projects here. This extension's premake
+-- runs during kit.setup_all() BEFORE schema projects exist. Forward references
+-- to non-existent projects corrupt premake5 workspace deps on Ubuntu 24.04.
+-- Schema copies are handled by post_build commands in repo.toml instead.
+
 -- Link only those files and folders into the extension target directory
 repo_build.prebuild_link {
     { "data", ext.target_dir.."/data" },
     { "docs", ext.target_dir.."/docs" },
     { "omni", ext.target_dir.."/omni" },
 }
-
--- bring in USD plugins for schemas into this extension
-copy_cae_schema("OmniCae", ext)
-copy_cae_schema("OmniCaeSids", ext)
-copy_cae_schema("OmniCaeVtk", ext)
-copy_cae_schema("OmniCaeEnSight", ext)

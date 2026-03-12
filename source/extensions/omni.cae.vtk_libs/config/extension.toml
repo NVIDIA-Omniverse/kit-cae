@@ -19,9 +19,6 @@ keywords = ["kit", "cae", "extension"]
 readme  = "docs/README.md"
 repository = "https://github.com/NVIDIA-Omniverse/kit-cae"
 
-[dependencies]
-"omni.cae.pipapi" = {}
-
 [[python.module]]  # Main python module this extension provides, it will be publicly available as "import omni.cae.vtk_libs"
 name = "omni.cae.vtk_libs"
 

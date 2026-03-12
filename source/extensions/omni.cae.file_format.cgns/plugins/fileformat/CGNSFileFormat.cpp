@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: LicenseRef-NvidiaProprietary
 //
 // NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
@@ -6,16 +6,16 @@
 // documentation and any modifications thereto. Any use, reproduction,
 // disclosure or distribution of this material and related documentation
 // without an express license agreement from NVIDIA CORPORATION or
-//  its affiliates is strictly prohibited.
+// its affiliates is strictly prohibited.
 
 #include "CGNSFileFormat.h"
 
 #include "debugCodes.h"
 
-#include <omniCae/cgnsFieldArray.h>
 #include <omniCae/dataSet.h>
 #include <omniCae/pointCloudAPI.h>
 #include <omniCae/tokens.h>
+#include <omniCaeCgns/cgnsFieldArray.h>
 #include <omniCaeSids/tokens.h>
 #include <omniCaeSids/unstructuredAPI.h>
 #include <pxr/base/tf/diagnostic.h>
@@ -166,6 +166,10 @@ SdfLayerRefPtr ReadCGNS(int cgFile, const std::string& fname, const pxr::SdfLaye
     iter = args.find("assetPath");
     auto assetPath = iter == args.end() ? SdfAssetPath(fname) : SdfAssetPath(iter->second);
 
+    const double timeScale = args.find("timeScale") != args.end() ? std::stod(args.at("timeScale")) : 1.0;
+    const double timeOffset = args.find("timeOffset") != args.end() ? std::stod(args.at("timeOffset")) : 0.0;
+    const std::string timeSource = args.find("timeSource") != args.end() ? args.at("timeSource") : "TimeStep";
+
     // add container for the file.
     auto scope = UsdGeomScope::Define(stage, world.GetPath().AppendChild(rootName));
 
@@ -259,7 +263,8 @@ SdfLayerRefPtr ReadCGNS(int cgFile, const std::string& fname, const pxr::SdfLaye
                 {
                     CGNS_ENUMT(DataType_t) datatype;
                     call_safe(cg_coord_info(cgFile, base, zone, coord, &datatype, name), "read coord info");
-                    OmniCaeCgnsFieldArray arrayT = OmniCaeCgnsFieldArray::Define(stage, MakeChildPath(gcPrim, name));
+                    OmniCaeCgnsCgnsFieldArray arrayT =
+                        OmniCaeCgnsCgnsFieldArray::Define(stage, MakeChildPath(gcPrim, name));
                     const ScopedPush forGridCoordinateCoord(cgnsPath, name);
                     arrayT.GetPrim().GetSpecializes().SetSpecializes({ fieldArrayClass.GetPath() });
                     arrayT.CreateFieldAssociationAttr().Set(OmniCaeTokens->vertex);
@@ -297,8 +302,8 @@ SdfLayerRefPtr ReadCGNS(int cgFile, const std::string& fname, const pxr::SdfLaye
 
                 {
                     const ScopedPush forConn(cgnsPath, "ElementConnectivity");
-                    OmniCaeCgnsFieldArray arrayT =
-                        OmniCaeCgnsFieldArray::Define(stage, MakeChildPath(datasetT, "ElementConnectivity"));
+                    OmniCaeCgnsCgnsFieldArray arrayT =
+                        OmniCaeCgnsCgnsFieldArray::Define(stage, MakeChildPath(datasetT, "ElementConnectivity"));
                     arrayT.GetPrim().GetSpecializes().SetSpecializes({ fieldArrayClass.GetPath() });
                     arrayT.CreateFieldAssociationAttr().Set(OmniCaeTokens->none);
                     arrayT.CreateFieldPathAttr().Set(TfStringJoin(cgnsPath, "/"));
@@ -308,8 +313,8 @@ SdfLayerRefPtr ReadCGNS(int cgFile, const std::string& fname, const pxr::SdfLaye
                 if (elementType == CGNS_ENUMV(NGON_n) || elementType == CGNS_ENUMV(NFACE_n))
                 {
                     const ScopedPush forOffsets(cgnsPath, "ElementStartOffset");
-                    OmniCaeCgnsFieldArray arrayT =
-                        OmniCaeCgnsFieldArray::Define(stage, MakeChildPath(datasetT, "ElementStartOffset"));
+                    OmniCaeCgnsCgnsFieldArray arrayT =
+                        OmniCaeCgnsCgnsFieldArray::Define(stage, MakeChildPath(datasetT, "ElementStartOffset"));
                     arrayT.GetPrim().GetSpecializes().SetSpecializes({ fieldArrayClass.GetPath() });
                     arrayT.CreateFieldAssociationAttr().Set(OmniCaeTokens->none);
                     arrayT.CreateFieldPathAttr().Set(TfStringJoin(cgnsPath, "/"));
@@ -410,7 +415,8 @@ SdfLayerRefPtr ReadCGNS(int cgFile, const std::string& fname, const pxr::SdfLaye
                     const std::string fieldName(name);
 
                     // const ScopedPush forField(cgnsPath, name);
-                    OmniCaeCgnsFieldArray arrayT = OmniCaeCgnsFieldArray::Define(stage, MakeChildPath(fsPrim, name));
+                    OmniCaeCgnsCgnsFieldArray arrayT =
+                        OmniCaeCgnsCgnsFieldArray::Define(stage, MakeChildPath(fsPrim, name));
                     arrayT.GetPrim().GetSpecializes().SetSpecializes({ fieldArrayClass.GetPath() });
                     arrayT.CreateFieldAssociationAttr().Set(GetGridLocation(location));
 
@@ -422,8 +428,10 @@ SdfLayerRefPtr ReadCGNS(int cgFile, const std::string& fname, const pxr::SdfLaye
                         {
                             const ScopedPush forSol(cgnsPath, ifsName);
                             const ScopedPush forField(cgnsPath, fieldName);
+                            double dataTime =
+                                timeSource == "TimeStep" ? static_cast<double>(time_idx) : timeValues.at(time_idx);
                             arrayT.CreateFieldPathAttr().Set(
-                                TfStringJoin(cgnsPath, "/"), pxr::UsdTimeCode(timeValues.at(time_idx)));
+                                TfStringJoin(cgnsPath, "/"), pxr::UsdTimeCode(timeOffset + timeScale * dataTime));
                             if (time_idx == 0)
                             {
                                 // adding first value as the value for default time code until we
@@ -444,8 +452,17 @@ SdfLayerRefPtr ReadCGNS(int cgFile, const std::string& fname, const pxr::SdfLaye
                     auto tfFieldName = TfToken("field:" + TfMakeValidIdentifier(name));
                     for (auto& section : sections)
                     {
-                        // TODO: we need to add API to OmniCaeDataSet to fields like UsdVolVolume.
-                        // section.CreateFieldRelationship(fieldName, arrayT.GetPath());
+                        // For NGON_n sections, we only add relationship for point-centered fields.
+                        // For other sections, we add relationship for both point-centered and cell-centered fields.
+                        if (location == CGNS_ENUMV(CellCenter))
+                        {
+                            OmniCaeSidsUnstructuredAPI sidsAPI(section);
+                            pxr::TfToken elementType;
+                            if (sidsAPI.GetElementTypeAttr().Get(&elementType) && elementType == OmniCaeSidsTokens->NGON_n)
+                            {
+                                continue;
+                            }
+                        }
                         section.GetPrim().CreateRelationship(tfFieldName).SetTargets({ arrayT.GetPath() });
                     }
 

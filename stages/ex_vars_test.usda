@@ -1,0 +1,20 @@
+#usda 1.0
+(
+    # SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+    # SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+    defaultPrim = "World"
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+# Stage used by omni.cae.exVars tests.
+# No expressionVariables are defined here; they are injected into the
+# session layer by the extension under test.
+
+def Xform "World"
+{
+    def "TestPrim"
+    {
+        asset dataFile = @${DATA_ROOT}/data.usda@
+    }
+}

@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+[package]
+title = "CAE VTK Delegate"
+version = "1.0.0"
+description = "Extension that provides VTK data delegates for reading VTK file formats (.vti, .vtu, .vts, .vtp, .vtk)."
+category = "CAE"
+changelog = "docs/CHANGELOG.md"
+icon = "data/icon.png"
+keywords = ["kit", "cae", "vtk"]
+readme = "docs/README.md"
+
+[dependencies]
+"omni.cae.pip_prebundle" = {}
+"omni.cae.data" = {}
+"omni.cae.vtk_libs" = {}
+
+[[python.module]]
+name = "omni.cae.delegate.vtk"
+
+[settings]
+# Set to false to disable the direct-binary VTU reader (falls back to the
+# standard VTK delegate).  Non-persistent: takes effect on next startup only.
+exts."omni.cae.delegate.vtk".useCustomVtuReader = false
+
+[documentation]
+pages = [
+    "docs/Overview.md",
+    "docs/CHANGELOG.md",
+]

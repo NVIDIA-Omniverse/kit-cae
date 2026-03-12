@@ -1,0 +1,73 @@
+#usda 1.0
+(
+    """
+        Trimesh-specific CAE field array schema for surface mesh formats
+        (STL, OBJ, PLY, OFF, GLTF, etc.).
+    """
+    subLayers = [
+        @../../shared/omniCae/schema.usda@
+    ]
+)
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+over "GLOBAL" (
+    customData = {
+        string libraryName = "omniCaeTrimesh"
+        string libraryPath = "omniCaeTrimesh"
+        string libraryPrefix = "OmniCaeTrimesh"
+        bool useLiteralIdentifier = true
+    }
+)
+{
+}
+
+class CaeTrimeshFieldArray "CaeTrimeshFieldArray" (
+    inherits = </CaeFieldArray>
+    doc = """Defines a surface mesh data array read via the trimesh library.
+             Supports STL, OBJ, PLY, OFF, GLTF/GLB and other formats
+             recognised by trimesh."""
+    customData = {
+        string className = "TrimeshFieldArray"
+    }
+)
+{
+    uniform token special = "none" (
+        allowedTokens = [
+            "none",
+            "vertices",
+            "faces",
+            "face_offsets",
+            "face_counts",
+            "vertex_normals",
+            "face_normals",
+            "vertex_colors",
+        ]
+        doc = """Specifies which component of the surface mesh to extract.
+                 - none          : use arrayName to look up a named vertex/face attribute
+                 - vertices      : Nx3 vertex positions (float32)
+                 - faces         : flattened Mx3 triangle indices (int32)
+                 - face_offsets  : per-face connectivity offsets [0, 3, 6, ... 3M] (int32)
+                 - face_counts   : per-face vertex counts, always 3 for a trimesh (int32)
+                 - vertex_normals: Nx3 per-vertex normals (float32)
+                 - face_normals  : Mx3 per-face normals (float32)
+                 - vertex_colors : Nx4 RGBA vertex colours (uint8)"""
+        displayName = "Special"
+        displayGroup = "Trimesh Field Array"
+    )
+
+    string arrayName = "" (
+        doc = """Name of a vertex or face attribute to return when special is 'none'.
+                 The attribute is looked up in mesh.vertex_attributes or
+                 mesh.face_attributes dictionaries."""
+        displayName = "Array Name"
+        displayGroup = "Trimesh Field Array"
+    )
+}

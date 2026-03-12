@@ -9,11 +9,14 @@
 # its affiliates is strictly prohibited.
 
 import asyncio
+from logging import getLogger
 
 from pxr import Usd
 
 from .bindings import IDataDelegate, IDataDelegateRegistry, IFieldArray
 from .typing import FieldArrayLike
+
+logger = getLogger(__name__)
 
 
 def _get_stage(id) -> Usd.Stage:
@@ -45,13 +48,21 @@ class DataDelegateBase(IDataDelegate):
         """internal method used by C++ API to call Python implementation by passing stageId and primPath
         instead of the Prim itself. Do not use this method directly."""
         stage = _get_stage(stageId)
-        return self.get_field_array(stage.GetPrimAtPath(primPath), Usd.TimeCode(time))
+        try:
+            return self.get_field_array(stage.GetPrimAtPath(primPath), Usd.TimeCode(time))
+        except Exception as e:
+            logger.exception("Error in get_field_array for prim %s at time %s: %s", primPath, time, e)
+            return None
 
     def _can_provide(self, stageId: int, primPath: str) -> bool:
         """internal method used by C++ API to call Python implementation by passing stageId and primPath
         instead of the Prim itself. Do not use this method directly."""
         stage = _get_stage(stageId)
-        return self.can_provide(stage.GetPrimAtPath(primPath))
+        try:
+            return self.can_provide(stage.GetPrimAtPath(primPath))
+        except Exception as e:
+            logger.exception("Error in can_provide for prim %s: %s", primPath, e)
+            return False
 
     def get_field_array(self, prim: Usd.Prim, time: Usd.TimeCode) -> FieldArrayLike:
         """

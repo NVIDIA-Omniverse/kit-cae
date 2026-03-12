@@ -1,4 +1,4 @@
--- SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+-- SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 -- SPDX-License-Identifier: LicenseRef-NvidiaProprietary
 --
 -- NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
@@ -15,7 +15,6 @@ project_ext(ext)
 repo_build.prebuild_link {
     { "data", ext.target_dir.."/data" },
     { "docs", ext.target_dir.."/docs" },
-    { "python/impl", ext.target_dir.."/omni/cae/index/impl" },
 }
 
 project_ext_plugin(ext, "omni.cae.index.plugin")
@@ -37,7 +36,6 @@ project_ext_plugin(ext, "omni.cae.index.plugin")
     links { "omni.usd", "carb" }
 
     add_usd()
-    add_cae_usd_schemas({"omniCae", "omniCaeSids"})
     add_cuda_build_support()
 
 project_ext_bindings {
@@ -56,3 +54,4 @@ project_ext_bindings {
     filter  { "configurations:release" }
         defines { "TBB_USE_DEBUG=0" }
     filter {}
+    add_cuda_build_support()

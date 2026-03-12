@@ -1,0 +1,181 @@
+#usda 1.0
+(
+    """
+        Schema for OpenFOAM case files.
+    """
+    subLayers = [
+        @../../shared/omniCae/schema.usda@
+    ]
+)
+
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+over "GLOBAL" (
+    customData = {
+        string libraryName = "omniCaeOpenFoam"
+        string libraryPath = "omniCaeOpenFoam"
+        string libraryPrefix = "OmniCaeOpenFoam"
+        bool useLiteralIdentifier = true
+    }
+)
+{
+}
+
+class CaeOpenFoamFieldArray "CaeOpenFoamFieldArray" (
+    inherits = </CaeFieldArray>
+    doc = "Defines an OpenFOAM field array"
+    customData = {
+        string className = "FieldArray"
+    }
+    doc = """An OpenFOAM field array."""
+)
+{
+    uniform token type (
+        allowedTokens = [ "internalField", "points", "facesOffsets", "faces", "owner", "neighbour"]
+    )
+
+    uniform string name (
+        doc = """Specifies the name of the field array."""
+        displayName = "Field Name"
+        displayGroup = "OpenFOAM Field Array"
+        customData = {
+            string apiName = "name"
+        }
+    )
+}
+
+class "CaeOpenFoamPolyMeshAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        string className = "PolyMeshAPI"
+    }
+    doc = """An OpenFOAM mesh API. This class is used to define the mesh structure
+             of an OpenFOAM case, including the polyMesh and internal field arrays."""
+)
+{
+    rel cae:foam:points (
+        doc = """Specifies the FieldArray that must be treated as the points of the mesh."""
+        displayName = "Points"
+        displayGroup = "OpenFOAM Mesh"
+        customData = {
+            string apiName = "points"
+        }
+    )
+
+    rel cae:foam:facesOffsets (
+        doc = """Specifies the FieldArray that must be treated as the faces offsets of the mesh."""
+        displayName = "Faces Offsets"
+        displayGroup = "OpenFOAM Mesh"
+        customData = {
+            string apiName = "facesOffsets"
+        }
+    )
+
+    rel cae:foam:faces (
+        doc = """Specifies the FieldArray that must be treated as the faces indices of the mesh."""
+        displayName = "Faces"
+        displayGroup = "OpenFOAM Mesh"
+        customData = {
+            string apiName = "faces"
+        }
+    )
+
+    rel cae:foam:owner (
+        doc = """Specifies the FieldArray that must be treated as the owner of the mesh."""
+        displayName = "Owner"
+        displayGroup = "OpenFOAM Mesh"
+        customData = {
+            string apiName = "owner"
+        }
+    )
+    rel cae:foam:neighbour (
+        doc = """Specifies the FieldArray that must be treated as the neighbour of the mesh."""
+        displayName = "Neighbour"
+        displayGroup = "OpenFOAM Mesh"
+        customData = {
+            string apiName = "neighbour"
+        }
+    )
+}
+
+class "CaeOpenFoamPolyBoundaryMeshAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        string className = "PolyBoundaryMeshAPI"
+    }
+    doc = """An OpenFOAM poly boundary mesh API. This class is used to define the boundaries of
+             an OpenFOAM mesh."""
+)
+{
+    uniform string cae:foam:name (
+        doc = """Specifies the name of the boundary mesh."""
+        displayName = "Boundary Name"
+        displayGroup = "OpenFOAM Boundary Mesh"
+        customData = {
+            string apiName = "name"
+        }
+    )
+
+    uniform int cae:foam:nFaces (
+        doc = "Specifies the number of faces in this boundary mesh."
+        displayName = "Number of Faces"
+        displayGroup = "OpenFOAM Boundary Mesh"
+        customData = {
+            string apiName = "nFaces"
+        }
+    )
+
+    uniform int cae:foam:startFace (
+        doc = """Specifies the starting face index for the boundary mesh."""
+        displayName = "Start Face"
+        displayGroup = "OpenFOAM Boundary Mesh"
+        customData = {
+            string apiName = "startFace"
+        }
+    )
+
+    rel cae:foam:points (
+        doc = """Specifies the FieldArray that must be treated as the points of the mesh."""
+        displayName = "Points"
+        displayGroup = "OpenFOAM Boundary Mesh"
+        customData = {
+            string apiName = "points"
+        }
+    )
+
+    rel cae:foam:facesOffsets (
+        doc = """Specifies the FieldArray that must be treated as the faces offsets of the mesh."""
+        displayName = "Faces Offsets"
+        displayGroup = "OpenFOAM Boundary Mesh"
+        customData = {
+            string apiName = "facesOffsets"
+        }
+    )
+
+    rel cae:foam:faces (
+        doc = """Specifies the FieldArray that must be treated as the faces indices of the mesh."""
+        displayName = "Faces"
+        displayGroup = "OpenFOAM Boundary Mesh"
+        customData = {
+            string apiName = "faces"
+        }
+    )
+
+    rel cae:foam:owner (
+        doc = """Specifies the FieldArray that must be treated as the owner of the mesh."""
+        displayName = "Owner"
+        displayGroup = "OpenFOAM Boundary Mesh"
+        customData = {
+            string apiName = "owner"
+        }
+    )
+
+}

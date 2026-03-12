@@ -1,0 +1,49 @@
+<svg width="40" height="40" viewBox="0 0 40 40"
+     xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Compute operator">
+  <!-- Background (transparent) -->
+  <rect x="0" y="0" width="40" height="40" fill="none"/>
+
+  <!-- Scale and place gear+shadow:
+       - scale(1.5) turns the original 20x20 design into ~30x30
+       - translate(0, 6.5) pushes it down so it sits in the lower-left -->
+  <g transform="translate(0, 6.5) scale(1.5)">
+    <!-- Slight drop shadow -->
+    <g opacity="0.18">
+      <circle cx="10" cy="10.7" r="5" fill="#000000"/>
+    </g>
+
+    <!-- Gear group -->
+    <g>
+      <!-- Gear teeth ring -->
+      <g fill="#3C76D8">
+        <!-- Up / Down -->
+        <rect x="9"   y="1.2"  width="2" height="2.5" rx="0.6"/>
+        <rect x="9"   y="16.3" width="2" height="2.5" rx="0.6"/>
+
+        <!-- Left / Right -->
+        <rect x="16.3" y="9" width="2.5" height="2" rx="0.6"/>
+        <rect x="1.2"  y="9" width="2.5" height="2" rx="0.6"/>
+
+        <!-- Diagonals -->
+        <rect x="14.2" y="3.2" width="2" height="2.5" rx="0.6"
+              transform="rotate(45 15.2 4.45)"/>
+        <rect x="3.8"  y="13.1" width="2" height="2.5" rx="0.6"
+              transform="rotate(45 4.8 14.35)"/>
+
+        <rect x="14.2" y="13.1" width="2" height="2.5" rx="0.6"
+              transform="rotate(-45 15.2 14.35)"/>
+        <rect x="3.8"  y="3.2"  width="2" height="2.5" rx="0.6"
+              transform="rotate(-45 4.8 4.45)"/>
+      </g>
+
+      <!-- Gear body -->
+      <circle cx="10" cy="10" r="4.3" fill="#4A8DF0"/>
+
+      <!-- Inner ring -->
+      <circle cx="10" cy="10" r="2.8" fill="#FFFFFF" opacity="0.9"/>
+
+      <!-- Inner disk -->
+      <circle cx="10" cy="10" r="1.6" fill="#4A8DF0"/>
+    </g>
+  </g>
+</svg>

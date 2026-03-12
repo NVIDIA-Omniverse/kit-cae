@@ -14,6 +14,10 @@
 import_configs = [
     "${root}/_repo/deps/repo_kit_tools/kit-template/repo.toml",
     "${root}/_repo/deps/repo_kit_tools/kit-template/repo-external-app.toml",
+
+    # Kit-CAE specific schemas
+    "${root}/repo_schemas.toml",
+
 ]
 
 # Repository Name
@@ -22,16 +26,19 @@ name = "kit-cae"
 [repo_build]
 # These are necessary to avoid a repo_build failure where the source/apps directory
 # is expected to always exist.
+# Also ensure Kit version is selected before fetch (generates required packman XML files).
 fetch."platform:linux-x86_64".before_pull_commands = [
     ["mkdir", "--parents", "${root}/source/apps"],
+    ["${root}/repo.sh", "select_kit_version", "--auto", "--quiet"],
 ]
 
 # Mute this command, don't emit to console.
+# Also ensure Kit version is selected before fetch (generates required packman XML files).
 fetch."platform:windows-x86_64".before_pull_commands = [
     ["powershell", "-Command", "New-Item -ItemType Directory -Path ${root}/source/apps -ErrorAction SilentlyContinue", ";", "Write-Host 'Done'"],
+    ["${root}/repo.bat", "select_kit_version", "--auto", "--quiet"],
 ]
 
-# If caching do not try to cache extensions. These will come from the NGC Kit Extension Registry.
 fetch."token:cache==true".after_pull_commands = []
 
 # List of packman dependency files to pull (in order), with target-platform passed in as a key.
@@ -41,8 +48,31 @@ fetch.packman_target_files_to_pull = [
     "${root}/tools/deps/kit-cae-deps.packman.xml",
 ]
 
+# Generate schema source code after dependencies are pulled, then run extension precache
+# Note: Schema compilation is now handled by premake (via repo_build), so we only generate here
+# This replaces the base template's after_pull_commands, so we must include precache_exts
+fetch."platform:linux-x86_64".after_pull_commands = [
+    ["${root}/repo.sh", "schema", "-c", "${config}", "--generate-only", "--no-warn"],
+    ["${root}/repo.sh", "precache_exts", "-c", "${config}"],
+]
+fetch."platform:windows-x86_64".after_pull_commands = [
+    ["${root}/repo.bat", "schema", "-c", "${config}", "--generate-only", "--no-warn"],
+    ["${root}/repo.bat", "precache_exts", "-c", "${config}"],
+]
+
+
 [repo_build.build]
 enabled = true
+
+[repo_build.post_build]
+# Configure plugInfo.json files after build completes
+# This must run after premake builds the schemas and copies them to extension directories
+"platform:linux-x86_64".commands = [
+    ["${root}/repo.sh", "schema", "-c", "${config}", "--pluginfo-only", "--no-warn"],
+]
+"platform:windows-x86_64".commands = [
+    ["${root}/repo.bat", "schema", "-c", "${config}", "--pluginfo-only", "--no-warn"],
+]
 
 [repo_build.msbuild]
 # If set to true will attempt to link to host's Visual Studio and Windows SDK installations.
@@ -99,19 +129,23 @@ publish_pip_cache = false
 ########################################################################################################################
 
 [repo_precache_exts]
+# Extension search folders (extends base template to include legacy extensions)
+ext_folders = [
+  "${root}/source/extensions",
+  "${root}/source/legacy_extensions",
+  "${root}/source/apps",
+]
+
 # Apps to run and precache
 apps = [
-"${root}/source/apps/omni.cae.kit",
-"${root}/source/apps/omni.cae_vtk.kit",
-"${root}/source/apps/omni.cae_streaming.kit"
+    "${root}/source/apps/kit_cae_editor.kit",
+    "${root}/source/apps/kit_cae_streaming.kit"
 ]
 
 registries = [
-# PUBLIC REGISTRIES - UNCOMMENT BEFORE STAGING TO GITHUB
     { name = "kit/default", url = "https://ovextensionsprod.blob.core.windows.net/exts/kit/prod/${kit_version_major}/shared" },
     { name = "kit/sdk", url = "https://ovextensionsprod.blob.core.windows.net/exts/kit/prod/sdk/${kit_version_short}/${kit_git_hash}" },
 ]
-
 
 ########################################################################################################################
 # Packaging
@@ -128,8 +162,6 @@ package_per_config = true                   # By default we only build + package
 append_config = true                        # Set to true to append release/debug config to package name.
 archive_format = "zip"                      # We support "7z", "zip", "tar.gz", "tar.bz2"
 windows_max_path_length = 0
-#build_version = "${file:${config_root}/tools/VERSION.md}"  # It's ignored when omniverse_flow_version_scheme is true
-
 
 files = [
     ["**"],
@@ -159,7 +191,6 @@ package_per_config = true
 append_config = true
 archive_format = "zip"
 windows_max_path_length = 0
-#build_version = "${file:${config_root}/tools/VERSION.md}"
 
 files = [
     ["**"],
@@ -179,17 +210,18 @@ files_exclude = [
     ["apps/kit.portable"],
     ["**/__pycache__"],
     ["**/_repo/**"],
+    ["**/pip_prebundle/vtk*"],
+    ["**/pip_prebundle/vtkmodules*"],
+    ["**/pip_prebundle/h5py*"],
     ["PACKAGE-INFO.yaml"],
 ]
 "linux-x86_64".files_strip = []
-
 
 ########################################################################################################################
 # Template tool configuration
 ########################################################################################################################
 [repo_kit_template]
 extension_templates_config = "templates/templates.toml"
-
 
 ########################################################################################################################
 # Application launching configuration
@@ -200,4 +232,54 @@ type_ordering = [
     "ApplicationLayerTemplate",
 ]
 
+########################################################################################################################
+# Application Launching
+########################################################################################################################
+[repo_launch_app]
+enabled = true
 
+########################################################################################################################
+# Application Packaging
+########################################################################################################################
+[repo_package_app]
+enabled = true
+
+########################################################################################################################
+# Application Containerization
+########################################################################################################################
+[repo_kit_package_container]
+package_cmd = "_package"
+enabled = true
+gui_cli = true
+auto_generate = true
+
+########################################################################################################################
+# Configure tools in repo_cae_tools
+########################################################################################################################
+[repo_schema]
+dependencies_packman_xml = [
+    # for Kit-SDK itself
+    "${root}/tools/deps/kit-sdk.packman.xml",
+    # for schema generation dependencies
+    "${root}/tools/deps/kit-sdk-schema-deps.packman.xml",
+]
+
+[repo_pip_download]
+requirements_files = [
+    "${root}/tools/deps/requirements.txt",
+]
+
+# Kit Version Configuration Tool
+# Override any of these settings to customize paths for your repository.
+# See tools/repo_cae_tools/repo_tools.toml for detailed documentation of each option.
+[repo_select_kit_version]
+enabled = true
+
+# Uncomment and customize these paths if defaults don't match your repository structure:
+# versions_config_file = "${root}/tools/kit-versions.json"
+# tracking_file = "${root}/.kit_selection.json"
+
+[repo_precompile_kernels]
+enabled = true
+devices = ["cuda", "cpu"]
+json = "${root}/aot_config.json"

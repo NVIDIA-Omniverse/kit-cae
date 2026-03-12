@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: LicenseRef-NvidiaProprietary
 //
 // NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
@@ -6,17 +6,18 @@
 // documentation and any modifications thereto. Any use, reproduction,
 // disclosure or distribution of this material and related documentation
 // without an express license agreement from NVIDIA CORPORATION or
-//  its affiliates is strictly prohibited.
+// its affiliates is strictly prohibited.
 
 #include "Importers.h"
 
-#include "CaeDataSetImporter.h"
-#include "CaeDataSetNanoVdbFetchTechnique.h"
+#include "PythonComputeTask.h"
+#include "PythonImporter.h"
 
 #include <carb/logging/Log.h>
 
 #include <nv/index/app/application_layer/property_reader.h>
 
+#include <map>
 namespace omni
 {
 namespace cae
@@ -33,7 +34,8 @@ ImporterFactory::ImporterFactory(nv::index::IIndex* index, nv::index::app::IAppl
         return;
     }
 
-    m_index->register_serializable_class<CaeDataSetImporter>();
+    m_index->register_serializable_class<PythonImporter>();
+    m_index->register_serializable_class<PythonComputeTask>();
 }
 
 ImporterFactory::~ImporterFactory()
@@ -43,34 +45,39 @@ ImporterFactory::~ImporterFactory()
 nv::index::IDistributed_data_import_callback* ImporterFactory::create_importer(
     const char* importer_name, const nv::index::app::IProperty_dict* in_dict, nv::index::app::IProperty_dict* out_dict) const
 {
-    if (strcmp(importer_name, "CaeDataSetImporter") == 0)
+    if (strcmp(importer_name, "PythonImporter") == 0)
     {
         const nv::index::app::Property_reader reader(in_dict);
-        const mi::Sint32 nb_fields = reader.get_property<mi::Sint32>("nb_fields", 0);
 
-        CaeDataSetImporter::Importer_parameters params;
-        for (mi::Sint32 cc = 0; cc < nb_fields; ++cc)
+        PythonImporter::Importer_parameters importer_params;
+        importer_params.python_module = reader.get_property("module_name");
+        if (importer_params.python_module.empty())
         {
-            const std::string field_name_str = reader.get_property(std::string("field:") + std::to_string(cc));
-            if (field_name_str.empty())
-            {
-                CARB_LOG_ERROR("Invalid 'field_name' specified for field:%d.", cc);
-                return nullptr;
-            }
-
-            params.field_names.push_back(field_name_str);
-        }
-
-        params.mesh_prim_path = reader.get_property("mesh");
-        if (params.mesh_prim_path.empty())
-        {
-            CARB_LOG_ERROR("Invalid 'mesh' prim path specified.");
+            CARB_LOG_ERROR("Invalid 'module_name' specified.");
             return nullptr;
         }
 
-        params.time_code = reader.get_property<mi::Float64>("timeCode", 0.0);
+        importer_params.python_class = reader.get_property("class_name");
+        if (importer_params.python_class.empty())
+        {
+            CARB_LOG_ERROR("Invalid 'class_name' specified.");
+            return nullptr;
+        }
 
-        auto* importer = new CaeDataSetImporter(params);
+        // progress all params_* properties
+        size_t num_props = in_dict->size();
+        for (size_t i = 0; i < num_props; ++i)
+        {
+            mi::base::Handle<mi::IString> key(in_dict->get_key(i));
+            std::string key_str = key->get_c_str();
+            if (key_str.find("params_") == 0)
+            {
+                mi::base::Handle<mi::IString> val(in_dict->get_value(key_str.c_str(), ""));
+                importer_params.params[key_str.substr(strlen("params_"))] = val->get_c_str();
+            }
+        }
+
+        auto* importer = new PythonImporter(importer_params);
         const std::string verbose = reader.get_property("is_verbose", "false");
         if (verbose == "true" || verbose == "yes" || verbose == "1")
         {
@@ -88,7 +95,7 @@ mi::base::IInterface* InterfaceFactory::create_iinterface(const char* iinterface
                                                           nv::index::app::IProperty_dict* out_dict) const
 {
     const std::string name_str(iinterface_name);
-    if (name_str == "CaeDataSetNanoVdbFetchTechnique")
+    if (name_str == "PythonComputeTask")
     {
         auto size = in_dict->size();
         for (mi::Size cc = 0; cc < size; ++cc)
@@ -100,27 +107,37 @@ mi::base::IInterface* InterfaceFactory::create_iinterface(const char* iinterface
 
         const nv::index::app::Property_reader reader(in_dict);
 
-        CaeDataSetNanoVdbFetchTechnique::Compute_parameters params;
-        params.prim_path = reader.get_property("prim");
-        params.cache_key = reader.get_property("cache_key");
-        params.execution_tag = reader.get_property<mi::Sint32>("execution_tag");
-        params.enable_interpolation = reader.get_property<bool>("enable_interpolation", false);
-        if (params.prim_path.empty())
+        PythonComputeTask::Compute_parameters params;
+        params.python_module = reader.get_property("module_name");
+        if (params.python_module.empty())
         {
-            CARB_LOG_ERROR("Invalid 'prim' path specified.");
+            CARB_LOG_ERROR("Invalid 'module_name' specified.");
             return nullptr;
         }
-        if (params.cache_key.empty())
+
+        params.python_class = reader.get_property("class_name");
+        if (params.python_class.empty())
         {
-            CARB_LOG_ERROR("Invalid 'cache_key' specified.");
+            CARB_LOG_ERROR("Invalid 'class_name' specified.");
             return nullptr;
         }
-        if (params.execution_tag <= 0)
+
+        params.is_gpu_operation = reader.get_property<bool>("is_gpu_operation", false);
+
+        // Process all params_* properties
+        size_t num_props = in_dict->size();
+        for (size_t i = 0; i < num_props; ++i)
         {
-            CARB_LOG_ERROR("Invalid execution tag specified.");
-            return nullptr;
+            mi::base::Handle<mi::IString> key(in_dict->get_key(i));
+            std::string key_str = key->get_c_str();
+            if (key_str.find("params_") == 0)
+            {
+                mi::base::Handle<mi::IString> val(in_dict->get_value(key_str.c_str(), ""));
+                params.params[key_str.substr(strlen("params_"))] = val->get_c_str();
+            }
         }
-        return new CaeDataSetNanoVdbFetchTechnique(params);
+
+        return new PythonComputeTask(params);
     }
     return nullptr;
 }

@@ -1,0 +1,80 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+[package]
+target.kit = ["109.0.1"]
+
+[dependencies]
+# Kit-Kernel specific base editor.
+"kit_base_editor" = {}
+"omni.cae.bundle" = {}
+
+[settings.app.exts]
+folders.'++' = [  # Search paths for extensions.
+	"${app}/../exts",
+    "${app}/../apps",
+	"${app}/../extscache/"
+]
+
+
+########################################################################################################################
+# BEGIN GENERATED PART (Remove from 'BEGIN' to 'END' to regenerate)
+########################################################################################################################
+
+# Kit SDK Version: 109.0.1+feature.252186.7a5e71a7.gl
+
+# Version lock for all dependencies:
+[settings.app.exts]
+enabled = [
+	"omni.anim.curve.core-1.5.2",
+	"omni.anim.window.timeline-109.0.2",
+	"omni.convexdecomposition-109.0.4",
+	"omni.flowusd-109.0.1",
+	"omni.flowusd.bundle-1.2.0",
+	"omni.flowusd.ui-109.0.0",
+	"omni.graph.action-2.0.0",
+	"omni.graph.action_nodes-2.0.3",
+	"omni.graph.action_nodes_core-2.0.1",
+	"omni.graph.nodes-2.1.6",
+	"omni.graph.nodes_core-2.0.3",
+	"omni.graph.scriptnode-2.1.2",
+	"omni.graph.ui_nodes-2.0.4",
+	"omni.kit.asset_converter-5.0.25",
+	"omni.kit.browser.core-2.3.17",
+	"omni.kit.browser.folder.core-1.12.1",
+	"omni.kit.debug.settings-1.0.2",
+	"omni.kit.dev.utilities.bundle-0.2.1",
+	"omni.kit.developer.bundle-0.2.0",
+	"omni.kit.tool.asset_importer-5.1.3",
+	"omni.kit.viewport.menubar.lighting-107.3.2",
+	"omni.kit.widget.zoombar-1.0.7",
+	"omni.kit.window.movie_capture-2.7.4",
+	"omni.kvdb-109.0.4",
+	"omni.localcache-109.0.4",
+	"omni.physx-109.0.4",
+	"omni.physx.cooking-109.0.4",
+	"omni.physx.foundation-109.0.4",
+	"omni.physx.stageupdate-109.0.4",
+	"omni.services.client-0.5.4",
+	"omni.services.transport.client.base-1.2.5",
+	"omni.services.transport.client.http_async-1.4.2",
+	"omni.usd.metrics.assembler-109.0.0",
+	"omni.usd.metrics.assembler.ui-109.0.0",
+	"omni.usd.schema.flow-109.0.0",
+	"omni.usd.schema.metrics.assembler-109.0.0",
+	"omni.usd.schema.physx-109.0.4",
+	"omni.usdphysics-109.0.4",
+	"omni.vdb_timesample_editor-0.2.3",
+	"omni.warp.core-1.10.1",
+]
+
+########################################################################################################################
+# END GENERATED PART
+########################################################################################################################

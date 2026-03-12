@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: LicenseRef-NvidiaProprietary
 //
 // NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
@@ -6,7 +6,7 @@
 // documentation and any modifications thereto. Any use, reproduction,
 // disclosure or distribution of this material and related documentation
 // without an express license agreement from NVIDIA CORPORATION or
-//  its affiliates is strictly prohibited.
+// its affiliates is strictly prohibited.
 
 #define CARB_EXPORTS
 
@@ -14,7 +14,9 @@
 #include <omni/cae/data/IDataDelegateIncludes.h>
 // .clang-format on
 
+#include "FieldArrayCache.h"
 #include "FieldArrayUtils.h"
+#include "UsdUtils.h"
 
 #include <carb/PluginUtils.h>
 #include <carb/events/EventsUtils.h>
@@ -30,8 +32,11 @@
 #include <omni/cae/data/IDataDelegateRegistry.h>
 #include <omni/cae/data/IFieldArrayUtils.h>
 #include <omni/cae/data/IFileUtils.h>
+#include <omni/cae/data/IUsdUtils.h>
 #include <omni/kit/IApp.h>
+#include <omni/kit/IStageUpdate.h>
 #include <omniCae/fieldArray.h>
+#include <pxr/usd/usdUtils/stageCache.h>
 
 #include <OmniClient.h>
 #include <string>
@@ -39,7 +44,11 @@
 
 #define EXTENSION_NAME "omni.cae.data.plugin"
 
-CARB_PLUGIN_IMPL_DEPS(carb::logging::ILogging, carb::tasking::ITasking, carb::settings::ISettings, omni::kit::IApp);
+CARB_PLUGIN_IMPL_DEPS(carb::logging::ILogging,
+                      carb::tasking::ITasking,
+                      carb::settings::ISettings,
+                      omni::kit::IApp,
+                      omni::kit::IStageUpdate);
 
 namespace omni
 {
@@ -49,6 +58,7 @@ namespace data
 {
 class DataDelegateRegistry;
 class FileUtils;
+class UsdUtils;
 } // namespace data
 } // namespace cae
 } // namespace omni
@@ -56,6 +66,7 @@ class FileUtils;
 static omni::cae::data::DataDelegateRegistry* s_registry;
 static omni::cae::data::FieldArrayUtils* s_utils;
 static omni::cae::data::FileUtils* s_fileUtils;
+static omni::cae::data::UsdUtils* s_usdUtils;
 
 namespace omni
 {
@@ -65,188 +76,6 @@ namespace data
 {
 
 constexpr carb::events::EventType kActNameEventType = CARB_EVENTS_TYPE_FROM_STR("omni.kit.window.status_bar@activity");
-
-template <typename T>
-class UsdNoticeListener final : public pxr::TfWeakBase
-{
-    pxr::TfNotice::Key m_key;
-    T* m_target = nullptr;
-
-public:
-    UsdNoticeListener(T* target) : m_target(target)
-    {
-        m_key = pxr::TfNotice::Register(pxr::TfCreateWeakPtr(this), &UsdNoticeListener::handleNotice);
-    }
-
-    ~UsdNoticeListener()
-    {
-        if (m_key)
-        {
-            pxr::TfNotice::Revoke(m_key);
-        }
-    }
-
-    void handleNotice(const pxr::UsdNotice::ObjectsChanged& notice)
-    {
-        if (m_target)
-        {
-            m_target->handleNotice(notice);
-        }
-    }
-};
-
-class FieldArrayCache
-{
-    struct CacheEntry
-    {
-        std::map<double, carb::ObjectPtr<IFieldArray>> m_fieldArrayMap;
-        pxr::UsdAttributeVector m_timeVaryingAttrs;
-        pxr::UsdPrim m_prim;
-
-        bool contains(double time) const
-        {
-            auto key = get_key(time);
-            return m_fieldArrayMap.find(key) != m_fieldArrayMap.end();
-        }
-
-        void add(pxr::UsdPrim prim, double time, carb::ObjectPtr<IFieldArray> fieldArray)
-        {
-            if (m_prim != prim)
-            {
-                init(prim);
-            }
-            m_fieldArrayMap[get_key(time)] = fieldArray;
-        }
-
-        carb::ObjectPtr<IFieldArray> get(double time) const
-        {
-            auto key = get_key(time);
-            auto iter = m_fieldArrayMap.find(key);
-            if (iter != m_fieldArrayMap.end())
-            {
-                return iter->second;
-            }
-            return {};
-        }
-
-    private:
-        /// over all time varying attributes, returns the largest time that is
-        /// less than or equal to the given time. if there are no time varying
-        /// attributes, returns the earliest time.
-        double get_key(double time) const
-        {
-            double key = pxr::UsdTimeCode::EarliestTime().GetValue();
-            for (const auto& attr : m_timeVaryingAttrs)
-            {
-                double lower, upper;
-                bool hasTimeSamples;
-                if (attr.GetBracketingTimeSamples(time, &lower, &upper, &hasTimeSamples) && hasTimeSamples)
-                {
-                    key = std::max(key, lower);
-                }
-            }
-            return key;
-        }
-
-        void init(pxr::UsdPrim prim)
-        {
-            m_prim = prim;
-            m_timeVaryingAttrs.clear();
-            m_fieldArrayMap.clear();
-
-            const auto primAttrs = prim.GetAttributes();
-            std::copy_if(primAttrs.begin(), primAttrs.end(), std::back_inserter(m_timeVaryingAttrs),
-                         [](const auto& attr) { return attr.ValueMightBeTimeVarying(); });
-        }
-    };
-
-    std::unique_ptr<UsdNoticeListener<FieldArrayCache>> m_listener;
-    std::map<pxr::SdfPath, CacheEntry> m_cache;
-    mutable carb::thread::mutex m_cacheMutex;
-
-public:
-    FieldArrayCache() : m_listener(new UsdNoticeListener<FieldArrayCache>(this))
-    {
-    }
-    ~FieldArrayCache() = default;
-
-    /// NOT INTENDED FOR USE; IT'S PRIMARILY FOR TESTING.
-    bool contains(pxr::UsdPrim prim, pxr::UsdTimeCode time) const
-    {
-        std::lock_guard<carb::thread::mutex> g(m_cacheMutex);
-        auto iter = m_cache.find(prim.GetPath());
-        return iter != m_cache.end() && iter->second.contains(time.GetValue());
-    }
-
-    /// @brief Add a field array to the cache
-    void add(pxr::UsdPrim prim, pxr::UsdTimeCode time, carb::ObjectPtr<IFieldArray> fieldArray)
-    {
-        std::lock_guard<carb::thread::mutex> g(m_cacheMutex);
-        auto& entry = m_cache[prim.GetPath()];
-        entry.add(prim, time.GetValue(), fieldArray);
-    }
-
-    /// @brief Get a field array from the cache
-    carb::ObjectPtr<IFieldArray> get(pxr::UsdPrim prim, pxr::UsdTimeCode time) const
-    {
-        std::lock_guard<carb::thread::mutex> g(m_cacheMutex);
-        auto iter = m_cache.find(prim.GetPath());
-        if (iter != m_cache.end())
-        {
-            return iter->second.get(time.GetValue());
-        }
-        return {};
-    }
-
-    /// @brief Clear the cache
-    void clear()
-    {
-        std::lock_guard<carb::thread::mutex> g(m_cacheMutex);
-        m_cache.clear();
-    }
-
-    void handleNotice(const pxr::UsdNotice::ObjectsChanged& notice)
-    {
-        std::lock_guard<carb::thread::mutex> g(m_cacheMutex);
-        if (m_cache.empty())
-        {
-            return;
-        }
-
-        // Check if an attribute of a cached prim has been explicitly changed.
-        for (const auto& path : notice.GetChangedInfoOnlyPaths())
-        {
-            if (!path.IsPropertyPath())
-                continue;
-
-            const auto& changedPrim = path.GetPrimPath();
-            auto it = m_cache.find(changedPrim);
-            if (it != end(m_cache))
-            {
-                CARB_LOG_INFO("[cache-drop] %s", changedPrim.GetText());
-                m_cache.erase(it);
-            }
-        }
-
-        // Check if the prim itself has been resynced or is part of a resynced tree
-        for (const auto& path : notice.GetResyncedPaths())
-        {
-            for (auto it = cbegin(m_cache); it != cend(m_cache);)
-            {
-                const auto& cachedPath = it->first;
-                if (cachedPath.HasPrefix(path))
-                {
-                    CARB_LOG_INFO("[cache-drop] %s", cachedPath.GetText());
-                    it = m_cache.erase(it);
-                }
-                else
-                {
-                    ++it;
-                }
-            }
-        }
-    }
-};
 
 class DataDelegateRegistry final : public IDataDelegateRegistry
 {
@@ -265,10 +94,68 @@ class DataDelegateRegistry final : public IDataDelegateRegistry
         }
     };
 
+    class StageUpdateListener
+    {
+        DataDelegateRegistry* m_registry;
+        omni::kit::StageUpdateNode* m_updateNode;
+
+    public:
+        StageUpdateListener(DataDelegateRegistry* registry) : m_registry(registry), m_updateNode(nullptr)
+        {
+            auto* stageUpdate = carb::getFramework()->acquireInterface<omni::kit::IStageUpdate>();
+            if (stageUpdate)
+            {
+                omni::kit::StageUpdateNodeDesc desc = { 0 };
+                desc.displayName = "CAE Data Delegate Cache";
+                desc.userData = this;
+                desc.onAttach = [](long int stageId, double metersPerUnit, void* userData)
+                {
+                    auto* listener = reinterpret_cast<StageUpdateListener*>(userData);
+                    if (listener && listener->m_registry)
+                    {
+                        listener->m_registry->m_fieldArrayCache.clear();
+                    }
+                };
+                desc.onDetach = [](void* userData)
+                {
+                    auto* listener = reinterpret_cast<StageUpdateListener*>(userData);
+                    if (listener && listener->m_registry)
+                    {
+                        listener->m_registry->m_fieldArrayCache.clear();
+                    }
+                };
+
+                auto stageUpdateInterface = stageUpdate->getStageUpdate();
+                if (stageUpdateInterface)
+                {
+                    m_updateNode = stageUpdateInterface->createStageUpdateNode(desc);
+                }
+            }
+        }
+
+        ~StageUpdateListener()
+        {
+            if (m_updateNode)
+            {
+                auto* stageUpdate = carb::getFramework()->acquireInterface<omni::kit::IStageUpdate>();
+                if (stageUpdate)
+                {
+                    auto stageUpdateInterface = stageUpdate->getStageUpdate();
+                    if (stageUpdateInterface)
+                    {
+                        stageUpdateInterface->destroyStageUpdateNode(m_updateNode);
+                    }
+                }
+                m_updateNode = nullptr;
+            }
+        }
+    };
+
 public:
-    DataDelegateRegistry()
+    DataDelegateRegistry(IUsdUtils* usdUtils) : m_fieldArrayCache(usdUtils)
     {
         m_tasking = carb::getFramework()->acquireInterface<carb::tasking::ITasking>();
+        m_stageUpdateListener = std::make_unique<StageUpdateListener>(this);
     }
 
     ~DataDelegateRegistry() = default;
@@ -342,41 +229,85 @@ public:
             CARB_LOG_ERROR("Missing tasking interface!!!");
             return {};
         }
+        // If the field array is cached, return the cached value without creating a new task.
+        // this ensures that cached fields arrays are returned immediately, without waiting for the task to complete.
+        if (auto array = m_fieldArrayCache.get(fieldArrayPrim, time))
+        {
+            carb::tasking::Promise<carb::ObjectPtr<IFieldArray>> promise;
+            promise.set_value(array);
+            return promise.get_future();
+        }
         return m_tasking->addTask(carb::tasking::Priority::eDefault, {},
                                   [this, fieldArrayPrim, time]() { return this->getFieldArray(fieldArrayPrim, time); });
     }
 
     carb::ObjectPtr<IFieldArray> getFieldArray(pxr::UsdPrim fieldArrayPrim, pxr::UsdTimeCode time) override
     {
-        carb::settings::ISettings* settings = carb::getCachedInterface<carb::settings::ISettings>();
-        const bool useCache = (settings->getAsBool("/persistent/exts/omni.cae.data/enableCache"));
-
-        if (useCache)
+        if (auto array = m_fieldArrayCache.get(fieldArrayPrim, time))
         {
-            if (auto array = m_fieldArrayCache.get(fieldArrayPrim, time))
-            {
-                CARB_LOG_INFO("[cache-hit] %s, time=%.3f", fieldArrayPrim.GetPath().GetText(), time.GetValue());
-                return array;
-            }
-            CARB_LOG_INFO("[cache-miss] %s, time=%.3f", fieldArrayPrim.GetPath().GetText(), time.GetValue());
-        }
-        else
-        {
-            CARB_LOG_INFO("[cache-skip] %s, time=%.3f", fieldArrayPrim.GetPath().GetText(), time.GetValue());
+            return array;
         }
 
         carb::ObjectPtr<IDataDelegate> delegate = getDelegate(fieldArrayPrim);
         if (!delegate)
         {
-            CARB_LOG_WARN("Could not find delegate for prim '%s' at path '%s'",
-                          fieldArrayPrim.GetTypeName().GetString().c_str(), fieldArrayPrim.GetPath().GetString().c_str());
+            // Use warning instead of error during test runs to avoid polluting test output
+            auto settings = carb::getCachedInterface<carb::settings::ISettings>();
+            bool isTestRun = settings && settings->getAsInt("/app/isTestRun") == 1;
+
+            if (isTestRun)
+            {
+                CARB_LOG_WARN(
+                    "Could not find delegate for prim '%s' at path '%s'. Are all necessary extensions installed and enabled?",
+                    fieldArrayPrim.GetTypeName().GetString().c_str(), fieldArrayPrim.GetPath().GetString().c_str());
+            }
+            else
+            {
+                CARB_LOG_ERROR(
+                    "Could not find delegate for prim '%s' at path '%s'. Are all necessary extensions installed and enabled?",
+                    fieldArrayPrim.GetTypeName().GetString().c_str(), fieldArrayPrim.GetPath().GetString().c_str());
+            }
             return {};
         }
         CARB_LOG_INFO("reading %s", fieldArrayPrim.GetPath().GetText());
         auto farray = delegate->getFieldArray(fieldArrayPrim, time);
-        if (farray.get() != nullptr && useCache)
+        if (farray.get() != nullptr)
         {
-            CARB_LOG_INFO("[cache-update] %s, time=%.3f", fieldArrayPrim.GetPath().GetText(), time.GetValue());
+            // Check if down-conversion from 64-bit to 32-bit is enabled
+            auto settings = carb::getCachedInterface<carb::settings::ISettings>();
+            bool downConvert64Bit = settings && settings->getAsBool("/persistent/exts/omni.cae.data/downConvert64Bit");
+
+            if (downConvert64Bit)
+            {
+                ElementType currentType = farray->getElementType();
+                ElementType targetType = ElementType::unspecified;
+
+                // Map 64-bit types to their 32-bit counterparts
+                switch (currentType)
+                {
+                case ElementType::int64:
+                    targetType = ElementType::int32;
+                    break;
+                case ElementType::uint64:
+                    targetType = ElementType::uint32;
+                    break;
+                case ElementType::float64:
+                    targetType = ElementType::float32;
+                    break;
+                default:
+                    // Not a 64-bit type, no conversion needed
+                    break;
+                }
+
+                // Perform conversion if needed
+                if (targetType != ElementType::unspecified && s_utils)
+                {
+                    CARB_LOG_INFO(
+                        "Converting field array from 64-bit to 32-bit for %s", fieldArrayPrim.GetPath().GetText());
+                    farray = s_utils->castAndCopy(farray, targetType);
+                }
+            }
+
             m_fieldArrayCache.add(fieldArrayPrim, time, farray);
         }
         return farray;
@@ -412,6 +343,7 @@ private:
 
     std::map<pxr::SdfPath, std::pair<carb::ObjectPtr<IFieldArray>, pxr::UsdPrim>> m_cache;
     FieldArrayCache m_fieldArrayCache;
+    std::unique_ptr<StageUpdateListener> m_stageUpdateListener;
 
     carb::tasking::ITasking* m_tasking;
 };
@@ -476,6 +408,11 @@ static IFileUtils* getFileUtils()
     return s_fileUtils;
 }
 
+static IUsdUtils* getUsdUtils()
+{
+    return s_usdUtils;
+}
+
 } // namespace data
 } // namespace cae
 } // namespace omni
@@ -487,12 +424,13 @@ CARB_PLUGIN_IMPL(kPluginImpl, omni::cae::data::IDataDelegateInterface)
 void fillInterface(omni::cae::data::IDataDelegateInterface& iface)
 {
     using namespace omni::cae::data;
-    iface = { getDataDelegateRegistry, getFieldArrayUtils, getFileUtils };
+    iface = { getDataDelegateRegistry, getFieldArrayUtils, getFileUtils, getUsdUtils };
 }
 
 CARB_EXPORT void carbOnPluginStartup()
 {
-    s_registry = new omni::cae::data::DataDelegateRegistry();
+    s_usdUtils = new omni::cae::data::UsdUtils();
+    s_registry = new omni::cae::data::DataDelegateRegistry(s_usdUtils);
     s_utils = new omni::cae::data::FieldArrayUtils();
     s_fileUtils = new omni::cae::data::FileUtils();
 }
@@ -505,4 +443,6 @@ CARB_EXPORT void carbOnPluginShutdown()
     s_utils = nullptr;
     delete s_fileUtils;
     s_fileUtils = nullptr;
+    delete s_usdUtils;
+    s_usdUtils = nullptr;
 }

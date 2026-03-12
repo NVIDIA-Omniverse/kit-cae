@@ -1,0 +1,140 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+########################################################################################################################
+# Kit Version Selection Tool
+########################################################################################################################
+
+[repo_select_kit_version]
+command = "select_kit_version"
+entry_point = "omni.repo.cae_tools.select_kit_version:setup_repo_tool"
+enabled = false
+
+# Path to the kit versions configuration JSON file
+# This JSON file should contain:
+#   - "common": object with "templates" array (applied to all versions)
+#   - "versions": object with version labels as keys
+#     - Each version has "variables" (for @@VARIABLE@@ substitution)
+#     - Each version has "templates" array (version-specific templates)
+#   - "default": string indicating the default version label
+# Each template in the arrays should have "src" and "dest" properties.
+# Override in repo.toml if you need a different location.
+versions_config_file = "${root}/tools/kit-versions.json"
+
+# File to track the currently selected Kit version and file mode (git-ignored)
+# This JSON file stores the selected version and use_symlinks setting.
+# The tool reads this file to determine which version and mode are active.
+# Override in repo.toml if you prefer a different tracking file name or location.
+tracking_file = "${root}/.kit_selection.json"
+
+########################################################################################################################
+# Schema Generation Tool
+########################################################################################################################
+# It is available for advanced use cases such as:
+#   - Rebuilding schemas only without building extensions
+#   - Debugging schema generation issues
+#   - Custom CI/CD pipelines
+########################################################################################################################
+
+[repo_schema]
+command = "schema"
+entry_point = "omni.repo.cae_tools.schema:setup_repo_tool"
+enabled = true
+
+# Schema generation and build directories
+schema_generated_source_root = "${root}/_schemas/source"
+schema_build_root = "${root}/_schemas/build"
+schema_install_root = "${root}/_schemas/install"
+
+# List of packman dependency files to pull (in order)
+# First entry should be the kit-sdk file, followed by additional dependencies
+dependencies_packman_xml = [
+    "${root}/tools/deps/schema-deps.packman.xml",
+]
+
+# CMake root directory (executable will be located at cmake_root/bin/cmake[.exe])
+cmake_root = "${root}/_build/host-deps/cmake"
+
+# Repo USD template CMake directory (used for schema generation)
+repo_usd_template_cmake_dir = "${root}/_repo/deps/repo_usd/templates/cmake"
+
+# NOTE: The schema tool now uses the same VS version and compiler toolset that repo_build
+# detects/selects. No need to manually specify VS version - it's automatic!
+
+########################################################################################################################
+# Version Bump Tool
+########################################################################################################################
+
+[repo_bump]
+command = "bump"
+entry_point = "omni.repo.cae_tools.bump:setup_repo_tool"
+enabled = true
+
+# default paths to search for apps and extensions
+ext_folders = [
+  "${root}/source/extensions",
+  "${root}/source/legacy_extensions",
+  "${root}/source/apps",
+]
+pkg_version_md = "${root}/tools/VERSION.md"
+
+########################################################################################################################
+# Precompile Kernels Tool
+########################################################################################################################
+
+[repo_precompile_kernels]
+command = "precompile_kernels"
+entry_point = "omni.repo.cae_tools.precompile_kernels:setup_repo_tool"
+enabled = true
+
+# Kit build directory (resolved at runtime via tokens)
+build_dir = "${root}/_build/${platform}/${config}"
+
+# Extension folders to pass to kit
+ext_folders = [
+    "${root}/_build/${platform}/${config}/exts",
+    "${root}/_build/${platform}/${config}/extscache",
+    "${root}/_build/${platform}/${config}/apps",
+]
+
+# Script executed inside kit after startup
+script = "${root}/tools/repo_cae_tools/scripts/precompile_kernels_script.py"
+
+# Default AOT configuration JSON (produced by dav.recorder). Override with --json on the command line.
+# json = "${root}/aot_config.json"
+
+# Default Warp devices to compile for. Override with --devices on the command line.
+# devices = ["cuda"]
+
+# Default kernel cache directory. Override with --kernel-cache-dir on the command line.
+# If unset, Warp determines the location automatically (WARP_CACHE_PATH).
+# kernel_cache_dir = "${root}/_build/kernel_cache"
+
+########################################################################################################################
+# Pip Download Tool
+########################################################################################################################
+
+[repo_pip_download]
+command = "pip_download"
+entry_point = "omni.repo.cae_tools.pip_download:setup_repo_tool"
+enabled = true
+
+# Directory where optional pip packages are installed
+install_dir = "${root}/_build/target-deps/pip_prebundle"
+
+# List of requirements files to install (when no package is specified)
+# These will be processed in order
+requirements_files = [
+    # Add your requirements files here, e.g.:
+    # "${root}/requirements.txt",
+]
+
+# Python executable path (resolved automatically from target-deps)
+python_root = "${root}/_build/target-deps/python"

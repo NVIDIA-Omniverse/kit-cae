@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: LicenseRef-NvidiaProprietary
 //
 // NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
@@ -6,7 +6,7 @@
 // documentation and any modifications thereto. Any use, reproduction,
 // disclosure or distribution of this material and related documentation
 // without an express license agreement from NVIDIA CORPORATION or
-//  its affiliates is strictly prohibited.
+// its affiliates is strictly prohibited.
 
 #pragma once
 
@@ -26,7 +26,7 @@ namespace index
 {
 
 /**
- * Importer factory to let IndeX know of our importers.
+ * Importer factory to let IndeX know of our Python-based importers.
  */
 class ImporterFactory : public mi::base::Interface_implement<nv::index::app::IImporter_factory>
 {
@@ -69,65 +69,43 @@ public:
                                                                   nv::index::app::IProperty_dict* out_dict) const override;
 
 private:
-    const std::vector<std::string> m_importer_names = { "CaeDataSetImporter" };
+    const std::vector<std::string> m_importer_names = { "PythonImporter" };
     nv::index::IIndex* m_index;
     nv::index::app::IApplication_layer* m_application_layer;
 };
 
 /**
- * Needed to make Index aware of our compute technique.
+ * Needed to make Index aware of our Python compute techniques.
  */
 class InterfaceFactory : public mi::base::Interface_implement<nv::index::app::IInterface_factory>
 {
 public:
-    /// Get namespace of this IInterface_factory
-    ///
-    /// \return namespace string
     const char* get_namespace_string() const override
     {
         return "nv::omni::cae::index";
     }
 
-    /// Get number of create-able IInterface in this factory
-    ///
-    /// \return number of available IInterfaces
     mi::Size get_nb_iinterfaces() const override
     {
         return m_interface_names.size();
     }
 
-    /// Get idx-th IInterface name
-    ///
-    /// \param[in] idx available IInterface index
-    /// \return IInterface name
     const char* get_iinterface_name(mi::Size idx) const override
     {
         return idx < m_interface_names.size() ? m_interface_names.at(idx).c_str() : nullptr;
     }
 
-    /// Get idx-th IInterface description
-    ///
-    /// \param[in] idx available IInterface index
-    /// \return IInterface description
     const char* get_iinterface_description(mi::Size) const override
     {
         return "";
     }
 
-
-    /// Create an IInterface with IProperty_dict.
-    ///
-    /// \param[in]  iinterface_name IInterface name
-    /// \param[in]  in_dict         iinterface argument for creation
-    /// \param[out] out_dict        (out) result information of iinterface creation
-    /// \return an IInterface, nullptr when failed.
-    ///
     mi::base::IInterface* create_iinterface(const char* iinterface_name,
                                             const nv::index::app::IProperty_dict* in_dict,
                                             nv::index::app::IProperty_dict* out_dict) const override;
 
 private:
-    const std::vector<std::string> m_interface_names = { "CaeDataSetNanoVdbFetchTechnique" };
+    const std::vector<std::string> m_interface_names = { "PythonComputeTask" };
 };
 
 } // namespace index

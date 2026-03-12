@@ -37,35 +37,35 @@ project_ext (ext)
         { targetDeps.."/hdf5/lib/libhdf5.so", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
-        { targetDeps.."/hdf5/lib/libhdf5.so.310", ext.target_dir.."/lib" }, "linux"
+        { targetDeps.."/hdf5/lib/libhdf5.so.320", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
-        { targetDeps.."/hdf5/lib/libhdf5.so.310.5.1", ext.target_dir.."/lib" }, "linux"
+        { targetDeps.."/hdf5/lib/libhdf5.so.320.1.0", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
         { targetDeps.."/hdf5/lib/libhdf5_cpp.so", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
-        { targetDeps.."/hdf5/lib/libhdf5_cpp.so.310", ext.target_dir.."/lib" }, "linux"
+        { targetDeps.."/hdf5/lib/libhdf5_cpp.so.320", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
-        { targetDeps.."/hdf5/lib/libhdf5_cpp.so.310.0.6", ext.target_dir.."/lib" }, "linux"
+        { targetDeps.."/hdf5/lib/libhdf5_cpp.so.320.1.0", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
         { targetDeps.."/hdf5/lib/libhdf5_hl.so", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
-        { targetDeps.."/hdf5/lib/libhdf5_hl.so.310", ext.target_dir.."/lib" }, "linux"
+        { targetDeps.."/hdf5/lib/libhdf5_hl.so.320", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
-        { targetDeps.."/hdf5/lib/libhdf5_hl.so.310.0.6", ext.target_dir.."/lib" }, "linux"
+        { targetDeps.."/hdf5/lib/libhdf5_hl.so.320.0.1", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
         { targetDeps.."/hdf5/lib/libhdf5_hl_cpp.so", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
-        { targetDeps.."/hdf5/lib/libhdf5_hl_cpp.so.310", ext.target_dir.."/lib" }, "linux"
+        { targetDeps.."/hdf5/lib/libhdf5_hl_cpp.so.320", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
-        { targetDeps.."/hdf5/lib/libhdf5_hl_cpp.so.310.0.6", ext.target_dir.."/lib" }, "linux"
+        { targetDeps.."/hdf5/lib/libhdf5_hl_cpp.so.320.1.0", ext.target_dir.."/lib" }, "linux"
     )

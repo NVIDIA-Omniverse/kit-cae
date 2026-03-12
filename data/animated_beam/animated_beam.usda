@@ -1,0 +1,124 @@
+#usda 1.0
+(
+    defaultPrim = "World"
+    upAxis = "Z"
+    startTimeCode = 0
+    endTimeCode = 200
+)
+
+def Xform "World"
+{
+    def Scope "animated_beam_vtu"
+    {
+        class "VTKStaticFieldArrayClass"
+        {
+            asset[] fileNames = [@./animated_beam_00.vtu@]
+        }
+
+        class "VTKTemporalFieldArrayClass"
+        {
+            asset[] fileNames.timeSamples = {
+              0:  [@./animated_beam_00.vtu@],
+              10: [@./animated_beam_01.vtu@],
+              20: [@./animated_beam_02.vtu@],
+              30: [@./animated_beam_03.vtu@],
+              40: [@./animated_beam_04.vtu@],
+              50: [@./animated_beam_05.vtu@],
+              60: [@./animated_beam_06.vtu@],
+              70: [@./animated_beam_07.vtu@],
+              80: [@./animated_beam_08.vtu@],
+              90: [@./animated_beam_09.vtu@],
+              100: [@./animated_beam_10.vtu@],
+              110: [@./animated_beam_11.vtu@],
+              120: [@./animated_beam_12.vtu@],
+              130: [@./animated_beam_13.vtu@],
+              140: [@./animated_beam_14.vtu@],
+              150: [@./animated_beam_15.vtu@],
+              160: [@./animated_beam_16.vtu@],
+              170: [@./animated_beam_17.vtu@],
+              180: [@./animated_beam_18.vtu@],
+              190: [@./animated_beam_19.vtu@],
+            }
+        }
+
+        def CaeDataSet "VTKUnstructuredGrid" (
+            prepend apiSchemas = ["CaeVtkUnstructuredGridAPI", "CaePointCloudAPI"]
+        )
+        {
+            rel cae:pointCloud:coordinates = </World/animated_beam_vtu/VTKUnstructuredGrid/Points>
+            rel cae:vtk:cellTypes = </World/animated_beam_vtu/VTKUnstructuredGrid/CellTypes>
+            rel cae:vtk:connectivityArray = </World/animated_beam_vtu/VTKUnstructuredGrid/Connectivity>
+            rel cae:vtk:connectivityOffsets = </World/animated_beam_vtu/VTKUnstructuredGrid/ConnectivityOffsets>
+            rel cae:vtk:points = </World/animated_beam_vtu/VTKUnstructuredGrid/Points>
+            custom rel field:displ = </World/animated_beam_vtu/PointData/displ>
+            custom rel field:InvRTData = </World/animated_beam_vtu/CellData/InvRTData>
+            custom rel field:RTData = </World/animated_beam_vtu/PointData/RTData>
+
+            def CaeVtkFieldArray "Points" (
+                specializes = </World/animated_beam_vtu/VTKTemporalFieldArrayClass>
+            )
+            {
+                string arrayName = "Points"
+                uniform token fieldAssociation = "none"
+                uniform token special = "points"
+            }
+
+            def CaeVtkFieldArray "ConnectivityOffsets" (
+                specializes = </World/animated_beam_vtu/VTKStaticFieldArrayClass>
+            )
+            {
+                string arrayName = "ConnectivityOffsets"
+                uniform token fieldAssociation = "none"
+                uniform token special = "connectivity_offsets"
+            }
+
+            def CaeVtkFieldArray "Connectivity" (
+                specializes = </World/animated_beam_vtu/VTKStaticFieldArrayClass>
+            )
+            {
+                string arrayName = "Connectivity"
+                uniform token fieldAssociation = "none"
+                uniform token special = "connectivity_array"
+            }
+
+            def CaeVtkFieldArray "CellTypes" (
+                specializes = </World/animated_beam_vtu/VTKStaticFieldArrayClass>
+            )
+            {
+                string arrayName = "CellTypes"
+                uniform token fieldAssociation = "none"
+                uniform token special = "cell_types"
+            }
+        }
+
+        def Scope "PointData"
+        {
+            def CaeVtkFieldArray "RTData" (
+                specializes = </World/animated_beam_vtu/VTKTemporalFieldArrayClass>
+            )
+            {
+                string arrayName = "RTData"
+                uniform token fieldAssociation = "vertex"
+            }
+
+            def CaeVtkFieldArray "displ" (
+                specializes = </World/animated_beam_vtu/VTKTemporalFieldArrayClass>
+            )
+            {
+                string arrayName = "displ"
+                uniform token fieldAssociation = "vertex"
+            }
+        }
+
+        def Scope "CellData"
+        {
+            def CaeVtkFieldArray "InvRTData" (
+                specializes = </World/animated_beam_vtu/VTKTemporalFieldArrayClass>
+            )
+            {
+                string arrayName = "InvRTData"
+                uniform token fieldAssociation = "cell"
+            }
+        }
+    }
+}

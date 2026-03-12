@@ -1,0 +1,34 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+[package]
+title = "CAE DAV"
+version = "1.0.0"
+description = "Extension that provides DAV-specific data processing algorithms and operators."
+category = "CAE"
+changelog = "docs/CHANGELOG.md"
+icon = "data/icon.png"
+keywords = ["kit", "cae", "dav"]
+readme  = "docs/README.md"
+repository = "https://github.com/NVIDIA-Omniverse/kit-cae"
+
+[dependencies]
+"omni.cae.data" = {}
+"omni.cae.dav_libs" = {}
+"omni.kit.window.preferences" = {optional = true}
+
+[[python.module]]
+name = "omni.cae.dav"
+
+[documentation]
+pages = [
+    "docs/Overview.md",
+    "docs/CHANGELOG.md",
+]

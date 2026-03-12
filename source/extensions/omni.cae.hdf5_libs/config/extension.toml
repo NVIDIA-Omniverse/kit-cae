@@ -10,7 +10,7 @@
 
 [package]
 title = "Omni CAE HDF5 Libs"
-version = "1.14.6" # Version should match the HDF5 library version
+version = "2.1.0" # Version should match the HDF5 library version
 description = "HDF5 libraries for CAE extensions"
 category = "Internal"
 changelog = "docs/CHANGELOG.md"

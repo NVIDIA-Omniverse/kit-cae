@@ -2,6 +2,47 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.0.0]
+
+### Added
+
+- **OpenFOAM format support**: Full import pipeline with data delegate and importer
+- **NanoVDB data delegate**: Roundtrip support for NanoVDB datasets via `CaeNanoVDBFieldArrayAPI` schema
+- **Biplane/Triplane slice**: New triplane option for the Slice operator
+- **Multi-seed streamlines**: Streamlines support multiple seeds natively
+- **Operator execution events**: `EVT_OPERATOR_BEGIN` / `EVT_OPERATOR_END` events for synchronizing external workflows (e.g., movie capture)
+- **Insights panel enhancements**: Quartile, histogram, and statistical analysis for field data
+- **Expression variables**: New extension (`omni.cae.exVars`) to set expression variables from command-line arguments
+- **Format onboarding tutorial**: End-to-end guide for integrating custom data formats into the OpenUSD schema and delegate model
+- **CaeViz schema documentation**: Visualization operator authoring guide with examples and design rationale
+- **`omni.cae.bundle` meta-extension**: Single dependency that brings in all Kit-CAE extensions with pre-configured IndeX, Flow, and Hydra settings
+- **Ahead-of-time kernel compilation**: Tool and settings for precompiling Warp/DAV kernels to reduce first-run latency
+
+### Changed
+
+- **Kit SDK 109.0.3**: Updated to Kit 109.0.3
+- **Selectable Kit SDK version**: Build against different Kit SDK versions (108.0.0 through 109.0.3) using `select_kit_version` tool without code changes
+- **Simplified build**: Removed CMake dependency; schemas now build as part of `repo.sh build` (no separate `repo.sh schema` step)
+- **Extensions reorganized by role**: Extensions renamed to clearly reflect function (delegates, importers, viz, UI); legacy code moved to `source/legacy_extensions/`
+- **Schemas reorganized**: Split into `source/schemas/shared/` (core, viz) and `source/schemas/formats/` (per-format)
+- **Unified field selection**: All visualization operators use `CaeVizFieldSelectionAPI` (multiple-apply schema) for consistent field selection
+- **Prim-authored voxelization**: Voxelization settings now authored on USD prims rather than local preferences, ensuring the same stage produces the same result on any machine
+- **GPU-accelerated computation**: Bounding boxes, field ranges, and histograms computed on GPU via Warp kernels instead of NumPy
+- **64-to-32-bit auto-downconversion**: Float64/int64 arrays automatically downconverted to 32-bit at load time (configurable)
+- **Fine-grained cache invalidation**: Cache supports 4 invalidation modes (`any`, `update`, `resync`, `delete`) and schema-filtered property watching
+- **Default Z-up axis**: Changed default up axis to Z to match CAE industry convention
+- **EnSight Gold enhancements**: Polyhedral element support, metadata caching to avoid repeated file parsing, and import progress reporting
+- **VTK enhancements**: Custom VTU reader for faster reads, polyhedra support, and improved reader caching
+- **Static geometry support for Faces**: Avoids reprocessing unchanging mesh topology on temporal datasets
+- **Ubuntu 24.04 and VS2026 support**: Platform compatibility updates
+
+### Fixed
+
+- Point-based streamline computation
+- CGNS NGon_n prims no longer get cell-centered data associated incorrectly
+- IndeX race conditions in NanoVDB path
+- VTK reader caching scoped per-prim instead of per-filename
+
 ## [1.5.0]
 
 - Update to Kit 109.0.1
