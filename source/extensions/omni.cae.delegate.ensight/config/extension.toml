@@ -10,7 +10,7 @@
 
 [package]
 title = "CAE EnSight"
-version = "1.0.1"
+version = "1.0.4"
 description = "Extension adds support for EnSight datasets."
 category = "CAE"
 changelog = "docs/CHANGELOG.md"

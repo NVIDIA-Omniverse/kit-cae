@@ -2,6 +2,19 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.0.1]
+
+### Fixed
+
+- **EnSight variable parsing**: Fixed variable names being read as empty strings when multiple spaces
+  separate the variable name from the filename in the `VARIABLE` section (`omni.cae.delegate.ensight`).
+- **EnSight per-element variable reader**: Fixed assertion failure when a `.case`/`.encas` var file lists
+  element type sections in a different order than the geometry file (`omni.cae.delegate.ensight`).
+- **EnSight `.encas` support**: Importer now accepts `.encas` as an alias for `.case` files
+  (`omni.cae.importer.ensight`).
+- **EnSight quoted filenames**: Geometry and variable filenames wrapped in double-quotes (e.g. from Fluent
+  exports) are now parsed correctly, including filenames that contain spaces (`omni.cae.delegate.ensight`).
+
 ## [2.0.0]
 
 ### Added

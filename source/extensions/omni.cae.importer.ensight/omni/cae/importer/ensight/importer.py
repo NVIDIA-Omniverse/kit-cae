@@ -72,11 +72,11 @@ class EnSightGoldImporter(AbstractImporterDelegate):
 
     @property
     def filter_regexes(self) -> list[str]:
-        return [r".*\.case$"]
+        return [r".*\.(case|encas)$"]
 
     @property
     def filter_descriptions(self) -> list[str]:
-        return ["EnSight Gold files"]
+        return ["EnSight Gold files (*.case, *.encas)"]
 
     def show_destination_frame(self):
         return True

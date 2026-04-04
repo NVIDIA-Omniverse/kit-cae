@@ -9,6 +9,7 @@
 # its affiliates is strictly prohibited.
 
 import os.path
+import shlex
 import threading
 from enum import Enum, auto
 from logging import getLogger
@@ -51,7 +52,7 @@ def get_geometry_filename(f):
             f.seek(pos)
             break
         if line.startswith("model:"):
-            components = line.split(":")[-1].strip().split(" ")
+            components = shlex.split(line.split(":")[-1].strip())
             if len(components) >= 2:
                 ts = int(components[0])
             geo_filename = components[-1]
@@ -158,10 +159,10 @@ def process_gold_case(stage: Usd.Stage, case_filename: str, rootPath: Sdf.Path, 
                     var_type = cae_ensight.Tokens.tensor9
 
                 if type.endswith(" per node"):
-                    parts = data.strip().split(" ")
+                    parts = shlex.split(data.strip())
                     variables[parts[-2]] = (parts[-1], cae.Tokens.vertex, var_type)
                 elif type.endswith(" per element"):
-                    parts = data.strip().split(" ")
+                    parts = shlex.split(data.strip())
                     variables[parts[-2]] = (parts[-1], cae.Tokens.cell, var_type)
                 else:
                     continue
@@ -714,11 +715,16 @@ class EnSightGoldVar(EnsightGoldBase):
                 if header == "part":
                     cur_part_id = int(np.fromfile(f, dtype=np.int32, count=1)[0])
                     pi = geo_index.parts_by_id[cur_part_id]
-                    for qi in pi.pieces:
-                        element_type = self.readline(f, 80).lower()
-                        assert (
-                            element_type == qi.element_type.name.lower()
-                        ), "Element type mismatch between geo and var files"
+                    # Build a lookup by element type name so we don't assume the
+                    # var file has the same piece ordering as the geo file.
+                    pieces_by_type = {qi.element_type.name.lower(): qi for qi in pi.pieces}
+                    header = self.readline(f, 80).lower()
+                    while header and header != "part":
+                        qi = pieces_by_type.get(header)
+                        if qi is None:
+                            raise ValueError(
+                                f"Element type '{header}' in var file not found in geo file for part {cur_part_id}"
+                            )
                         nb_values = qi.num_elems * self.nb_comps
                         if part_id == cur_part_id and (piece_id is None or piece_id == qi.id):
                             yield self._reshape(np.fromfile(f, dtype=np.float32, count=nb_values))
@@ -726,9 +732,11 @@ class EnSightGoldVar(EnsightGoldBase):
                                 break  # we've read the required piece
                         else:
                             f.seek(nb_values * 4, os.SEEK_CUR)
+                        header = self.readline(f, 80).lower()
                     if part_id == cur_part_id:
                         break  # we've read the required part, no need to continue
-                header = self.readline(f, 80)
+                else:
+                    header = self.readline(f, 80)
 
     def _reshape(self, array):
         if self.nb_comps == 1:

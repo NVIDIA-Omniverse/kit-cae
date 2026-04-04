@@ -10,7 +10,7 @@
 
 [package]
 title = "CAE EnSight Importer"
-version = "1.0.0"  # Semantic Versionning is used: https://semver.org/
+version = "1.0.1"  # Semantic Versionning is used: https://semver.org/
 description = "Asset importer extension for importing EnSight files into Omniverse using the asset importer framework."
 category = "CAE"
 changelog = "docs/CHANGELOG.md"
