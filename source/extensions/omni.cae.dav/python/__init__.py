@@ -9,27 +9,16 @@
 # its affiliates is strictly prohibited.
 
 
-from .command_types import ConvertToDAVDataSet
+from .command_types import ConvertToDAVDataSet, GetField
 from .extension import Extension
-from .utils import (
-    fetch_data,
-    get_dataset,
-    get_field,
-    get_selected_component_field,
-    get_vector_magnitude_field,
-    lerp_dataset,
-    pass_fields,
-    probe_fields,
-)
+from .utils import fetch_data, get_dataset, lerp_dataset, pass_fields, probe_fields
 
 __all__ = [
     "ConvertToDAVDataSet",
+    "GetField",
     # Utilities
     "fetch_data",
     "get_dataset",
-    "get_field",
-    "get_selected_component_field",
-    "get_vector_magnitude_field",
     "lerp_dataset",
     "pass_fields",
     "probe_fields",

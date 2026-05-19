@@ -1,0 +1,29 @@
+name: volume_render
+description: >
+  Tests the agent's ability to create a volume rendering of a specific field
+  from a CGNS file and capture a clean screenshot.
+graded: true
+kit_file: omni.cae.kit
+data_file: StaticMixer.cgns
+validator: validators/validate_02.py
+
+prompt: |
+  Import `data/StaticMixer.cgns` into Kit-CAE, create a volume rendering of
+  the Eddy Viscosity field, and capture a clean screenshot (no UI chrome) at
+  1280x720 resolution.
+
+  Save the screenshot to `{render_dir}/eval_02_volume.png`.
+
+  Use the farm-style launch args for clean headless capture. The script should
+  print RENDER_COMPLETE when the screenshot has been saved.
+
+expected_outputs:
+  - type: file
+    path: "{render_dir}/eval_02_volume.png"
+    min_size_bytes: 10000
+    resolution: [1280, 720]
+  - type: stage
+    prims:
+      - path_contains: Volume
+        type: Mesh  # volume operator creates a Mesh prim
+      - path_contains: BoundingBox

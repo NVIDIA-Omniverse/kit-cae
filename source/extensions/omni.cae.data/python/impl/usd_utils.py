@@ -498,7 +498,12 @@ def get_bracketing_time_samples_for_data_set_prim(
     )
 
 
-def get_related_data_prims(prim: Usd.Prim, transitive: bool = True, include_self: bool = True) -> list[Usd.Prim]:
+def get_related_data_prims(
+    prim: Usd.Prim,
+    transitive: bool = True,
+    include_self: bool = True,
+    rel_names: list[str] = [],
+) -> list[Usd.Prim]:
     """
     Get all related DataSet and FieldArray prims for a given prim.
 
@@ -512,6 +517,9 @@ def get_related_data_prims(prim: Usd.Prim, transitive: bool = True, include_self
                    immediate relationship targets
         include_self: If True, include the input prim in the result set; if False, only return
                      related prims
+        rel_names: If non-empty, only relationships whose name is in this list are followed on
+                   the first traversal hop. Subsequent transitive hops follow all relationships
+                   freely. Defaults to [] (follow all relationships at every hop).
 
     Returns:
         List of related DataSet and FieldArray prims
@@ -528,6 +536,9 @@ def get_related_data_prims(prim: Usd.Prim, transitive: bool = True, include_self
         >>> # Get only the field relationships (exclude self)
         >>> fields = get_related_data_prims(dataset.GetPrim(), transitive=False, include_self=False)
         >>> # fields will contain: [field1, field2]
+        >>> # Only follow "field:Field1" on the first hop
+        >>> prims = get_related_data_prims(dataset.GetPrim(), rel_names=["field:Field1"])
+        >>> # prims will contain: [dataset, field1]  (field2 excluded)
     """
     if not prim or not prim.IsValid():
         return []
@@ -539,7 +550,7 @@ def get_related_data_prims(prim: Usd.Prim, transitive: bool = True, include_self
 
     interface = get_data_delegate_interface()
     utils = interface.get_usd_utils()
-    result_paths = utils.get_related_data_prims(stage_id, prim_path, transitive, include_self)
+    result_paths = utils.get_related_data_prims(stage_id, prim_path, transitive, include_self, rel_names)
 
     # Convert paths back to prims
     result_prims = []

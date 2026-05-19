@@ -2,11 +2,11 @@
   <!-- Put all extension specific dependencies in this file. -->
   <!-- Edit this section to pull extension specific dependencies -->
   <dependency name="cgns" linkPath="${root}/_build/target-deps/cgns" tags="non-redist">
-     <package name="cgns" version="4.5.1-0-${platform_target_abi}-dynamic-release" />
+     <package name="cgns" version="4.5.1-1-${platform_target_abi}-dynamic-release" />
   </dependency>
 
   <dependency name="hdf5" linkPath="${root}/_build/target-deps/hdf5">
-    <package name="hdf5" version="2.1.0-0-${platform_target_abi}-dynamic-release" />
+    <package name="hdf5" version="2.1.1-0-${platform_target_abi}-dynamic-release" />
   </dependency>
 
   <dependency name="index-for-omniverse-headers" linkPath="${root}/_build/target-deps/nvindex">

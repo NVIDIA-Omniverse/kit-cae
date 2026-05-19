@@ -9,7 +9,7 @@
 # its affiliates is strictly prohibited.
 
 [package]
-version = "2.0.0"
+version = "2.1.0"
 title = "CAE Extension Bundle"
 description = "Bundle of all CAE extensions, dependencies, and settings for Kit-CAE applications"
 category = "CAE"
@@ -67,6 +67,7 @@ icon = "data/icon.png"
 
 # Utility
 "omni.cae.exVars" = {}
+"omni.cae.startup" = {}
 
 [[python.module]]
 name = "omni.cae.bundle"

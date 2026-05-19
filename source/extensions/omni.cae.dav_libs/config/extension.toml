@@ -10,7 +10,7 @@
 
 [package]
 title = "Omni CAE DAV Libs"
-version = "1.0.0"
+version = "1.1.0"
 description = "DAV libraries"
 category = "Internal"
 changelog = "docs/CHANGELOG.md"

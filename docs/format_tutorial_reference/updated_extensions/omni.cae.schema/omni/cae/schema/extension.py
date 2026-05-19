@@ -10,48 +10,57 @@
 
 __all__ = ["Extension"]
 
-import os.path
+import os
+import sys
+from pathlib import Path
 from logging import getLogger
 
 import omni.ext
+from omni.kit.app import get_app
 from pxr import Plug, Usd  # noqa: F401 -- Usd import ensures base class wrappers exist for schema modules
 
 logger = getLogger(__name__)
 
 
-def _load_usd_plugins():
-    schemas = [
-        "OmniCae",
-        "OmniCaeSids",
-        "OmniCaeViz",
-        "OmniCaeNumPy",
-        "OmniCaeHdf5",
-        "OmniCaeCgns",
-        "OmniCaeVtk",
-        "OmniCaeEnSight",
-        "OmniCaeOpenFoam",
-        "OmniCaeTrimesh",
-        "OmniCaeScae",
-    ]
+def _load_usd_plugins(ext_id):
+    plugin_dir = Path(get_app().get_extension_manager().get_extension_path(ext_id)) / "usd" / "plugin"
 
-    def get_parent_dir(path, level=1):
-        for i in range(level):
-            path = os.path.dirname(path)
-        return path
+    resource_dirs = sorted(path for path in plugin_dir.glob("*/resources") if (path / "plugInfo.json").is_file())
+    if not resource_dirs:
+        logger.warning("No USD schema plugins found under '%s'", plugin_dir)
+        return
 
-    extRoot = get_parent_dir(__file__, 4)
-    for name in schemas:
-        schemaPath = f"{extRoot}/plugins/{name}/resources"
-        logger.info("loading USD plugin from '%s'", schemaPath)
-        result = Plug.Registry().RegisterPlugins(schemaPath)
+    dll_dir_handles = []
+
+    # On Windows, importing the generated Python bindings (for example
+    # `usd/python/OmniCaeViz/_omniCaeViz.pyd`) does not automatically make the
+    # matching schema DLL in `usd/plugin/OmniCaeViz/` discoverable. Register each
+    # plugin directory with the process DLL search path before any schema Python
+    # modules are imported so dependent DLLs such as `omniCaeViz.dll` and
+    # `omniCae.dll` can be resolved.
+    #
+    # Keep the returned handles alive for the lifetime of the extension;
+    # dropping them removes the directories from the DLL search path.
+    if sys.platform == "win32":
+        for resource_dir in resource_dirs:
+            dll_dir = resource_dir.parent
+            logger.info("Adding schema DLL search path '%s'", dll_dir)
+            dll_dir_handles.append(os.add_dll_directory(str(dll_dir)))
+
+    for resource_dir in resource_dirs:
+        logger.info("Registering USD plugin from '%s'", resource_dir)
+        result = Plug.Registry().RegisterPlugins(str(resource_dir))
         if not result:
-            logger.error("Failed to load USD plugin from '%s'", schemaPath)
+            logger.error("Failed to register USD plugin from '%s'", resource_dir)
+
+    return dll_dir_handles
 
 
 class Extension(omni.ext.IExt):
     def on_startup(self, extId):
         logger.info("starting extension %s", extId)
-        _load_usd_plugins()
+        self._dll_dir_handles = _load_usd_plugins(extId)
 
     def on_shutdown(self):
+        self._dll_dir_handles = []
         logger.info("shutting down")

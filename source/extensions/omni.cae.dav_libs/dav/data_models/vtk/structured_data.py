@@ -211,6 +211,40 @@ def get_hex_face_num_points(face_idx: wp.int32) -> wp.int32:
 
 
 @dav.func
+def get_voxel_face_point_local_idx(face_idx: wp.int32, local_idx: wp.int32) -> wp.int32:
+    """Get the local point index within a cell for a voxel face point (VTK voxel ordering).
+
+    VTK voxel vertex ordering differs from VTK hex ordering: vertices 2↔3 and 6↔7 are
+    swapped.  This LUT maps (face_idx, local_idx) to the correct voxel-ordered local
+    vertex index so that the resulting cross-product gives an outward-pointing face normal.
+
+    Args:
+        face_idx: Local face index (0-5)
+        local_idx: Local index within the face (0-3)
+
+    Returns:
+        wp.int32: The local cell vertex index (0-7) in VTK voxel ordering
+    """
+    # Flat 6×4 LUT, row-major.  Each row lists the 4 voxel-ordered local vertex indices
+    # for that face, wound CCW when viewed from outside (outward normal via right-hand rule).
+    # face 0 (-X): [0,4,6,2]  face 1 (+X): [1,3,7,5]  face 2 (-Y): [0,1,5,4]
+    # face 3 (+Y): [2,6,7,3]  face 4 (-Z): [0,2,3,1]  face 5 (+Z): [4,5,7,6]
+    # NOTE: if I don't turn formatting off, Ruff puts one number/line. Which is ridiculous.
+    # fmt: off
+    lut = wp.vector(
+        0, 4, 6, 2,  # face 0 (-X)
+        1, 3, 7, 5,  # face 1 (+X)
+        0, 1, 5, 4,  # face 2 (-Y)
+        2, 6, 7, 3,  # face 3 (+Y)
+        0, 2, 3, 1,  # face 4 (-Z)
+        4, 5, 7, 6,  # face 5 (+Z)
+        dtype=wp.int32, length=24,
+    )
+    # fmt: on
+    return lut[face_idx * wp.int32(4) + local_idx]
+
+
+@dav.func
 def get_hex_face_point_local_idx(face_idx: wp.int32, local_idx: wp.int32) -> wp.int32:
     """Get the local point index within a cell for a hexahedron face point.
 

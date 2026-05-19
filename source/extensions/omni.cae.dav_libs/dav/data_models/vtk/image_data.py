@@ -262,8 +262,8 @@ class CellAPI:
         Returns:
             wp.int32: The global point ID
         """
-        # Get the local point index within the cell
-        cell_local_idx = sd.get_hex_face_point_local_idx(face_idx, local_idx)
+        # Get the local point index within the cell (voxel vertex ordering)
+        cell_local_idx = sd.get_voxel_face_point_local_idx(face_idx, local_idx)
         # Convert to global point ID
         return CellAPI.get_point_id(cell, cell_local_idx, ds)
 
@@ -527,6 +527,21 @@ def _image_data_locate_cell(ds: DatasetHandle, position: wp.vec3f) -> CellHandle
 
     # Check if cell_ijk is within valid bounds (relative to extent_min)
     cell_ijk_relative = cell_ijk - ds.extent_min
+    tolerance = wp.float32(1.0e-6)
+
+    # Treat exact max-boundary samples as belonging to the last cell.
+    # This keeps point-centered voxelization from dropping samples on the
+    # dataset's upper faces while still rejecting points truly outside.
+    rel_x = cell_ijk_relative.x
+    rel_y = cell_ijk_relative.y
+    rel_z = cell_ijk_relative.z
+    if rel_x == cell_dims.x and wp.abs(grid_coords.x - wp.float32(ds.extent_max.x)) <= tolerance:
+        rel_x = cell_dims.x - wp.int32(1)
+    if rel_y == cell_dims.y and wp.abs(grid_coords.y - wp.float32(ds.extent_max.y)) <= tolerance:
+        rel_y = cell_dims.y - wp.int32(1)
+    if rel_z == cell_dims.z and wp.abs(grid_coords.z - wp.float32(ds.extent_max.z)) <= tolerance:
+        rel_z = cell_dims.z - wp.int32(1)
+    cell_ijk_relative = wp.vec3i(rel_x, rel_y, rel_z)
 
     if (
         cell_ijk_relative.x < 0

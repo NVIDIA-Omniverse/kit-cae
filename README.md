@@ -80,6 +80,32 @@ This project uses several open-source libraries:
 
 Review the license terms of these open source projects before use.
 
+## Agent Skills
+
+Kit-CAE ships with agent skills in `skills/` that let agents (Codex, Claude Code, OpenClaw, Cursor, etc.) drive Kit-CAE programmatically: importing data, setting up visualizations, and capturing renders without manual intervention.
+
+### Onboarding
+
+1. Point your agent's skill/tool search path at `<kit-cae-dir>/skills/`.
+2. The agent reads the relevant `SKILL.md` on demand — no further configuration needed.
+
+| Skill | Purpose |
+|-------|--------|
+| `cae-core` | Shared foundation: APIs, stage discovery, format references, utility scripts. Loaded as a dependency — not invoked directly. |
+| `cae-visualization` | End-to-end visualization: inspect data → import → create viz operators → render. |
+| `cae-capture` | Production capture: clean PNG/EXR screenshots and MP4 video with NVENC encoding. |
+| `cae-streaming` | Run Kit-CAE as a WebRTC streamed app; remote clients view and control it via data-channel messages. |
+
+Skills reference each other via relative paths (e.g., `cae-core/references/kit-cae-api.md`), so the `skills/` directory is self-contained and portable.
+
+### Onboarding Prompt
+
+Paste this into Codex, Claude Code, OpenClaw, Cursor, or any skills-aware agent after pointing it at this repo:
+
+```text
+This repository ships agent skills under `skills/` (cae-core, cae-visualization, cae-capture, cae-streaming). Read each SKILL.md, run any preflight or environment checks the skills prescribe, and confirm Kit-CAE is ready to use on this system. Then give me a short summary of what each skill enables so I know what to ask you to do next.
+```
+
 ## Contributing
 
 We provide this source code as-is and are currently not accepting outside contributions.

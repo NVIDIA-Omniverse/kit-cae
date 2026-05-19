@@ -1,0 +1,12 @@
+# Per-harness eval results (scripts + per-scenario JSON + per-model summary.json)
+# are kept locally but not tracked — only the top-level SUMMARY.md is committed.
+# Drop additional harnesses here as they're added.
+claude-code/
+codex/
+openclaw/
+
+# Rendered outputs (PNG/MP4) live under each <harness>/<model>/renders/ — not committed.
+# Generated data (custom format files) also lives under renders/ — not committed.
+**/renders/
+**/eval_08_data/
+**/logs/

@@ -10,7 +10,7 @@
 
 [package]
 # Semantic Versionning is used: https://semver.org/
-version = "1.0.0"
+version = "1.5.1"
 
 # The title and description fields are primarly for displaying extension info in UI
 title = "CAE Visualization"
@@ -41,6 +41,7 @@ icon = "data/icon.png"
 "omni.kit.commands" = {}
 "omni.cae.index" = {}
 "omni.client" = {}
+"omni.ui" = {} # needed for ui.DynamicTextureProvider
 
 [settings]
 # Whether operators should be created enabled by default

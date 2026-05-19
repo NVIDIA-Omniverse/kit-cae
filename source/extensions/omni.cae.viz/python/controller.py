@@ -548,20 +548,22 @@ class Controller:
         have changed transforms.
         """
         for instance_name in usd_utils.get_instances(prim, "CaeVizDatasetTransformingAPI"):
-            # locate the DatasetSelectionAPI instance
-            if not prim.HasAPI(cae_viz.DatasetSelectionAPI, instance_name):
-                continue
-
             xforming_api = cae_viz.DatasetTransformingAPI(prim, instance_name)
-            ds_api = cae_viz.DatasetSelectionAPI(prim, instance_name)
-            targets = ds_api.GetTargetRel().GetForwardedTargets()
             attr_name = (
                 "omni:fabric:worldMatrix"
                 if xforming_api.GetUseGlobalTransformAttr().Get()
                 else "omni:fabric:localMatrix"
             )
-            for target in targets:
-                attr_path = target.AppendProperty(attr_name)
+
+            if instance_name == "self":
+                # Watch the operator prim's own transform
+                attr_path = prim.GetPath().AppendProperty(attr_name)
                 if self._xform_change_tracker.AttributeChanged(str(attr_path)):
                     return True
+            elif prim.HasAPI(cae_viz.DatasetSelectionAPI, instance_name):
+                ds_api = cae_viz.DatasetSelectionAPI(prim, instance_name)
+                for target in ds_api.GetTargetRel().GetForwardedTargets():
+                    attr_path = target.AppendProperty(attr_name)
+                    if self._xform_change_tracker.AttributeChanged(str(attr_path)):
+                        return True
         return False

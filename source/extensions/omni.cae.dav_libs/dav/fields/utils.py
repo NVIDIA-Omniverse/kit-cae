@@ -97,6 +97,30 @@ def get_copy_field_kernel(field_model: dav.FieldModel, output_dtype: Any):
 
 
 @dav.cached
+def get_copy_field_to_field_kernel(src_model: dav.FieldModel, dst_model: dav.FieldModel):
+    """Get a kernel that copies elements from one FieldHandle to another, with automatic dtype cast.
+
+    Args:
+        src_model: Source field model.
+        dst_model: Destination field model.
+
+    Returns:
+        Compiled warp kernel.
+    """
+    src_dtype = type(src_model.FieldAPI.zero())
+    dst_dtype = type(dst_model.FieldAPI.zero())
+    static_cast = dav.utils.get_cast_function(src_dtype, dst_dtype)
+
+    @dav.kernel(module="unique")
+    @dav.utils.set_qualname("dav_copy_field_to_field_kernel")
+    def copy_field_to_field_kernel(src: src_model.FieldHandle, dst: dst_model.FieldHandle):
+        idx = wp.tid()
+        dst_model.FieldAPI.set(dst, idx, static_cast(src_model.FieldAPI.get(src, idx)))
+
+    return copy_field_to_field_kernel
+
+
+@dav.cached
 def get_compute_field_range_kernel(field_model: dav.FieldModel):
     value_type = type(field_model.FieldAPI.zero())
     scalar_type = dav.utils.get_scalar_dtype(value_type)

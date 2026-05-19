@@ -233,11 +233,20 @@ def _classify_arg(arg_val):
     return None
 
 
+def _model_to_inner_spec(model) -> list | None:
+    """Convert a registered field model class to a nested field model spec."""
+    if model is not None and id(model) in _class_registry:
+        factory_qualname, factory_bound_args = _class_registry[id(model)]
+        return _factory_to_inner_spec(factory_qualname, factory_bound_args)
+    return None
+
+
 def _factory_to_inner_spec(factory_qualname: str, factory_bound_args: dict) -> list | None:
     """Convert a factory qualname + bound args to an inner spec list.
 
     Returns ``["array", layout, dtype_str, length]`` for array models,
-    ``["nanovdb", dtype_str]`` for nanovdb models, or ``None`` if unrecognised.
+    ``["nanovdb", dtype_str]`` for nanovdb models, nested view specs for
+    collection/vector_reduced/selection models, or ``None`` if unrecognised.
     """
     parts = factory_qualname.split(".")
     if "fields" not in parts:
@@ -258,6 +267,29 @@ def _factory_to_inner_spec(factory_qualname: str, factory_bound_args: dict) -> l
         if dtype is not None:
             return ["nanovdb", _warp_type_name(dtype)]
 
+    elif field_type == "collection":
+        inner_spec = _model_to_inner_spec(factory_bound_args.get("field_model"))
+        if inner_spec is not None:
+            return ["collection", inner_spec]
+
+    elif field_type == "vector_reduced":
+        inner_spec = _model_to_inner_spec(factory_bound_args.get("inner_field_model"))
+        component = factory_bound_args.get("component")
+        magnitude = factory_bound_args.get("magnitude", False)
+        if inner_spec is not None:
+            if component is not None:
+                return ["vector_reduced", inner_spec, "component", component]
+            if magnitude:
+                return ["vector_reduced", inner_spec, "magnitude"]
+
+    elif field_type == "selection":
+        inner_spec = _model_to_inner_spec(factory_bound_args.get("inner_field_model"))
+        if inner_spec is not None:
+            if "subrange" in func_name:
+                return ["selection", inner_spec, "subrange"]
+            if "indexed_subset" in func_name:
+                return ["selection", inner_spec, "indexed_subset"]
+
     return None
 
 
@@ -269,11 +301,13 @@ def _build_field_models_config(factory_infos: list[tuple[str, dict]]) -> dict:
       ``nanovdb``       → list of ``[dtype_str]``
       ``collection``    → list of inner specs ``["array"|"nanovdb", ...]``
       ``vector_reduced``→ list of ``[inner_spec, "component"|"magnitude", *args]``
+      ``selection``     → list of ``[inner_spec, "subrange"|"indexed_subset"]``
     """
     array_specs: list = []
     nanovdb_specs: list = []
     collection_specs: list = []
     vr_entries: list = []
+    selection_entries: list = []
 
     for factory_qualname, factory_bound_args in factory_infos:
         parts = factory_qualname.split(".")
@@ -301,29 +335,39 @@ def _build_field_models_config(factory_infos: list[tuple[str, dict]]) -> dict:
 
         elif field_type == "collection":
             base_model = factory_bound_args.get("field_model")
-            if base_model is not None and id(base_model) in _class_registry:
-                inner_qualname, inner_args = _class_registry[id(base_model)]
-                inner_spec = _factory_to_inner_spec(inner_qualname, inner_args)
-                if inner_spec is not None and inner_spec not in collection_specs:
-                    collection_specs.append(inner_spec)
+            inner_spec = _model_to_inner_spec(base_model)
+            if inner_spec is not None and inner_spec not in collection_specs:
+                collection_specs.append(inner_spec)
 
         elif field_type == "vector_reduced":
             inner_model = factory_bound_args.get("inner_field_model")
             component = factory_bound_args.get("component")
             magnitude = factory_bound_args.get("magnitude", False)
-            if inner_model is not None and id(inner_model) in _class_registry:
-                inner_qualname, inner_args = _class_registry[id(inner_model)]
-                inner_spec = _factory_to_inner_spec(inner_qualname, inner_args)
-                if inner_spec is None:
-                    continue
-                if component is not None:
-                    entry = [inner_spec, "component", component]
-                elif magnitude:
-                    entry = [inner_spec, "magnitude"]
-                else:
-                    continue
-                if entry not in vr_entries:
-                    vr_entries.append(entry)
+            inner_spec = _model_to_inner_spec(inner_model)
+            if inner_spec is None:
+                continue
+            if component is not None:
+                entry = [inner_spec, "component", component]
+            elif magnitude:
+                entry = [inner_spec, "magnitude"]
+            else:
+                continue
+            if entry not in vr_entries:
+                vr_entries.append(entry)
+
+        elif field_type == "selection":
+            inner_model = factory_bound_args.get("inner_field_model")
+            inner_spec = _model_to_inner_spec(inner_model)
+            if inner_spec is None:
+                continue
+            if "subrange" in func_name:
+                entry = [inner_spec, "subrange"]
+            elif "indexed_subset" in func_name:
+                entry = [inner_spec, "indexed_subset"]
+            else:
+                continue
+            if entry not in selection_entries:
+                selection_entries.append(entry)
 
     config: dict = {}
     if array_specs:
@@ -334,6 +378,8 @@ def _build_field_models_config(factory_infos: list[tuple[str, dict]]) -> dict:
         config["collection"] = collection_specs
     if vr_entries:
         config["vector_reduced"] = vr_entries
+    if selection_entries:
+        config["selection"] = selection_entries
     return config
 
 

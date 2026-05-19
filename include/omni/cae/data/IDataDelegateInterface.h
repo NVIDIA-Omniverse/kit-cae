@@ -36,10 +36,13 @@ class IUsdUtils;
  *     - Added getFileUtils() to access IFileUtils singleton.
  * - v0.4:
  *     - Added getUsdUtils() to access IUsdUtils singleton.
+ * - v0.5:
+ *     - IUsdUtils::getRelatedDataPrims() gains a new `relNames` parameter
+ *       (default `{}`) for first-hop relationship filtering during expansion.
  */
 struct IDataDelegateInterface
 {
-    CARB_PLUGIN_INTERFACE("omni::cae::data::IDataDelegateInterface", 0, 4)
+    CARB_PLUGIN_INTERFACE("omni::cae::data::IDataDelegateInterface", 0, 5)
 
     /**
      * Gets access the IDataDelegateRegistry singleton.

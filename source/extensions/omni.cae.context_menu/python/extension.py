@@ -10,6 +10,7 @@
 
 __all__ = ["Extension"]
 
+import omni.kit.context_menu as kit_context_menu
 from omni.ext import IExt
 from omni.kit.property.usd import PrimPathWidget
 from omni.kit.widget.context_menu import add_menu
@@ -39,12 +40,25 @@ class Extension(IExt):
         self._menu_entries.append(add_menu(context_menu.get_flow_menu_dict(), "CREATE"))
         self._add_to_prim_path_widget(context_menu.get_add_menu_dict())
 
+        self._colormap_menu_entry = kit_context_menu.add_menu(
+            {
+                "name": "Copy LUT Texture URL",
+                "glyph": "menu_link.svg",
+                "show_fn": context_menu.ColormapCopyLutUrl.show,
+                "onclick_fn": context_menu.ColormapCopyLutUrl.onclick,
+                "appear_after": "Copy Prim Path",
+            },
+            "MENU",
+            "omni.kit.widget.stage",
+        )
+
         # legacy menus - only register if legacy UI is enabled
         if _is_legacy_ui_enabled():
             self._menu_entries.append(add_menu(legacy_context_menu.get_algorithms_menu_dict(), "CREATE"))
             self._menu_entries.append(add_menu(legacy_context_menu.get_flow_menu_dict(), "CREATE"))
 
     def on_shutdown(self):
+        self._colormap_menu_entry = None
         for item in self._prim_path_widget_entries:
             PrimPathWidget.remove_button_menu_entry(item)
         self._prim_path_widget_entries.clear()

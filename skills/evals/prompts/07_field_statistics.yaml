@@ -1,0 +1,28 @@
+name: field_statistics
+description: >
+  Tests the agent's ability to programmatically query field statistics — min, max,
+  mean, median, and histogram — and report structured results.
+graded: true
+kit_file: omni.cae.kit
+data_file: StaticMixer.cgns
+validator: validators/validate_07.py
+
+prompt: |
+  Import `data/StaticMixer.cgns` into Kit-CAE and compute statistics for the
+  Pressure field. Report:
+  - Minimum value
+  - Maximum value
+  - Mean
+  - Median
+  - A 32-bin histogram (bin edges and counts)
+
+  Write a Kit-CAE script that imports the file, locates the Pressure field,
+  computes statistics using the Kit-CAE data API, and prints the results as
+  JSON between STATS_BEGIN and STATS_END markers.
+
+  Run it headless with --no-window. No visualization or screenshot needed.
+
+expected_outputs:
+  - type: stdout
+    markers: ["STATS_BEGIN", "STATS_END"]
+    json_keys: ["min", "max", "mean", "median", "counts", "bin_edges"]

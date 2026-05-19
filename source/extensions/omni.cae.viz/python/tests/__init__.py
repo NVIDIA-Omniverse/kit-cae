@@ -10,9 +10,11 @@
 
 from .test_bounding_box import *
 from .test_change_tracker import *
+from .test_colormap_texture_manager import *
 from .test_controller import *
 from .test_faces import *
 from .test_index_volume import *
 from .test_points import *
+from .test_slice import *
 from .test_streamlines import *
 from .test_utils import *

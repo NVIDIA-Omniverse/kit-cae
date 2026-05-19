@@ -1,0 +1,28 @@
+name: faces_colormap
+description: >
+  Tests the agent's ability to import a VTK file, create a faces visualization
+  colored by a specific field, and capture a screenshot.
+graded: true
+kit_file: omni.cae_vtk.kit
+data_file: multicomb_0_polyhedra.vtu
+validator: validators/validate_03.py
+
+prompt: |
+  Import `data/multicomb_0_polyhedra.vtu` into Kit-CAE, create a surface (faces)
+  visualization colored by the Density field, and capture a clean screenshot at
+  1280x720 resolution.
+
+  Save the screenshot to `{render_dir}/eval_03_faces.png`.
+
+  Use the farm-style launch args for clean headless capture. The script should
+  print RENDER_COMPLETE when the screenshot has been saved.
+
+expected_outputs:
+  - type: file
+    path: "{render_dir}/eval_03_faces.png"
+    min_size_bytes: 10000
+    resolution: [1280, 720]
+  - type: stage
+    prims:
+      - path_contains: Faces
+      - path_contains: BoundingBox

@@ -201,7 +201,8 @@ bool UsdUtils::getBracketingTimeSamplesForDataSetPrim(const pxr::UsdPrim& prim,
 void UsdUtils::collectRelatedDataPrims(const pxr::UsdPrim& prim,
                                        bool transitive,
                                        std::set<pxr::SdfPath>& processedPrims,
-                                       std::vector<pxr::UsdPrim>& result) const
+                                       std::vector<pxr::UsdPrim>& result,
+                                       const std::vector<std::string>& relNames) const
 {
     if (!prim.IsValid())
     {
@@ -216,9 +217,19 @@ void UsdUtils::collectRelatedDataPrims(const pxr::UsdPrim& prim,
 
     processedPrims.insert(primPath);
 
-    // Traverse all relationships
+    // Traverse relationships, optionally filtered to a specific name set (first-hop only).
     for (const auto& rel : prim.GetAuthoredRelationships())
     {
+        // If relNames is non-empty, skip relationships not in the set.
+        if (!relNames.empty())
+        {
+            const std::string relName = rel.GetName().GetString();
+            if (std::find(relNames.begin(), relNames.end(), relName) == relNames.end())
+            {
+                continue;
+            }
+        }
+
         pxr::SdfPathVector targets;
         if (rel.GetForwardedTargets(&targets))
         {
@@ -237,10 +248,11 @@ void UsdUtils::collectRelatedDataPrims(const pxr::UsdPrim& prim,
                     // Add this prim to the result
                     result.push_back(targetPrim);
 
-                    // If transitive, recursively collect from this target
+                    // If transitive, recursively collect from this target using no rel filter —
+                    // once inside the subgraph we follow all relationships freely.
                     if (transitive)
                     {
-                        collectRelatedDataPrims(targetPrim, transitive, processedPrims, result);
+                        collectRelatedDataPrims(targetPrim, transitive, processedPrims, result, {});
                     }
                 }
             }
@@ -248,7 +260,10 @@ void UsdUtils::collectRelatedDataPrims(const pxr::UsdPrim& prim,
     }
 }
 
-std::vector<pxr::UsdPrim> UsdUtils::getRelatedDataPrims(const pxr::UsdPrim& prim, bool transitive, bool includeSelf) const
+std::vector<pxr::UsdPrim> UsdUtils::getRelatedDataPrims(const pxr::UsdPrim& prim,
+                                                        bool transitive,
+                                                        bool includeSelf,
+                                                        const std::vector<std::string>& relNames) const
 {
     std::vector<pxr::UsdPrim> result;
     std::set<pxr::SdfPath> processedPrims;
@@ -261,7 +276,7 @@ std::vector<pxr::UsdPrim> UsdUtils::getRelatedDataPrims(const pxr::UsdPrim& prim
     }
 
     // Collect related prims (will add prim to processedPrims to avoid cycles)
-    collectRelatedDataPrims(prim, transitive, processedPrims, result);
+    collectRelatedDataPrims(prim, transitive, processedPrims, result, relNames);
 
     return result;
 }

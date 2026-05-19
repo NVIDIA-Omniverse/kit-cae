@@ -1,0 +1,38 @@
+name: multi_viz
+description: >
+  Tests the agent's ability to compose multiple visualization types on a single
+  dataset — volume rendering plus glyphs with velocity arrows colored by temperature.
+graded: true
+kit_file: omni.cae.kit
+data_file: disk_out_ref.npz
+validator: validators/validate_04.py
+
+prompt: |
+  Import `data/disk_out_ref.npz` into Kit-CAE as "SIDS Unstructured" schema.
+  Create two visualizations on the same dataset:
+
+  1. A volume rendering colored by temperature (the "Temp" field) using
+     irregular volume type (appropriate for unstructured grids with cell topology)
+  2. Glyphs (arrows) oriented by velocity (the "V" field) and colored by
+     temperature (the "Temp" field), scaled small enough that the volume
+     cloud is clearly visible
+
+  Remember that NPZ files imported as SIDS Unstructured require a field
+  association fix before visualization operators work correctly.
+
+  Capture a clean screenshot at 1280x720 showing both visualizations and save
+  it to `{render_dir}/eval_04_multi.png`.
+
+  Use the farm-style launch args for clean headless capture (including volume
+  renderer args). Print RENDER_COMPLETE when done.
+
+expected_outputs:
+  - type: file
+    path: "{render_dir}/eval_04_multi.png"
+    min_size_bytes: 10000
+    resolution: [1280, 720]
+  - type: stage
+    prims:
+      - path_contains: Volume
+      - path_contains: Glyph
+      - path_contains: BoundingBox

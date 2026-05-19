@@ -13,6 +13,7 @@ __all__ = [
     "get_operators_menu_dict",
     "get_flow_menu_dict",
     "get_add_menu_dict",
+    "get_colormap_menu_dict",
 ]
 
 
@@ -335,14 +336,61 @@ class VolumeSlice:
             title="Choose Slice Shape",
             label="Select the slice shape:",
             # disable non-planar shapes for now since omni.index.usd doesn't handle those.
-            # options=["Plane", "Bi-Plane", "Sphere", "Custom"],
-            options=["Plane", "Bi-Plane", "Tri-Plane"],
-            default_index=0,
-            field_label="Shape:",
-            field_width=60,
+            # selections=[("Shape:", ["Plane", "Bi-Plane", "Sphere", "Custom"])],
+            selections=[("Shape:", ["Plane", "Bi-Plane", "Tri-Plane"])],
         )
-        shape = await dialog.exec()
-        return shape
+        result = await dialog.exec()
+        return result[0] if result else None
+
+
+class OperatorsPlanarSlice:
+    @staticmethod
+    def show(objects: dict) -> bool:
+        return objects.get("stage") is not None
+
+    @staticmethod
+    def enabled(objects: dict) -> bool:
+        return schema_isa(cae.DataSet, objects)
+
+    @staticmethod
+    @async_callback
+    @select_result
+    async def onclick(objects: dict):
+        stage = objects.get("stage")
+        assert stage is not None, "missing stage"
+        active_dataset_prims = get_active_prims(objects, lambda prim: prim.IsA(cae.DataSet))
+        assert len(active_dataset_prims) > 0
+
+        volume_type = await OperatorsPlanarSlice.get_type()
+        if volume_type is None:
+            return None
+
+        created_paths = []
+        for dataset_prim in active_dataset_prims:
+            name = f"PlanarSlice_{dataset_prim.GetName()}"
+            prim_path = get_stage_next_free_path(stage, get_anchor_path(stage).AppendChild(name), False)
+            status, plane_paths = await execute_command(
+                "CreateCaeVizPlanarSlice",
+                dataset_path=str(dataset_prim.GetPath()),
+                prim_path=prim_path,
+                type=volume_type,
+            )
+            if status:
+                created_paths.extend(plane_paths or [prim_path])
+
+        return created_paths
+
+    @staticmethod
+    async def get_type() -> Optional[str]:
+        dialog = TypeSelectionDialog(
+            title="Configure Planar Slice",
+            label="Configure the planar slice:",
+            selections=[
+                ("Type:", ["standard", "nanovdb"]),
+            ],
+        )
+        result = await dialog.exec()
+        return result[0] if result else None
 
 
 class OperatorsPoints:
@@ -443,13 +491,10 @@ class OperatorsGlyphs:
         dialog = TypeSelectionDialog(
             title="Choose Glyph Shape",
             label="Select the glyph shape:",
-            options=["Sphere", "Cone", "Arrow", "Custom"],
-            default_index=0,
-            field_label="Shape:",
-            field_width=60,
+            selections=[("Shape:", ["Sphere", "Cone", "Arrow", "Custom"])],
         )
-        shape = await dialog.exec()
-        return shape
+        result = await dialog.exec()
+        return result[0] if result else None
 
 
 class OperatorsStreamlines:
@@ -492,13 +537,10 @@ class OperatorsStreamlines:
         dialog = TypeSelectionDialog(
             title="Choose Streamlines Type",
             label="Select the streamlines type:",
-            options=["standard", "nanovdb"],
-            default_index=0,
-            field_label="Type:",
-            field_width=60,
+            selections=[("Type:", ["standard", "nanovdb"])],
         )
-        streamlines_type = await dialog.exec()
-        return streamlines_type
+        result = await dialog.exec()
+        return result[0] if result else None
 
 
 class OperatorsVolume:
@@ -540,25 +582,16 @@ class OperatorsVolume:
         dialog = TypeSelectionDialog(
             title="Choose Volume Type",
             label="Select the volume type:",
-            options=["irregular", "nanovdb"],
-            default_index=0,
-            field_label="Type:",
-            field_width=60,
+            selections=[("Type:", ["irregular", "nanovdb"])],
         )
-        volume_type = await dialog.exec()
-        return volume_type
+        result = await dialog.exec()
+        return result[0] if result else None
 
 
 def get_operators_menu_dict():
     return {
         "name": {
             "CAE Operators": [
-                {
-                    "name": "Points",
-                    "onclick_fn": OperatorsPoints.onclick,
-                    "show_fn": OperatorsPoints.show,
-                    "enabled_fn": OperatorsPoints.enabled,
-                },
                 {
                     "name": "Faces",
                     "onclick_fn": OperatorsFaces.onclick,
@@ -570,6 +603,18 @@ def get_operators_menu_dict():
                     "onclick_fn": OperatorsGlyphs.onclick,
                     "show_fn": OperatorsGlyphs.show,
                     "enabled_fn": OperatorsGlyphs.enabled,
+                },
+                {
+                    "name": "Planar Slices",
+                    "onclick_fn": OperatorsPlanarSlice.onclick,
+                    "show_fn": OperatorsPlanarSlice.show,
+                    "enabled_fn": OperatorsPlanarSlice.enabled,
+                },
+                {
+                    "name": "Points",
+                    "onclick_fn": OperatorsPoints.onclick,
+                    "show_fn": OperatorsPoints.show,
+                    "enabled_fn": OperatorsPoints.enabled,
                 },
                 {
                     "name": "Streamlines",
@@ -721,12 +766,11 @@ class FlowFuelInjectorSphere:
         dialog = TypeSelectionDialog(
             title="Choose Flow Layer",
             label="Select the flow layer:",
-            options=[f"{layer_number}" for layer_number in layer_numbers],
-            default_index=0,
-            field_label="Layer:",
+            selections=[("Layer:", [f"{layer_number}" for layer_number in layer_numbers])],
             field_width=50,
         )
-        return await dialog.exec()
+        result = await dialog.exec()
+        return int(result[0]) if result else None
 
     @staticmethod
     def get_simulation_prim(stage: Usd.Stage, layer_number: int) -> Usd.Prim:
@@ -827,6 +871,40 @@ class FlowBoundary:
         created_paths.append(prim_path)
 
         return created_paths
+
+
+def _colormap_has_texture_api(prim) -> bool:
+    from omni.cae.schema import viz as cae_viz
+
+    return prim.GetTypeName() == "Colormap" and prim.HasAPI(cae_viz.ColormapTextureAPI)
+
+
+def _add_colormap_texture_api(objects: dict):
+    import uuid
+
+    from omni.cae.schema import viz as cae_viz
+
+    for prim in get_selected_prims(objects, lambda p: p.GetTypeName() == "Colormap"):
+        api = cae_viz.ColormapTextureAPI.Apply(prim)
+        if not api.GetIdentifierAttr().Get():
+            api.GetIdentifierAttr().Set(uuid.uuid4().hex[:12])
+
+
+class ColormapCopyLutUrl:
+    @staticmethod
+    def show(objects: dict) -> bool:
+        return len(get_active_prims(objects, _colormap_has_texture_api)) > 0
+
+    @staticmethod
+    def onclick(objects: dict):
+        import omni.kit.clipboard
+        from omni.cae.schema import viz as cae_viz
+        from omni.cae.viz.colormap_texture_manager import get_dynamic_url_for_identifier
+
+        prims = get_active_prims(objects, _colormap_has_texture_api)
+        if prims:
+            identifier = cae_viz.ColormapTextureAPI(prims[0]).GetIdentifierAttr().Get()
+            omni.kit.clipboard.copy(get_dynamic_url_for_identifier(identifier))
 
 
 def get_flow_menu_dict():
@@ -1003,6 +1081,18 @@ def get_add_menu_dict():
                     "show_fn": partial(can_apply_api, "CaeVizDatasetTemporalTraitsAPI"),
                 },
                 {
+                    "name": "Dataset Subset",
+                    "onclick_fn": partial(
+                        add_api,
+                        Usd.Typed,
+                        "CaeVizDatasetSubsetAPI",
+                        suggestions_provider=lambda prims: get_dependent_api_suggestions(
+                            prims, "CaeVizDatasetSelectionAPI"
+                        ),
+                    ),
+                    "show_fn": partial(can_apply_api, "CaeVizDatasetSubsetAPI"),
+                },
+                {
                     "name": "Field Selection",
                     "onclick_fn": partial(
                         add_api,
@@ -1035,6 +1125,11 @@ def get_add_menu_dict():
                         ),
                     ),
                     "show_fn": partial(can_apply_api, "CaeVizFieldThresholdingAPI"),
+                },
+                {
+                    "name": "Colormap Texture",
+                    "onclick_fn": _add_colormap_texture_api,
+                    "show_fn": partial(can_apply_api, "CaeVizColormapTextureAPI"),
                 },
                 # {
                 #     "name": "Block List",

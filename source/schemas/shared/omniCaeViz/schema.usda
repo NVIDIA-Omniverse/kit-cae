@@ -82,6 +82,32 @@ class "CaeVizOperatorDebuggingAPI" (
     )
 }
 
+class "CaeVizColormapTextureAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "ColormapTextureAPI"
+        token[] apiSchemaCanOnlyApplyTo = ["Colormap"]
+    }
+    doc = """Single-apply API schema that opts a Colormap prim into the
+    ColormapTextureManager. When applied, the manager publishes the prim's
+    color ramp as a dynamic texture whose URL is derived from 'identifier'
+    rather than the prim path, making it stable under USD composition."""
+)
+{
+    uniform string cae:viz:colormapTexture:identifier = "" (
+        doc = """Unique identifier used to name the dynamic texture published by
+        ColormapTextureManager. Set once at prim creation (e.g. uuid4().hex)
+        and never changed afterwards. The resulting texture URL is
+        dynamic://cae_colormap_<identifier>."""
+        displayName = "Texture Identifier"
+        displayGroup = "Colormap Texture"
+        customData = {
+            string apiName = "identifier"
+        }
+    )
+}
+
 class "CaeVizOperatorDependenciesAPI" (
     inherits = </APISchemaBase>
     customData = {
@@ -237,6 +263,14 @@ class "CaeVizDatasetVoxelizationAPI" (
         displayGroup = "Dataset Voxelization"
     )
 
+    uniform token fieldCentering = "point" (
+        doc = """Specifies whether voxelized fields are sampled and associated with grid cells
+        or grid points."""
+        allowedTokens = ["cell", "point"]
+        displayName = "Field Centering"
+        displayGroup = "Dataset Voxelization"
+    )
+
     rel roi (
         doc = "Specifies the prim whose bounds should be used as the region of interest (ROI) to target for the volume rendering."
         displayName = "Region-of-interest (ROI)"
@@ -246,6 +280,38 @@ class "CaeVizDatasetVoxelizationAPI" (
     uniform int inflateBounds = 0 (
         doc = "If greater than 0, specifies the percentage by which to inflate the data bounds before voxelization."
         displayGroup = "Dataset Voxelization"
+        displayName = "Inflate Bounds (%)"
+    )
+}
+
+class "CaeVizDatasetSubsetAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "multipleApply"
+        string className = "DatasetSubsetAPI"
+        token propertyNamespacePrefix = "cae:viz:dataset_subset"
+    }
+)
+{
+    rel roi (
+        doc = "Specifies the prim whose bounds should be used as the region of interest (ROI) to target for the volume rendering."
+        displayName = "Region-of-interest (ROI)"
+        displayGroup = "Dataset Subset"
+    )
+
+    uniform token mode = "centroid" (
+        doc = """Specifies the criterion for selecting cells that lie inside the ROI's axis-aligned bounds.
+        "all" selects a cell only if every one of its vertices is inside the box; "any" selects a cell
+        if at least one of its vertices is inside the box; "centroid" selects a cell if its geometric
+        centroid is inside the box."""
+        allowedTokens = ["all", "any", "centroid"]
+        displayName = "Mode"
+        displayGroup = "Dataset Subset"
+    )
+
+    uniform int inflateBounds = 0 (
+        doc = "If greater than 0, specifies the percentage by which to inflate the ROI bounds before subsetting."
+        displayGroup = "Dataset Subset"
         displayName = "Inflate Bounds (%)"
     )
 }
@@ -676,6 +742,51 @@ class "CaeVizIndeXVolumeAPI" (
     represents a volume dataset to be rendered using NVIDIA IndeX."""
 )
 {
+}
+
+class "CaeVizPlanarSliceAPI" (
+    inherits = </APISchemaBase>
+    customData = {
+        token apiSchemaType = "singleApply"
+        string className = "PlanarSliceAPI"
+        token[] apiSchemaCanOnlyApplyTo = ["UsdGeomMesh"]
+    }
+    doc = """Single-apply API schema when applied to UsdGeomMesh indicates that the prim
+    represents a single planar slice extracted from the dataset targeted by the 'source'
+    instance of CaeVizDatasetSelectionAPI. Multiple slices are expressed as sibling UsdGeomMesh
+    prims, each with this API applied, grouped under a common UsdGeomXform."""
+)
+{
+    uniform int2 cae:viz:planarSlice:textureResolution = (512, 512) (
+        doc = """Specifies the resolution (width, height) of the texture generated for this slice."""
+        displayName = "Texture Resolution"
+        displayGroup = "Planar Slice"
+        customData = {
+            token apiName = "textureResolution"
+        }
+    )
+    uniform token cae:viz:planarSlice:mode = "free" (
+        doc = """Specifies the slice mode.
+         'free' = single free-moving plane;
+         'x'/'y'/'z' = single axis-aligned plane;
+         'xy'/'xz'/'yz' = two axis-aligned planes;
+         'xyz' = three axis-aligned planes."""
+        displayName = "Mode"
+        displayGroup = "Planar Slice"
+        allowedTokens = [
+            "free",
+            "x",
+            "y",
+            "z",
+            "xy",
+            "xz",
+            "yz",
+            "xyz",
+        ]
+        customData = {
+            token apiName = "mode"
+        }
+    )
 }
 
 # ---------------------------------------------------------------------------------------------------------

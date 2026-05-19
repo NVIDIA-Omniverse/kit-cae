@@ -185,20 +185,22 @@ class TestStreamlines(omni.kit.test.AsyncTestCase):
 
         # Forward direction assertions
         np.testing.assert_allclose(
-            result["forward"]["min"], [-0.19460653, -0.19781476, -1.9648020], atol=self.tolerance
+            result["forward"]["min"], [-0.19496827, -0.19781476, -2.01281691], atol=self.tolerance
         )
         np.testing.assert_allclose(result["forward"]["max"], [0.19890438, 0.19781476, 0.2], atol=self.tolerance)
         self.assertEqual(result["forward"]["shape"], (38400, 3))
 
         # Backward direction assertions
-        np.testing.assert_allclose(result["backward"]["min"], [-0.50252163, -0.50247568, -0.2], atol=self.tolerance)
-        np.testing.assert_allclose(result["backward"]["max"], [0.57305855, 0.59693217, 1.9457186], atol=self.tolerance)
+        np.testing.assert_allclose(result["backward"]["min"], [-0.47952273, -0.47531837, -0.2], atol=self.tolerance)
+        np.testing.assert_allclose(result["backward"]["max"], [0.53531051, 0.61094195, 1.94740367], atol=self.tolerance)
         self.assertEqual(result["backward"]["shape"], (38400, 3))
 
         if not self.skip_if_kit_108():
             # Moved sphere assertions
-            np.testing.assert_allclose(result["moved"]["min"], [-0.69733274, -0.8208583, -0.2], atol=self.tolerance)
-            np.testing.assert_allclose(result["moved"]["max"], [0.71503311, 0.68206424, 1.9481354], atol=self.tolerance)
+            np.testing.assert_allclose(result["moved"]["min"], [-0.69408685, -0.82115805, -0.2], atol=self.tolerance)
+            np.testing.assert_allclose(
+                result["moved"]["max"], [0.71303058, 0.66411346, 1.94949317], atol=self.tolerance
+            )
             self.assertEqual(result["moved"]["shape"], (38400, 3))
 
     async def test_streamlines_static_mixer_standard_with_colors(self):
@@ -244,7 +246,7 @@ class TestStreamlines(omni.kit.test.AsyncTestCase):
 
         # Points assertions (same as without colors)
         np.testing.assert_allclose(
-            result["forward"]["min"], [-0.19460653, -0.19781476, -1.9648020], atol=self.tolerance
+            result["forward"]["min"], [-0.19496827, -0.19781476, -2.01281691], atol=self.tolerance
         )
         np.testing.assert_allclose(result["forward"]["max"], [0.19890438, 0.19781476, 0.2], atol=self.tolerance)
         self.assertEqual(result["forward"]["shape"], (38400, 3))
@@ -252,7 +254,7 @@ class TestStreamlines(omni.kit.test.AsyncTestCase):
         # Color assertions for forward direction
         self.assertIsNotNone(result["forward"].get("colors_min"))
         self.assertAlmostEqual(result["forward"]["colors_min"][0], 285.0, places=3)
-        self.assertAlmostEqual(result["forward"]["colors_max"][0], 300.540, places=3)
+        self.assertAlmostEqual(result["forward"]["colors_max"][0], 300.4997, places=3)
         self.assertEqual(result["forward"]["colors_shape"], (38400, 1))
 
     async def test_streamlines_static_mixer_standard_with_widths(self):

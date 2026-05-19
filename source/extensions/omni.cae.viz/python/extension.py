@@ -21,7 +21,8 @@ from omni.client.utils import make_file_url_if_possible
 from omni.kit.app import get_app
 from omni.kit.commands import register_all_commands_in_module, unregister_module_commands
 
-from . import create_commands, faces, flow_emitters, index_volume, points, streamlines
+from . import create_commands, faces, flow_emitters, index_volume, points, slice, streamlines
+from .colormap_texture_manager import ColormapTextureManager
 from .listener import Listener
 from .operator import register_module_operators, unregister_module_operators
 
@@ -57,12 +58,16 @@ class Extension(omni.ext.IExt):
         self._listener = Listener()
         logger.info("Listener created and subscribed to stage events")
 
+        self._colormap_texture_manager = ColormapTextureManager()
+        logger.info("ColormapTextureManager created and subscribed to stage events")
+
         # Import and register all operator modules
         operator_count = register_module_operators(streamlines)
         operator_count += register_module_operators(index_volume)
         operator_count += register_module_operators(points)
         operator_count += register_module_operators(faces)
         operator_count += register_module_operators(flow_emitters)
+        operator_count += register_module_operators(slice)
         logger.info(f"Registered {operator_count} operators")
 
         register_all_commands_in_module(create_commands)
@@ -103,12 +108,18 @@ class Extension(omni.ext.IExt):
         operator_count += unregister_module_operators(points)
         operator_count += unregister_module_operators(faces)
         operator_count += unregister_module_operators(flow_emitters)
+        operator_count += unregister_module_operators(slice)
         logger.info(f"Unregistered {operator_count} operators")
 
         # Unregister settings page
         self._unregister_page()
 
         # Cleanup listener
+        if self._colormap_texture_manager:
+            self._colormap_texture_manager.finalize()
+            self._colormap_texture_manager = None
+            logger.info("ColormapTextureManager cleaned up")
+
         if self._listener:
             self._listener.finalize()
             self._listener = None

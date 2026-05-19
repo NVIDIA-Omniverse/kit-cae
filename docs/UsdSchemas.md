@@ -51,7 +51,7 @@ Kit-CAE also includes specialized schemas for specific use cases:
 
 ## Schema Implementation
 
-The USD schemas are implemented in the [source/schemas/](../source/schemas/) directory and loaded into Omniverse through the [`omni.cae.schema`](../source/extensions/omni.cae.schema/) extension.
+The USD schemas are implemented in the [source/schemas/](../source/schemas/) directory and loaded into Omniverse through the [`omni.cae.schema`](../source/extensions/omni.cae.schema/) extension, which registers the copied USD plugins at startup from its `usd/plugin/*/resources` tree.
 
 For more details on how these schemas are used in practice, see:
 - [Extensions Overview](./Extensions.md)

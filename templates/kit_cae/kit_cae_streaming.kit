@@ -18,6 +18,15 @@ target.kit = ["{{ version }}"]
 "kit_base_editor" = {}
 "omni.cae.bundle" = {}
 "default_stream" = {}
+# Required for the cae-streaming skill's data-channel handlers
+# (LivestreamMessaging.observe / observe_and_dispatch + register_event_type_to_send).
+"omni.kit.livestream.messaging" = {}
+
+[settings.app.window]
+# UI hidden by default so the WebRTC stream is just the viewport. The streaming
+# kit ships with the editor chrome; this collapses it for headless deployments.
+# Override with --/app/window/hideUi=false for local debugging.
+hideUi = true
 
 [settings.app.exts]
 folders.'++' = [  # Search paths for extensions.

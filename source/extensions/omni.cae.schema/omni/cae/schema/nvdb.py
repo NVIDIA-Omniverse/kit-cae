@@ -8,4 +8,4 @@
 # without an express license agreement from NVIDIA CORPORATION or
 # its affiliates is strictly prohibited.
 
-from OmniCaeNvdb import FieldArray  # noqa: F401
+from pxr.OmniCaeNvdb import FieldArray  # noqa: F401

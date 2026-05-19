@@ -69,6 +69,11 @@ class TestIndeXVolume(omni.kit.test.AsyncTestCase):
         """
         dataset = self.get_cached_dataset(prim, timeCode)
 
+        if volume_type == "vdb":
+            # cae_mask should always be present in the dataset for vdb volumes since it's used for masking
+            # the volume in the shader
+            expected_field_names = expected_field_names + ["cae_mask"]
+
         # Verify dataset is valid
         self.assertIsInstance(dataset, dav.Dataset, "Cached object should be a dav.Dataset")
 
@@ -403,9 +408,9 @@ class TestIndeXVolume(omni.kit.test.AsyncTestCase):
             extent = extent_attr.Get()
             self.assertEqual(len(extent), 2, "Extent should have 2 elements (min and max)")
 
-            # Verify extent values match the dataset bounds
+            # Verify extent values match the point-centered voxelization bounds
             expected_min = (-2.019507, -3.02926, -2.019507)
-            expected_max = (2.06759, 3.077344, 2.06759)
+            expected_max = (2.019507, 3.02926, 2.019507)
             np.testing.assert_allclose(extent[0], expected_min, atol=self.tolerance, err_msg="Extent min should match")
             np.testing.assert_allclose(extent[1], expected_max, atol=self.tolerance, err_msg="Extent max should match")
 

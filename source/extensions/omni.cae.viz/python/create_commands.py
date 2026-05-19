@@ -248,6 +248,8 @@ class CreateCaeVizStreamlines(omni.kit.commands.Command):
             helper = await DatasetHelper.init(stage, [self._dataset_path])
             if helper.nb_cells <= 0:
                 cae_viz.DatasetGaussianSplattingAPI.Apply(prim, "source")
+        else:
+            cae_viz.DatasetSubsetAPI.Apply(prim, "source")
         cae_viz.DatasetSelectionAPI.Apply(prim, "source")
         cae_viz.DatasetSelectionAPI.Apply(prim, "seeds")
         cae_viz.DatasetTransformingAPI.Apply(prim, "seeds")
@@ -340,6 +342,8 @@ class CreateCaeVizPoints(omni.kit.commands.Command):
         cae_viz.OperatorAPI.Apply(prim)
         cae_viz.PointsAPI.Apply(prim)
         cae_viz.DatasetSelectionAPI.Apply(prim, "source")
+        if helper.nb_cells > 0:
+            cae_viz.DatasetSubsetAPI.Apply(prim, "source")
 
         source_selection_api = cae_viz.DatasetSelectionAPI(prim, "source")
         source_selection_api.CreateTargetRel().SetTargets({self._dataset_path})
@@ -395,7 +399,7 @@ class CreateCaeVizFaces(omni.kit.commands.Command):
         self._prim_path = prim_path
         self._material_path = material_path
 
-    def do(self):
+    async def do(self):
         logger.info("executing %s.do()", self.__class__.__name__)
         stage: Usd.Stage = get_context().get_stage()
 
@@ -403,11 +407,15 @@ class CreateCaeVizFaces(omni.kit.commands.Command):
         primT.CreatePointsAttr()
         primT.CreateSubdivisionSchemeAttr().Set(UsdGeom.Tokens.bilinear)
 
+        helper = await DatasetHelper.init(stage, [self._dataset_path])
+
         # Apply schemas
         prim = primT.GetPrim()
         cae_viz.OperatorAPI.Apply(prim)
         cae_viz.FacesAPI.Apply(prim)
         cae_viz.DatasetSelectionAPI.Apply(prim, "source")
+        if helper.nb_cells > 0:
+            cae_viz.DatasetSubsetAPI.Apply(prim, "source")
 
         source_selection_api = cae_viz.DatasetSelectionAPI(prim, "source")
         source_selection_api.CreateTargetRel().SetTargets({self._dataset_path})
@@ -480,6 +488,8 @@ class CreateCaeVizGlyphs(omni.kit.commands.Command):
         glyphs_api.CreateUseCellPointsAttr().Set(helper.nb_cells > 0)
 
         cae_viz.DatasetSelectionAPI.Apply(prim, "source")
+        if helper.nb_cells > 0:
+            cae_viz.DatasetSubsetAPI.Apply(prim, "source")
         source_selection_api = cae_viz.DatasetSelectionAPI(prim, "source")
         source_selection_api.CreateTargetRel().SetTargets({self._dataset_path})
 
@@ -590,6 +600,7 @@ class CreateCaeVizVolume(omni.kit.commands.Command):
             nvindex_type = "irregular_volume"
             if helper.nb_cells <= 0:
                 logger.warning("No cells found in dataset. Volume rendering may not be correct.")
+            cae_viz.DatasetSubsetAPI.Apply(prim, "source")
         else:
             nvindex_type = "vdb"
             cae_viz.DatasetVoxelizationAPI.Apply(prim, "source")
@@ -687,6 +698,10 @@ class CreateCaeVizVolume(omni.kit.commands.Command):
     @staticmethod
     def define_colormap(stage: Usd.Stage, path: Sdf.Path) -> Usd.Prim:
         """Defines a colormap shader at the given path."""
+        import uuid
+
+        from omni.cae.schema import viz as cae_viz
+
         colormap_prim = stage.DefinePrim(path, "Colormap")
         colormap_prim.CreateAttribute("outputs:colormap", Sdf.ValueTypeNames.Token)
         colormap_prim.CreateAttribute("colormapSource", Sdf.ValueTypeNames.String).Set("rgbaPoints")
@@ -696,11 +711,16 @@ class CreateCaeVizVolume(omni.kit.commands.Command):
         colormap_prim.CreateAttribute("xPoints", Sdf.ValueTypeNames.FloatArray).Set([0, 0.5, 1.0])
         colormap_prim.CreateAttribute("domain", Sdf.ValueTypeNames.Float2).Set((0, -1))
         colormap_prim.CreateAttribute("domainBoundaryMode", Sdf.ValueTypeNames.Token).Set("clampToEdge")
+        cae_viz.ColormapTextureAPI.Apply(colormap_prim).GetIdentifierAttr().Set(uuid.uuid4().hex[:12])
         return colormap_prim
 
     @staticmethod
     def define_opaque_colormap(stage: Usd.Stage, path: Sdf.Path, based_on_prim: Usd.Prim = None) -> Usd.Prim:
         """Defines an opaque colormap shader at the given path."""
+        import uuid
+
+        from omni.cae.schema import viz as cae_viz
+
         colormap_prim = stage.DefinePrim(path, "Colormap")
         colormap_prim.CreateAttribute("outputs:colormap", Sdf.ValueTypeNames.Token)
         colormap_prim.CreateAttribute("colormapSource", Sdf.ValueTypeNames.String).Set("rgbaPoints")
@@ -710,6 +730,7 @@ class CreateCaeVizVolume(omni.kit.commands.Command):
         colormap_prim.CreateAttribute("xPoints", Sdf.ValueTypeNames.FloatArray).Set([0, 0.5, 1.0])
         colormap_prim.CreateAttribute("domain", Sdf.ValueTypeNames.Float2).Set((0, -1))
         colormap_prim.CreateAttribute("domainBoundaryMode", Sdf.ValueTypeNames.Token).Set("clampToTransparent")
+        cae_viz.ColormapTextureAPI.Apply(colormap_prim).GetIdentifierAttr().Set(uuid.uuid4().hex[:12])
 
         if based_on_prim and based_on_prim.GetTypeName() == "Colormap":
             rgbaPoints = based_on_prim.GetAttribute("rgbaPoints").Get()
@@ -1042,6 +1063,65 @@ class CreateCaeVizVolumeSlice(omni.kit.commands.Command):
         primT.GetPrim().GetReferences().AddInternalReference(selected_prim.GetPath())
         primT.CreateVisibilityAttr().Set(UsdGeom.Tokens.inherited)
         return primT.GetPrim()
+
+
+class CreateCaeVizPlanarSlice(omni.kit.commands.Command):
+
+    def __init__(self, dataset_path: str, prim_path: str, type: str = "standard"):
+        self._dataset_path = dataset_path
+        self._prim_path = prim_path
+        self._type = type
+
+    async def do(self):
+        logger.info("executing %s.do()", self.__class__.__name__)
+        stage: Usd.Stage = get_context().get_stage()
+        dataset_prim = stage.GetPrimAtPath(self._dataset_path)
+        if not dataset_prim:
+            raise RuntimeError("Dataset prim is invalid!")
+
+        helper = await DatasetHelper.init(stage, [self._dataset_path])
+        bounds = helper.bounds
+        if bounds.IsEmpty():
+            bounds = Gf.Range3d(Gf.Vec3d(-0.5, -0.5, -0.5), Gf.Vec3d(0.5, 0.5, 0.5))
+        center_pos = tuple(bounds.GetMidpoint())
+
+        mesh = UsdGeom.Mesh.Define(stage, self._prim_path)
+        xformable = UsdGeom.Xformable(mesh.GetPrim())
+        xformable.AddTranslateOp().Set(center_pos)
+        xformable.AddRotateXYZOp()
+        xformable.AddScaleOp().Set((1, 1, 1))
+        mesh_prim = mesh.GetPrim()
+
+        cae_viz.OperatorAPI.Apply(mesh_prim)
+        cae_viz.PlanarSliceAPI.Apply(mesh_prim)
+        dataset_selection_api = cae_viz.DatasetSelectionAPI.Apply(mesh_prim, "source")
+        dataset_selection_api.CreateTargetRel().AddTarget(dataset_prim.GetPath())
+        if self._type == "nanovdb":
+            cae_viz.DatasetVoxelizationAPI.Apply(mesh_prim, "source")
+        else:
+            cae_viz.DatasetSubsetAPI.Apply(mesh_prim, "source")
+
+        # "self" instance: re-execute when the operator prim's own xform changes
+        cae_viz.DatasetTransformingAPI.Apply(mesh_prim, "self")
+        cae_viz.DatasetTransformingAPI(mesh_prim, "self").CreateUseGlobalTransformAttr().Set(True)
+
+        cae_viz.FieldSelectionAPI.Apply(mesh_prim, "colors")
+        rescale_range_api = cae_viz.RescaleRangeAPI.Apply(mesh_prim, "colors")
+
+        material = create_material(
+            "SliceTexture", stage, mesh_prim.GetPath().AppendChild("Materials").AppendChild("SliceTexture")
+        )
+        setup_mdl_colormap(material, "cae/colormaps/gist_rainbow.png")
+        if shader := get_surface_shader(material, "mdl"):
+            attr = shader.CreateInput("domain", Sdf.ValueTypeNames.Float2)
+            attr.Set((0, -1))
+            rescale_range_api.CreateIncludesRel().AddTarget(attr.GetAttr().GetPath())
+        bind_material(UsdGeom.Mesh(mesh_prim), material)
+
+        cae_viz.OperatorAPI(mesh_prim).CreateEnabledAttr().Set(settings.get_default_operator_enabled())
+
+        logger.info("created '%s'", self._prim_path)
+        return [str(mesh_prim.GetPath())]
 
 
 class CreateCaeVizBoundingBox(omni.kit.commands.Command):

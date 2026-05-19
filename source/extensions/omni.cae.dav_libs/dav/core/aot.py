@@ -22,8 +22,11 @@ configuration = {
     #   nanovdb:       [dtype]                        e.g. ["float32"]
     #   collection:    [inner_field_type, *inner_args] e.g. ["array", "AoS", "float32", 3]
     #   vector_reduced: [inner_spec, reduction, *reduction_args]
-    #                  where inner_spec is ["array"|"nanovdb", ...]
     #                  and reduction is "component" (with int arg) or "magnitude"
+    #   selection:     [inner_spec, mode]
+    #                  where mode is "subrange" or "indexed_subset"
+    #   inner_spec can be a storage model spec such as ["array", ...] or a
+    #   nested view model spec such as ["vector_reduced", inner_spec, ...].
     "field_models": {
         "array": [["SoA", "float32", 3], ["AoS", "float32", 1], ["AoS", "int32", 1], ["AoS", "uint32", 1]],
         "nanovdb": [["float32"], ["vec3f"]],
@@ -34,6 +37,7 @@ configuration = {
             [["array", "SoA", "float32", 3], "component", 2],
             [["array", "SoA", "float32", 3], "magnitude"],
         ],
+        "selection": [],
     },
     "data_models": {
         "custom": {
@@ -144,12 +148,16 @@ def get_scalar_types():
     return types
 
 
-def _resolve_inner_spec(spec, array_mod, nanovdb_mod):
+def _resolve_inner_spec(spec, array_mod, nanovdb_mod, collection_mod=None, vector_reduced_mod=None, selection_mod=None):
     """Resolve an inner field model spec to a model class.
 
     Inner specs have the form ``[field_type, *args]``:
       - ``["array", layout, dtype_str, length]``
       - ``["nanovdb", dtype_str]``
+      - ``["collection", inner_spec]``
+      - ``["vector_reduced", inner_spec, "component", component]``
+      - ``["vector_reduced", inner_spec, "magnitude"]``
+      - ``["selection", inner_spec, "subrange"|"indexed_subset"]``
     """
     field_type, *args = spec
     if field_type == "array":
@@ -161,8 +169,35 @@ def _resolve_inner_spec(spec, array_mod, nanovdb_mod):
             return array_mod.get_field_model_AoS(dtype, length)
     elif field_type == "nanovdb":
         return nanovdb_mod.get_field_model(getattr(wp, args[0]))
+    elif field_type == "collection":
+        if collection_mod is None:
+            from dav.fields import collection as collection_mod
+
+        return collection_mod.get_field_model(_resolve_inner_spec(args[0], array_mod, nanovdb_mod, collection_mod, vector_reduced_mod, selection_mod))
+    elif field_type == "vector_reduced":
+        if vector_reduced_mod is None:
+            from dav.fields import vector_reduced as vector_reduced_mod
+
+        inner_spec, reduction, *reduction_args = args
+        inner_model = _resolve_inner_spec(inner_spec, array_mod, nanovdb_mod, collection_mod, vector_reduced_mod, selection_mod)
+        if reduction == "component":
+            return vector_reduced_mod.get_field_model_vector_reduced(inner_model, component=reduction_args[0])
+        elif reduction == "magnitude":
+            return vector_reduced_mod.get_field_model_vector_reduced(inner_model, magnitude=True)
+    elif field_type == "selection":
+        if selection_mod is None:
+            from dav.fields import selection as selection_mod
+
+        inner_spec, mode = args
+        inner_model = _resolve_inner_spec(inner_spec, array_mod, nanovdb_mod, collection_mod, vector_reduced_mod, selection_mod)
+        if mode == "subrange":
+            return selection_mod.get_field_model_subrange(inner_model)
+        elif mode == "indexed_subset":
+            return selection_mod.get_field_model_indexed_subset(inner_model)
     else:
         raise ValueError(f"Unknown field type in inner spec: {field_type!r}")
+
+    raise ValueError(f"Unknown field model spec: {spec!r}")
 
 
 def get_field_models(*, selected_length: int = None, selected_element_type=None, specialization: str = None):
@@ -179,7 +214,7 @@ def get_field_models(*, selected_length: int = None, selected_element_type=None,
             If None, uses the top-level ``configuration["field_models"]``.
     """
     from dav import utils as dav_utils
-    from dav.fields import array, collection, nanovdb, vector_reduced
+    from dav.fields import array, collection, nanovdb, selection, vector_reduced
 
     field_models = []
 
@@ -233,14 +268,14 @@ def get_field_models(*, selected_length: int = None, selected_element_type=None,
     field_models.extend(nanovdb_models)
 
     for spec in field_models_config.get("collection", []):
-        inner_model = _resolve_inner_spec(spec, array, nanovdb)
+        inner_model = _resolve_inner_spec(spec, array, nanovdb, collection, vector_reduced, selection)
         field_models.append(collection.get_field_model(inner_model))
 
     # vector_reduced always outputs scalars (length=1); skip when caller filters for length>1.
     if selected_length is None or selected_length == 1:
         for entry in field_models_config.get("vector_reduced", []):
             inner_spec, reduction, *reduction_args = entry
-            inner_model = _resolve_inner_spec(inner_spec, array, nanovdb)
+            inner_model = _resolve_inner_spec(inner_spec, array, nanovdb, collection, vector_reduced, selection)
             inner_scalar = dav_utils.get_scalar_dtype(type(inner_model.FieldAPI.zero()))
             if selected_element_type is not None and inner_scalar != selected_element_type:
                 continue
@@ -248,6 +283,21 @@ def get_field_models(*, selected_length: int = None, selected_element_type=None,
                 field_models.append(vector_reduced.get_field_model_vector_reduced(inner_model, component=reduction_args[0]))
             elif reduction == "magnitude":
                 field_models.append(vector_reduced.get_field_model_vector_reduced(inner_model, magnitude=True))
+
+    for entry in field_models_config.get("selection", []):
+        inner_spec, mode = entry
+        inner_model = _resolve_inner_spec(inner_spec, array, nanovdb, collection, vector_reduced, selection)
+        inner_dtype = type(inner_model.FieldAPI.zero())
+        inner_length = dav_utils.get_vector_length(inner_dtype)
+        inner_scalar = dav_utils.get_scalar_dtype(inner_dtype)
+        if selected_length is not None and inner_length != selected_length:
+            continue
+        if selected_element_type is not None and inner_scalar != selected_element_type:
+            continue
+        if mode == "subrange":
+            field_models.append(selection.get_field_model_subrange(inner_model))
+        elif mode == "indexed_subset":
+            field_models.append(selection.get_field_model_indexed_subset(inner_model))
 
     return field_models
 

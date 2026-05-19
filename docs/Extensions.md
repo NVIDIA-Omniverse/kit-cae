@@ -19,7 +19,7 @@ Kit-CAE is composed of modular Omniverse extensions organised into the following
 
 #### [`omni.cae.schema`](../source/extensions/omni.cae.schema/)
 
-Loads the CAE USD schemas into Omniverse. USD plugins must be registered early during initialisation; this extension handles that lifecycle. It exposes the core `CaeDataSet` and `CaeFieldArray` prim types plus all associated API schemas described in [USD Schemas](./UsdSchemas.md).
+Loads the CAE USD schemas into Omniverse. USD plugins must be registered early during initialisation; this extension discovers the copied schema plugins under its `usd/plugin/*/resources` tree and registers them at startup. It exposes the core `CaeDataSet` and `CaeFieldArray` prim types plus all associated API schemas described in [USD Schemas](./UsdSchemas.md).
 
 ---
 

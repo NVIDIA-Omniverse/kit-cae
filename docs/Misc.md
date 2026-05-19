@@ -1,4 +1,15 @@
-# Miscellaneous
+# Reference Guide
+
+This guide covers features and utilities in Kit-CAE that don't belong to a single subsystem but are useful to know when extending or integrating with the application.
+
+**Contents**
+
+- [Settings](#settings) — persistent user settings and command-line extension settings
+- [Colormap Textures](#colormap-textures) — automatic dynamic texture publishing for `Colormap` prims
+- [Configuring Warp](#configuring-warp) — `warp.config` overrides and the Blackwell PTX workaround
+- [Precompiling Warp Kernels](#precompiling-warp-kernels-experimental) — ahead-of-time kernel compilation for production deployments
+
+---
 
 ## Settings
 
@@ -36,6 +47,73 @@ repo.bat launch -n omni.cae.kit -- --/foo/bar=12
 ```
 
 These command-line settings override default values but are not saved between sessions unless configured in application `.kit` files.
+
+## Colormap Textures
+
+CAE scenes use `Colormap` prims as the canonical description of a scientific color ramp. The NVIDIA IndeX renderer for volume visualization can consume these prims directly — it reads `rgbaPoints` and `xPoints` natively. However, MDL shaders used for surfaces, streamlines, and other geometry-based representations expect a **1-D texture asset** for their LUT input rather than a USD prim.
+
+This creates a split: the same colormap definition must be accessible in two different forms depending on the renderer. Without automation, a developer would have to bake a texture file for every colormap, keep it synchronized whenever the ramp changes, and wire up each shader manually.
+
+`ColormapTextureManager` eliminates this by automatically publishing every `Colormap` prim that has `CaeVizColormapTextureAPI` applied as a `dynamic://` texture at runtime. Any MDL shader that needs the LUT can bind it by URL — derived from a stable identifier stored on the prim — without any manual bake step. The texture is regenerated automatically whenever the prim's control points change, so IndeX and MDL shaders always see the same ramp.
+
+### How it works
+
+`ColormapTextureManager` (a process-wide singleton owned by the extension) subscribes to stage attach/detach events and USD object-change notices. It only tracks `Colormap` prims that have `CaeVizColormapTextureAPI` applied. Whenever such a prim is added, removed, or modified, it:
+
+1. Reads the prim's `cae:viz:colormapTexture:identifier` attribute.
+2. Reads `rgbaPoints` (Nx4 float) and `xPoints` (N float) and samples them into a uniform 256-sample 1-D RGBA LUT.
+3. Uploads the result to an `omni.ui.DynamicTextureProvider` named `cae_colormap_<identifier>`.
+
+### Texture URL convention
+
+The dynamic texture URL is derived from the prim's `identifier` attribute (a UUID set once at creation), not from its path. This makes the URL stable under USD composition — the prim can be relocated via references or payloads without breaking any shaders that bind the URL.
+
+| `identifier` value | Dynamic texture URL |
+|---|---|
+| `a1b2c3d4e5f6...` | `dynamic://cae_colormap_a1b2c3d4e5f6...` |
+
+`CaeVizColormapTextureAPI` is applied automatically when a `Colormap` prim is created through Kit-CAE's create commands.
+
+### Python API
+
+Use `get_dynamic_url_for_identifier` to construct the texture URL from a known identifier:
+
+```python
+from omni.cae.viz.colormap_texture_manager import get_dynamic_url_for_identifier
+
+identifier = colormap_prim.GetAttribute("cae:viz:colormapTexture:identifier").Get()
+url = get_dynamic_url_for_identifier(identifier)   # "dynamic://cae_colormap_<identifier>"
+```
+
+To check whether a texture has been registered or retrieve its entry from the running manager:
+
+```python
+from omni.cae.viz.colormap_texture_manager import ColormapTextureManager
+
+mgr = ColormapTextureManager.get_instance()   # None if extension not loaded
+
+if mgr and mgr.has_colormap("/World/Foo/Material/Colormap"):
+    url = mgr.get_dynamic_url("/World/Foo/Material/Colormap")
+```
+
+### Copying the URL from the stage
+
+Right-clicking a `Colormap` prim in the stage panel shows a **Copy LUT Texture URL** option. This copies the
+`dynamic://` URL for that prim directly to the clipboard, so it can be pasted into any MDL shader's LUT input
+without constructing the path by hand.
+
+### Binding in an MDL shader
+
+Pass the URL returned by `get_dynamic_url_for_colormap_path` to any shader input that accepts a texture asset. In Python:
+
+```python
+shader = UsdShade.Shader(stage.GetPrimAtPath("/World/Foo/Material/Shader"))
+shader.GetInput("lut").Set(Sdf.AssetPath(get_dynamic_url_for_colormap_path(colormap_prim)))
+```
+
+The texture is available as soon as the `Colormap` prim exists on the stage — no explicit refresh call is needed.
+
+---
 
 ## Configuring Warp
 

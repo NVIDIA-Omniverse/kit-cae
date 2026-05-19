@@ -2,6 +2,84 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.0]
+
+### Added
+
+- **Cell-centered fields on CGNS NGON_n sections** (`omni.cae.file_format.cgns` 1.2.0, `omni.cae.dav` 1.2.0):
+  The CGNS reader now creates `field:*` relationships for cell-centered fields on NGON_n sections, and
+  `CaeSidsUnstructuredGetField` remaps each NGON face to a referencing NFACE_n volume cell so face-based
+  visualization can color by volume cell data.
+- **ROI-based cell subsetting for operators** (`omni.cae.schema` 1.6.0, `omni.cae.viz` 1.5.1,
+  `omni.cae.context_menu` 2.4.0): New `CaeVizDatasetSubsetAPI` multi-apply schema restricts an
+  operator's input dataset to cells inside an ROI prim's axis-aligned bounds. The schema exposes a
+  `roi` relationship, a `mode` selector (`all`/`any`/`centroid` — how cell vertices must relate to
+  the box), and an `inflateBounds` percentage. `get_input_dataset` runs the subset step before
+  voxelization via the new `cell_in_box` operator and `cell_subset` data model in DAV. The API is
+  auto-applied on the `source` instance of newly created non-voxelized operators (Points, Faces,
+  Glyphs — only when the dataset has cells; Streamlines and PlanarSlice in standard mode; Volume in
+  irregular mode), and is also available as an **Add API > CAE > Dataset Subset** context menu entry.
+- **`omni.cae.startup` extension**: New extension that reads an optional `exts."omni.cae.startup".usdFile`
+  setting and, when set, waits for the renderer to deliver its first frame before closing the empty startup
+  stage and opening the specified USD file.
+- **Automatic colormap LUT publishing** (`omni.cae.viz`): The IndeX volume renderer consumes `Colormap` prims
+  directly, but MDL shaders used for surfaces and streamlines require a 1-D texture asset for their LUT input.
+  The new `ColormapTextureManager` service bridges this gap — it monitors every `Colormap` prim that has
+  `CaeVizColormapTextureAPI` applied and publishes each one as a `dynamic://` texture. The URL is derived from
+  a stable `identifier` attribute authored on the prim at creation time
+  (e.g. `dynamic://cae_colormap_<uuid>`), so it survives prim relocation via USD composition. Textures are
+  regenerated automatically whenever the prim's control points change, keeping IndeX and MDL shaders in sync
+  with no manual baking step. See the [Reference Guide](docs/Misc.md#colormap-textures) for usage details.
+
+- **PlanarSlice operator**: New `omni.cae.viz` operator that extracts a texture-mapped planar slice from any CAE
+  dataset using `dav.operators.probe` — no IndeX license required.  Supports free-moving, single-axis,
+  dual-axis, and tri-axis (`xyz`) modes with configurable texture resolution and colormap.
+- **`CaeVizPlanarSliceAPI` schema**: New USD single-apply API schema (in `omni.cae.schema`) capturing
+  `textureResolution` and `mode` attributes for planar slice prims.
+- **Planar slice context menu entry**: Right-clicking a CAE dataset now offers a *Planar Slice* option in the
+  Operators submenu (`omni.cae.context_menu`), with a dialog to choose `standard` or `nanovdb` execution.
+- **Copy LUT Texture URL context menu entry** (`omni.cae.context_menu`): Right-clicking a `Colormap` prim now
+  shows a *Copy LUT Texture URL* option that copies the `dynamic://` texture URL for that prim to the
+  clipboard, making it easy to wire up MDL shader LUT inputs without constructing the path by hand.
+- **Agent skills for Kit-CAE** (`skills/`): Bundled Claude Code, Codex, OpenClaw, and Cursor-compatible
+  skills that let coding agents drive Kit-CAE programmatically — `cae-core` (shared foundation),
+  `cae-visualization` (data import + viz operators), `cae-capture` (clean PNG/EXR/MP4 output), and
+  `cae-streaming` (run Kit-CAE as a WebRTC-streamed app controllable via data-channel messages).
+  Point your agent's skill search path at `<kit-cae-dir>/skills/` to use them — see the README's
+  *Agent Skills* section for a copy-paste onboarding prompt.
+
+### Changed
+
+- **Schema extension packaging and loading** (`omni.cae.schema`): USD schema artifacts now install under a
+  dedicated `usd/` subtree, with plugin resources and native libraries in `usd/plugin/<SchemaName>` and
+  generated Python modules exposed through a shared `usd/python/` tree. The schema extension discovers and
+  registers copied USD plugins at startup instead of relying on Kit `[[native.library]]` entries.
+- **Schema Python modules published under `pxr`** (`omni.cae.schema` 1.5.0): Generated schema Python
+  packages now live under `usd/python/pxr/`, and the extension ships a local `pxr/__init__.py` that turns
+  `pxr` into a namespace package. Schemas can be imported as
+  `from pxr import OmniCae, OmniCaeSids, OmniCaeVtk, ...`, matching Pixar's USD schema convention.
+  `omni/cae/schema/*.py` wrappers and the format onboarding tutorial were updated to the new import form.
+- **Precise cache invalidation for DAV datasets**: `ConvertToDAVDataSet.invoke` now stores results with a
+  `PrimWatch`-based guard (`cache.put_ex`) so cached DAV datasets are invalidated precisely when their source
+  prim changes (`omni.cae.dav`).
+- **Multi-apply schema support in `PrimWatch`**: `PrimWatch` schemas list now accepts
+  `(class_or_str, instance_name)` tuples, enabling fine-grained property filtering against specific multi-apply
+  schema instances (`omni.cae.data`).
+- **Self-transform watching in the controller**: Operators can now declare
+  `CaeVizDatasetTransformingAPI:self` to re-execute automatically when their own prim's transform changes
+  (`omni.cae.viz`).
+- **Kit SDK 110.1.1 default**: The default Kit version is now 110.1.1.
+
+### Fixed
+
+- **PlanarSlice material shading** (`omni.cae.viz` 1.5.1): `SliceTexture` now emits the sampled slice color by
+  default so planar slice colors are less dependent on surrounding scene lighting.
+- **Stale intermediate caches on `FieldArray` changes** (`omni.cae.data` 2.2.0): `put_ex()` now
+  auto-expands `PrimWatch` prims to include related `CaeDataSet`/`CaeFieldArray` prims, so
+  changing a field array's data correctly invalidates any cached result that depended on it.
+- Fixed incomplete caching across the `get_input_dataset` call chain — intermediate results were previously
+  not cached, causing redundant recomputation on each operator execution (`omni.cae.data`).
+
 ## [2.0.1]
 
 ### Fixed

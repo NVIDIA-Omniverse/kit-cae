@@ -15,7 +15,7 @@ order = -100
 
 [package]
 title = "Omni CAE Schema"
-version = "1.1.0"  # Semantic Versionning is used: https://semver.org/
+version = "1.6.0"  # Semantic Versionning is used: https://semver.org/
 description = "Core USD schemas that define CAE data types, field arrays, and datasets for Omniverse."
 category = "internal"  # How to categorize this in the Extension Manager
 changelog = "docs/CHANGELOG.md"
@@ -33,83 +33,7 @@ readme  = "docs/README.md"  # Path (relative to the root) or content of readme m
 name = "omni.cae.schema"
 
 [[python.module]]
-name = "OmniCae"
-
-[[python.module]]
-name = "OmniCaeSids"
-
-[[python.module]]
-name = "OmniCaeNumPy"
-
-[[python.module]]
-name = "OmniCaeNvdb"
-
-[[python.module]]
-name = "OmniCaeHdf5"
-
-[[python.module]]
-name = "OmniCaeCgns"
-
-[[python.module]]
-name = "OmniCaeVtk"
-
-[[python.module]]
-name = "OmniCaeEnSight"
-
-[[python.module]]
-name = "OmniCaeViz"
-
-[[python.module]]
-name = "OmniCaeOpenFoam"
-
-[[python.module]]
-name = "OmniCaeTrimesh"
-
-[[python.module]]
-
-[[native.library]]
-"filter:platform"."linux-x86_64"."path" = "lib/${lib_prefix}omniCae${lib_ext}"
-"filter:platform"."windows-x86_64"."path" = "bin/${lib_prefix}omniCae${lib_ext}"
-
-[[native.library]]
-"filter:platform"."linux-x86_64"."path" = "lib/${lib_prefix}omniCaeSids${lib_ext}"
-"filter:platform"."windows-x86_64"."path" = "bin/${lib_prefix}omniCaeSids${lib_ext}"
-
-[[native.library]]
-"filter:platform"."linux-x86_64"."path" = "lib/${lib_prefix}omniCaeNumPy${lib_ext}"
-"filter:platform"."windows-x86_64"."path" = "bin/${lib_prefix}omniCaeNumPy${lib_ext}"
-
-[[native.library]]
-"filter:platform"."linux-x86_64"."path" = "lib/${lib_prefix}omniCaeNvdb${lib_ext}"
-"filter:platform"."windows-x86_64"."path" = "bin/${lib_prefix}omniCaeNvdb${lib_ext}"
-
-[[native.library]]
-"filter:platform"."linux-x86_64"."path" = "lib/${lib_prefix}omniCaeHdf5${lib_ext}"
-"filter:platform"."windows-x86_64"."path" = "bin/${lib_prefix}omniCaeHdf5${lib_ext}"
-
-[[native.library]]
-"filter:platform"."linux-x86_64"."path" = "lib/${lib_prefix}omniCaeCgns${lib_ext}"
-"filter:platform"."windows-x86_64"."path" = "bin/${lib_prefix}omniCaeCgns${lib_ext}"
-
-[[native.library]]
-"filter:platform"."linux-x86_64"."path" = "lib/${lib_prefix}omniCaeVtk${lib_ext}"
-"filter:platform"."windows-x86_64"."path" = "bin/${lib_prefix}omniCaeVtk${lib_ext}"
-
-[[native.library]]
-"filter:platform"."linux-x86_64"."path" = "lib/${lib_prefix}omniCaeEnSight${lib_ext}"
-"filter:platform"."windows-x86_64"."path" = "bin/${lib_prefix}omniCaeEnSight${lib_ext}"
-
-[[native.library]]
-"filter:platform"."linux-x86_64"."path" = "lib/${lib_prefix}omniCaeViz${lib_ext}"
-"filter:platform"."windows-x86_64"."path" = "bin/${lib_prefix}omniCaeViz${lib_ext}"
-
-[[native.library]]
-"filter:platform"."linux-x86_64"."path" = "lib/${lib_prefix}omniCaeOpenFoam${lib_ext}"
-"filter:platform"."windows-x86_64"."path" = "bin/${lib_prefix}omniCaeOpenFoam${lib_ext}"
-
-[[native.library]]
-"filter:platform"."linux-x86_64"."path" = "lib/${lib_prefix}omniCaeTrimesh${lib_ext}"
-"filter:platform"."windows-x86_64"."path" = "bin/${lib_prefix}omniCaeTrimesh${lib_ext}"
+path = "usd/python"
 
 [documentation]
 pages = [

@@ -1,0 +1,32 @@
+name: import_inspect
+description: >
+  Tests the agent's ability to import a CGNS file and discover its contents —
+  field names, data types, and value ranges.
+graded: true
+kit_file: omni.cae.kit
+data_file: StaticMixer.cgns
+validator: validators/validate_01.py
+
+prompt: |
+  Import the file `data/StaticMixer.cgns` into Kit-CAE and tell me what fields
+  are available. For each field, report:
+  - The field name
+  - Its data type (e.g., float32, float64)
+  - Its shape (number of elements and components)
+  - Its value range (min and max)
+
+  Write a Kit-CAE script that imports the file, discovers all data fields
+  (not coordinate arrays), and prints a summary. Run it headless with --no-window.
+
+  Print the results as structured text between FIELD_REPORT_BEGIN and
+  FIELD_REPORT_END markers.
+
+expected_outputs:
+  - type: stdout
+    markers: ["FIELD_REPORT_BEGIN", "FIELD_REPORT_END"]
+    contains:
+      - "Eddy_Viscosity"
+      - "Pressure"
+      - "Temperature"
+      - "Velocity"
+      - "float"

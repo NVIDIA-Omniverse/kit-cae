@@ -1,0 +1,146 @@
+name: creativity
+description: >
+  Ungraded creative eval. Tests the agent's ability to invent a novel data format,
+  generate scientifically meaningful data, and produce a visually striking video
+  with narrative camera work and high visual contrast.
+graded: false
+kit_file: null
+data_file: null
+validator: null
+
+prompt: |
+  This is an open-ended creative challenge using Kit-CAE.
+
+  Your task has three parts — each must be done from scratch in this session:
+
+  1. **Invent a brand-new custom data format** — design a new binary file format
+     that Kit-CAE doesn't natively support. Follow the Format Onboarding process
+     in `docs/FormatOnboarding.md` (schema → delegate → importer → API schema).
+     Use `docs/format_tutorial_reference/` as a *structural reference* to see
+     how format onboarding works (schema, delegate, importer, autorun script).
+     Do NOT copy the SCAE format itself — study how it's built, then design
+     your own format from scratch with its own structure and conventions.
+     Your format should have a *functional advantage* for the type of data
+     you're generating — e.g., if your data is a structured grid, design
+     a format that represents structured grids efficiently rather than
+     shoehorning into a generic point cloud layout.
+     Requirements:
+     - New file extension, header/manifest structure, and naming conventions
+     - Do NOT reuse `.scae` (the tutorial format), `.nxf`, `.nvol`, or any
+       format you have seen or created in prior sessions. The format must be
+       original to this session.
+     - The format must support time-varying data (multiple timestep files or
+       a multi-frame container)
+     - Follow the SCAE tutorial pattern for delegate and importer structure:
+       inherit from `DataDelegateBase` and `AbstractImporterDelegate`
+     - Choose the correct API schema for your data topology:
+       `CaePointCloudAPI` (points only), `CaeSidsUnstructuredAPI` (mesh),
+       or `CaeDenseVolumeAPI` (structured grid)
+
+  2. **Generate physically or mathematically meaningful data** — write a data
+     generator (running inside Kit via `--exec`) that algorithmically produces
+     time-varying data from first principles. Requirements:
+     - The data must reveal a real physical law, mathematical phenomenon, or
+       engineering principle — not random noise or purely decorative patterns
+     - Time evolution must be dramatic and obvious: a viewer should immediately
+       see something changing, growing, collapsing, propagating, or transforming
+     - Generate enough timesteps for a compelling animation (20+ frames minimum)
+     - Do NOT load pre-existing datasets — all data must be computed fresh
+     - **Choose a field for coloring that has the widest dynamic range across
+       time** — e.g., a tracer/mixing fraction that goes from 0 to 1 is better
+       than a density field that varies by only 5%
+     - **Verify dramatic evolution by comparing data statistics at first and last
+       timestep** — the min/max range should shift significantly
+
+  3. **Produce a cinematically compelling video** — the final output must be
+     a self-contained visual story. Requirements:
+     - **High contrast, rich coloring**: Choose colormap domain bounds that
+       maximize visual contrast. The render should show a full spectrum of
+       colors across the data range — never washed out, never monochrome.
+       Manually set the color domain to the actual data range (or a subset
+       that emphasizes the interesting region). Use a colormap with strong
+       variation (e.g., gist_rainbow, turbo, inferno). **Query field statistics
+       with `array_utils.get_componentwise_ranges()` to get the actual data
+       min/max and set the colormap domain accordingly.** If the render looks
+       mostly one color, the domain is wrong — fix it before proceeding.
+     - **Dramatic data evolution**: The time-varying data must be the visual
+       centerpiece. Each frame should look noticeably different from the last.
+       Avoid nearly-static data where changes are only visible on close
+       inspection. **Self-check: compare early and late frames. If a human
+       couldn't instantly tell them apart at a glance, the evolution isn't
+       dramatic enough.** Consider using a field that changes the most over
+       time (e.g., a tracer or mixing fraction rather than a slowly-varying
+       temperature).
+     - **Narrative camera motion specific to the data**: The camera path must
+       relate to what the data is showing. Examples:
+       - Start close on a nucleation point, pull back as a wavefront expands
+       - Track alongside a propagating feature
+       - Orbit tightly around a developing instability, then pull back for
+         the full picture
+       - Descend through layers of a stratified field
+       Do NOT use a simple 360° turntable or a static camera. The camera
+       must have narrative purpose — it should guide the viewer's attention
+       to the most interesting features as they develop. **Vary the camera
+       distance, elevation, and look-target over time. A constant-radius
+       orbit, even with elevation changes, still reads as a turntable.**
+     - **H.264 video** at 1280x720 minimum, 24fps, **5–10 seconds long**
+     - **Visual validation (MANDATORY before final encode)**: Render 3 test
+       frames (early, middle, late) and verify:
+       (a) Multiple distinct colors are visible (not monochrome/flat)
+       (b) The frames look obviously different from each other
+       (c) The data fills a significant portion of the viewport
+       If any check fails, fix the issue before rendering all frames.
+
+  Notes for phenomena (please come up with your own):
+  The phenomenon you choose to simulate and visualize should be visually striking and have clear time evolution. It is important that the phenomenon is both scientifically interesting and physically and/or mathematically grounded. Some good examples of interesting phenomena that have been done before include (do something different, but use these as inspiration):
+  - Lorenz attractor animated over time with a tracer field showing mixing
+  - Stellar nebular collapse progressing over time to a star, with density or temperature field showing the evolving structure and resulting energy release.
+
+  Save the final video to `{render_dir}/eval_08_creativity.mp4`.
+
+  **All artifacts** (generated data files, rendered frames, videos) must be
+  written under `skills/evals/results/`. Do not write generated data to `data/`
+  or scripts to `scripts/` — keep the rest of the repo clean.
+
+  **Summary requirement:** After completing eval 08, add an `eval_08_creativity`
+  section to your `summary.json` file (`skills/evals/results/<harness>/<model>/summary.json`)
+  with a concise explanation covering:
+  - `format`: name, structure, functional advantage, schema, onboarding steps
+  - `data`: phenomenon, physics/math basis, grid size, timestep count, field choice
+  - `visualization`: viz type, colormap strategy, renderer
+  - `video`: resolution, fps, duration, codec, camera narrative description
+  This allows reviewers to compare what each model/harness produced without
+  watching every video.
+
+  This eval measures your ability to synthesize format engineering, scientific
+  computing, visualization design, and cinematography into one coherent piece.
+  There is no single correct answer — show what you can do.
+
+scoring_notes: |
+  This eval is NOT automatically graded. Human reviewers should evaluate:
+
+  Format (weight: 20%)
+  - Is the format genuinely new? (NOT .scae, .nxf, .nvol, or any prior format)
+  - Does it have a proper schema, delegate, and importer?
+  - Does it support time-varying data?
+  - Does the data format provide some functional advantage for the type of data generated?
+
+  Data (weight: 30%)
+  - Is the data generated algorithmically from physical/mathematical principles?
+  - Is the phenomenon scientifically accurate or meaningfully approximated?
+  - Is time evolution dramatic and obvious (not subtle or nearly-static)?
+  - Would a domain scientist recognize the phenomenon?
+
+  Visualization (weight: 30%)
+  - High contrast with rich color variation? (not washed out, not monochrome)
+  - Color domain set to maximize visual interest?
+  - Data changes clearly visible frame-to-frame?
+  - Appropriate visualization type for the data (volume, faces, streamlines)?
+
+  Camera & Storytelling (weight: 20%)
+  - Does the camera motion relate to the data's spatial/temporal structure?
+  - Is there narrative purpose (not a simple orbit or static shot)?
+  - Does the camera guide attention to developing features?
+  - Does the overall video tell a coherent visual story?
+
+  Overall: would this impress a domain scientist AND a cinematographer?

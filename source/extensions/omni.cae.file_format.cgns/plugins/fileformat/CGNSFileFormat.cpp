@@ -452,17 +452,6 @@ SdfLayerRefPtr ReadCGNS(int cgFile, const std::string& fname, const pxr::SdfLaye
                     auto tfFieldName = TfToken("field:" + TfMakeValidIdentifier(name));
                     for (auto& section : sections)
                     {
-                        // For NGON_n sections, we only add relationship for point-centered fields.
-                        // For other sections, we add relationship for both point-centered and cell-centered fields.
-                        if (location == CGNS_ENUMV(CellCenter))
-                        {
-                            OmniCaeSidsUnstructuredAPI sidsAPI(section);
-                            pxr::TfToken elementType;
-                            if (sidsAPI.GetElementTypeAttr().Get(&elementType) && elementType == OmniCaeSidsTokens->NGON_n)
-                            {
-                                continue;
-                            }
-                        }
                         section.GetPrim().CreateRelationship(tfFieldName).SetTargets({ arrayT.GetPath() });
                     }
 

@@ -23,3 +23,7 @@ repo_build.prebuild_link {
     { "docs", ext.target_dir.."/docs" },
     { "omni", ext.target_dir.."/omni" },
 }
+
+repo_build.prebuild_copy {
+    { "templates/plugInfo.json.in", ext.target_dir.."/usd/plugin/plugInfo.json"}
+}

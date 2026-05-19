@@ -9,11 +9,8 @@
 # its affiliates is strictly prohibited.
 __all__ = [
     "get_dataset",
-    "get_field",
     "pass_fields",
     "probe_fields",
-    "get_vector_magnitude_field",
-    "get_selected_component_field",
     "fetch_data",
     "lerp_dataset",
 ]
@@ -22,33 +19,13 @@ from typing import Any
 
 import dav
 import dav.operators.probe
-import numpy as np
 import warp as wp
 from omni.cae.data import array_utils, progress, usd_utils
-from omni.cae.schema import cae
 from pxr import Usd
 
 from .command_types import ConvertToDAVDataSet
 
 logger = getLogger(__name__)
-
-
-def _get_dav_association(assoc: str) -> dav.AssociationType:
-    if assoc == cae.Tokens.vertex:
-        return dav.AssociationType.VERTEX
-    elif assoc == cae.Tokens.cell:
-        return dav.AssociationType.CELL
-    else:
-        raise ValueError(f"Unsupported field association '{assoc}'")
-
-
-def _get_num_components_from_array(array) -> int:
-    if array.ndim == 1:
-        return 1
-    elif array.ndim == 2:
-        return array.shape[1]
-    else:
-        raise ValueError(f"Array with ndim {array.ndim} is not supported for component selection.")
 
 
 def fetch_data(dataset: dav.Dataset, field_name: str) -> array_utils.IFieldArray:
@@ -106,133 +83,12 @@ async def get_dataset(
     return await ConvertToDAVDataSet.invoke(dataset_prim, device, timeCode, needs_topology, needs_geometry)
 
 
-async def get_field(field_prims: list[Usd.Prim], timeCode: Usd.TimeCode, device: str) -> dav.Field:
-    """
-    Utility to get a field from a list of field prims.
-    Parameters
-    ----------
-    field_prims : list[Usd.Prim]
-        The list of field prims to get the field from
-    timeCode : Usd.TimeCode
-        The time code for which to fetch the field
-    device : str
-        The device on which to load the field
-
-    Returns
-    -------
-    dav.Field
-        The loaded field
-    """
-    # this can never be since get_target_prims will throw usd_utils.QuietableException if arrays are missing.
-    assert len(field_prims) > 0, f"No field prims found"
-
-    if any(prim.HasAPI(cae.NanoVDBFieldArrayAPI) for prim in field_prims):
-        if len(field_prims) > 1:
-            raise ValueError(
-                "CaeNanoVDBFieldArrayAPI only supports a single field prim; " f"{len(field_prims)} were provided."
-            )
-        prim = field_prims[0]
-        nanovdb_api = cae.NanoVDBFieldArrayAPI(prim)
-
-        origin_val = nanovdb_api.GetOriginAttr().Get(timeCode)
-        origin = wp.vec3i(*origin_val) if origin_val is not None else wp.vec3i(0, 0, 0)
-
-        # GetDimsAttr() will be available after schema regen+rebuild
-        dims_val = prim.GetAttribute("cae:nanovdb_field_array:dims").Get(timeCode)
-        if dims_val is None:
-            raise ValueError("CaeNanoVDBFieldArrayAPI: 'dims' attribute is not set.")
-        dims = wp.vec3i(*dims_val)
-
-        association_token = cae.FieldArray(prim).GetFieldAssociationAttr().Get(timeCode)
-        dav_association = _get_dav_association(association_token)
-
-        array = (await usd_utils.get_arrays(field_prims, timeCode))[0]
-        np_array = array.numpy().view(np.byte)  # NanoVDB buffer as uint32
-        wp_raw = wp.array(np_array, device=device)  # Ensure the array is on the correct device
-        volume = wp.Volume(wp_raw)
-        return dav.Field.from_volume(volume, dims=dims, association=dav_association, origin=origin)
-
-    associations = [cae.FieldArray(fa).GetFieldAssociationAttr().Get(timeCode) for fa in field_prims]
-
-    if not all(assoc == associations[0] for assoc in associations):
-        raise ValueError("Multiple different associations found; only one is supported currently.")
-
-    dav_association = _get_dav_association(associations[0])
-    arrays = await usd_utils.get_arrays(field_prims, timeCode)
-
-    # To keep things a bit manageable, we only support selecting arrays where there's just 1 array
-    # or multiple arrays with exactly one component each.
-    if len(arrays) > 1 and any(_get_num_components_from_array(array) != 1 for array in arrays):
-        raise ValueError(
-            "FieldSelectionAPI with multiple target prims only supports arrays with a single component each."
-        )
-
-    # let's create warp arrays on the target device
-    wp_arrays = [array_utils.as_warp_array(array).to(device) for array in arrays]
-
-    # this will create an SoA field if there are multiple arrays, otherwise a AoS field is created.
-    field = dav.Field.from_arrays(wp_arrays, dav_association)
-    return field
-
-
-async def get_vector_magnitude_field(field_prims: list[Usd.Prim], timeCode: Usd.TimeCode, device: str) -> dav.Field:
-    """
-    Utility to get a vector magnitude field from a list of field prims.
-    Parameters
-    ----------
-    field_prims : list[Usd.Prim]
-        The list of field prims to get the vector magnitude field from
-    timeCode : Usd.TimeCode
-        The time code for which to fetch the vector magnitude field
-    device : str
-        The device on which to load the vector magnitude field
-    """
-    base_field = await get_field(field_prims, timeCode, device)
-    if not dav.utils.is_vector_dtype(base_field.dtype):
-        # not a vector field, return the base field
-        return base_field
-
-    return dav.Field.from_field(base_field, magnitude=True)
-
-
-async def get_selected_component_field(
-    field_prims: list[Usd.Prim], timeCode: Usd.TimeCode, device: str, component_index: int
-) -> dav.Field:
-    """
-    Utility to get a selected component field from a list of field prims.
-    Parameters
-    ----------
-    field_prims : list[Usd.Prim]
-        The list of field prims to get the selected component field from
-    timeCode : Usd.TimeCode
-        The time code for which to fetch the selected component field
-    device : str
-        The device on which to load the selected component field
-    component_index : int
-        The index of the component to fetch
-    """
-    base_field = await get_field(field_prims, timeCode, device)
-    if not dav.utils.is_vector_dtype(base_field.dtype):
-        # not a vector field, return the base field
-        if component_index != 0:
-            logger.warning(f"Component index {component_index} is not supported for scalar fields.")
-        return base_field
-
-    nb_components = dav.utils.get_vector_length(base_field.dtype)
-    if component_index < 0 or component_index >= nb_components:
-        raise ValueError(
-            f"Component index {component_index} out of range for vector fields. Vector length is {nb_components}."
-        )
-
-    return dav.Field.from_field(base_field, component=component_index)
-
-
 def probe_fields(
     source_dataset: dav.Dataset,
     target_dataset: dav.Dataset,
     *,
-    fields: set[str] = set(),
-    exclude_fields: set[str] = set(),
+    fields: set[str] | None = None,
+    exclude_fields: set[str] | None = None,
 ) -> dav.Dataset:
     """
     Utility to probe fields from a source dataset onto a target dataset based on matching associations and topology.
@@ -252,6 +108,8 @@ def probe_fields(
     dav.Dataset
         The target dataset with probed fields added
     """
+    fields = fields or set()
+    exclude_fields = exclude_fields or set()
     for field_name in source_dataset.get_field_names():
         if fields and field_name not in fields:
             logger.debug(f"Field '{field_name}' not in specified fields to probe; skipping.")
@@ -268,7 +126,7 @@ def probe_fields(
 
 
 @dav.cached
-def get_extract_elements_kernel(field_model: dav.FieldModel, indices_model: dav.FieldModel, dtype: Any):
+def _get_extract_elements_kernel(field_model: dav.FieldModel, indices_model: dav.FieldModel, dtype: Any):
     """
     Get a kernel to extract elements from a field based on indices.
     """
@@ -284,13 +142,13 @@ def get_extract_elements_kernel(field_model: dav.FieldModel, indices_model: dav.
     return extract_elements_kernel
 
 
-def extract_elements(field: dav.Field, indices: dav.Field) -> wp.array:
+def _extract_elements(field: dav.Field, indices: dav.Field) -> wp.array:
     """
     Extract elements from a field based on indices.
     """
     result = wp.zeros(indices.size, dtype=field.dtype, device=field.device)
 
-    kernel = get_extract_elements_kernel(field.field_model, indices.field_model, field.dtype)
+    kernel = _get_extract_elements_kernel(field.field_model, indices.field_model, field.dtype)
     wp.launch(kernel, dim=indices.size, inputs=[field.handle, indices.handle, result], device=field.device)
     return result
 
@@ -299,12 +157,14 @@ def pass_fields(
     source_dataset: dav.Dataset,
     target_dataset: dav.Dataset,
     *,
-    fields: set[str] = set(),
-    exclude_fields: set[str] = set(),
+    fields: set[str] | None = None,
+    exclude_fields: set[str] | None = None,
 ) -> dav.Dataset:
     """
     Utility to pass fields from a source dataset to a target dataset.
     """
+    fields = fields or set()
+    exclude_fields = exclude_fields or set()
     pt_idx = target_dataset.get_field("point_idx") if target_dataset.has_field("point_idx") else None
     cell_idx = target_dataset.get_field("cell_idx") if target_dataset.has_field("cell_idx") else None
     for field_name in source_dataset.get_field_names():
@@ -321,7 +181,7 @@ def pass_fields(
                     target_dataset.add_field(field_name, source_field)
                 else:
                     # extract point indices from source field and use them to index the target field
-                    wp_array = extract_elements(source_field, pt_idx)
+                    wp_array = _extract_elements(source_field, pt_idx)
                     new_field = dav.Field.from_array(wp_array, pt_idx.association)
                     target_dataset.add_field(field_name, new_field)
             elif source_field.association == dav.AssociationType.CELL:
@@ -329,7 +189,7 @@ def pass_fields(
                     target_dataset.add_field(field_name, source_field)
                 else:
                     # extract cell indices from source field and use them to index the target field
-                    wp_array = extract_elements(source_field, cell_idx)
+                    wp_array = _extract_elements(source_field, cell_idx)
                     new_field = dav.Field.from_array(wp_array, cell_idx.association)
                     target_dataset.add_field(field_name, new_field)
             else:
@@ -370,8 +230,8 @@ def lerp_dataset(
     dataset2: dav.Dataset,
     t: float,
     *,
-    fields: set[str] = set(),
-    exclude_fields: set[str] = set(),
+    fields: set[str] | None = None,
+    exclude_fields: set[str] | None = None,
 ) -> dav.Dataset:
     """
     Linearly interpolate between two datasets.
@@ -410,6 +270,9 @@ def lerp_dataset(
     """
     from dav.data_models.custom import point_cloud as dav_point_cloud
     from dav.data_models.custom import surface_mesh as dav_surface_mesh
+
+    fields = fields or set()
+    exclude_fields = exclude_fields or set()
 
     # Verify data models match
     if dataset1.data_model != dataset2.data_model:

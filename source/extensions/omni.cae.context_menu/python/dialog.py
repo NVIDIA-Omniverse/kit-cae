@@ -19,97 +19,92 @@ from omni import ui
 
 
 class TypeSelectionDialog:
-    """A modal dialog for selecting a type from a list of options.
+    """A modal dialog with one or more combobox selections.
 
-    This dialog presents a combobox with options and returns the selected value
-    when the user clicks OK, or None if cancelled.
+    ``selections`` is a list of ``(field_label, options)`` or
+    ``(field_label, options, default_index)`` tuples — one per combobox row.
+    ``exec()`` returns a ``list[str]`` (one value per row) on OK, or ``None``
+    if the user cancels or any options list is empty.
 
-    Example:
+    Example — single selection::
+
         dialog = TypeSelectionDialog(
             title="Choose Volume Type",
             label="Select the volume type:",
-            options=["irregular", "nanovdb"],
-            default_index=0
+            selections=[("Type:", ["irregular", "nanovdb"])],
         )
-        selected = await dialog.exec()
-        if selected is not None:
-            print(f"Selected: {selected}")
+        result = await dialog.exec()
+        volume_type = result[0] if result else None
+
+    Example — multiple selections::
+
+        dialog = TypeSelectionDialog(
+            title="Configure Slice",
+            label="Configure the planar slice:",
+            selections=[
+                ("Type:",  ["standard", "nanovdb"]),
+                ("Shape:", ["Plane", "Bi-Plane", "Tri-Plane"]),
+            ],
+        )
+        result = await dialog.exec()
+        if result:
+            volume_type, shape = result
     """
 
     def __init__(
         self,
         title: str,
         label: str,
-        options: list[str],
-        default_index: int = 0,
-        field_label: str = "Type:",
+        selections: list[tuple],  # (field_label, options[, default_index])
         field_width: int = 60,
     ):
-        """Initialize the dialog.
-
-        Args:
-            title: The window title
-            label: The description label shown above the combobox
-            options: List of string options to display in the combobox
-            default_index: The initially selected option index (default: 0)
-            field_label: The label shown next to the combobox (default: "Type:")
-            field_width: Width of the field label in pixels (default: 60)
-        """
         self._title = title
         self._label = label
-        self._options = options
-        self._default_index = default_index
-        self._field_label = field_label
+        self._selections = [(s[0], s[1], s[2] if len(s) > 2 else 0) for s in selections]
         self._field_width = field_width
 
         self._window: Optional[ui.Window] = None
         self._dialog_result = asyncio.Event()
         self._accepted = [False]
-        self._selected_value = [options[default_index] if options else None]
+        self._values = [opts[default] for _, opts, default in self._selections]
 
-    async def exec(self) -> Optional[str]:
+    async def exec(self) -> Optional[list[str]]:
         """Show the dialog and wait for user response.
 
         Returns:
-            The selected option string if OK was clicked, None if cancelled or no options.
+            A list of selected strings (one per selection row) if OK clicked,
+            or None if cancelled or any options list is empty.
         """
-        if not self._options:
+        if any(not opts for _, opts, _ in self._selections):
             return None
 
         self._build_ui()
         self._window.visible = True
-
-        # Wait for the user to accept or cancel the dialog
         await self._dialog_result.wait()
 
-        # Get the selected value before closing the window
-        result = self._selected_value[0] if self._accepted[0] else None
+        result = list(self._values) if self._accepted[0] else None
 
-        # Close and destroy the window
         self._window.visible = False
         self._window.destroy()
         self._window = None
-
         return result
 
     def _build_ui(self):
-        """Build the dialog UI."""
         self._window = ui.Window(self._title, auto_resize=True, flags=ui.WINDOW_FLAGS_MODAL, visible=False)
 
         with self._window.frame:
             with ui.VStack(spacing=8):
                 ui.Label(self._label)
 
-                # Combobox for type selection
-                with ui.HStack(height=0, spacing=4):
-                    ui.Label(self._field_label, width=self._field_width)
-                    type_combobox = ui.ComboBox(self._default_index, *self._options)
+                for i, (field_label, options, default) in enumerate(self._selections):
+                    with ui.HStack(height=0, spacing=4):
+                        ui.Label(field_label, width=self._field_width)
+                        combo = ui.ComboBox(default, *options)
 
-                    def on_type_changed(model, item):
-                        selected_index = model.get_item_value_model().as_int
-                        self._selected_value[0] = self._options[selected_index]
+                        def on_changed(model, _, idx=i, opts=options):
+                            self._values[idx] = opts[model.get_item_value_model().as_int]
 
-                    type_combobox.model.add_item_changed_fn(on_type_changed)
+                        combo.model.add_item_changed_fn(on_changed)
 
                 ui.Spacer()
                 with ui.HStack(height=0, spacing=4):
@@ -118,12 +113,10 @@ class TypeSelectionDialog:
                     ui.Button("Cancel", name="cancel_button", width=80, clicked_fn=self._on_cancel_clicked)
 
     def _on_ok_clicked(self):
-        """Handle OK button click."""
         self._accepted[0] = True
         self._dialog_result.set()
 
     def _on_cancel_clicked(self):
-        """Handle Cancel button click."""
         self._accepted[0] = False
         self._dialog_result.set()
 

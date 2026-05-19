@@ -1040,7 +1040,8 @@ PYBIND11_MODULE(_omni_cae_data, m)
             py::arg("stageId"), py::arg("primPath"), py::arg("time"), py::arg("traverseFieldRelationships"))
         .def(
             "get_related_data_prims",
-            [](IUsdUtils* self, long int stageId, std::string primPath, bool transitive, bool includeSelf) -> py::list
+            [](IUsdUtils* self, long int stageId, std::string primPath, bool transitive, bool includeSelf,
+               std::vector<std::string> relNames) -> py::list
             {
                 auto stage = GetStage(pxr::UsdStageCache::Id::FromLongInt(stageId));
                 if (!stage)
@@ -1049,7 +1050,7 @@ PYBIND11_MODULE(_omni_cae_data, m)
                 }
 
                 pxr::UsdPrim prim = stage->GetPrimAtPath(pxr::SdfPath(primPath));
-                std::vector<pxr::UsdPrim> result = self->getRelatedDataPrims(prim, transitive, includeSelf);
+                std::vector<pxr::UsdPrim> result = self->getRelatedDataPrims(prim, transitive, includeSelf, relNames);
 
                 // Convert UsdPrim vector to string vector
                 py::list resultPaths;
@@ -1075,12 +1076,16 @@ PYBIND11_MODULE(_omni_cae_data, m)
                             of relationship targets); if False, only return immediate relationship targets
                  includeSelf: If True, include the input prim in the result set; if False, only return
                              related prims (excluding the input prim itself)
+                 relNames: If non-empty, only relationships whose name is in this list are followed on
+                           the first traversal hop. Transitive hops are unrestricted. Defaults to []
+                           (follow all relationships).
 
              Returns:
                  list[str]: List of prim paths (as strings) for all related DataSet and FieldArray prims.
                            Returns an empty list if the stage is invalid.
              )",
-            py::arg("stageId"), py::arg("primPath"), py::arg("transitive") = true, py::arg("includeSelf") = true)
+            py::arg("stageId"), py::arg("primPath"), py::arg("transitive") = true, py::arg("includeSelf") = true,
+            py::arg("relNames") = std::vector<std::string>{})
         /**/;
 }
 } // namespace

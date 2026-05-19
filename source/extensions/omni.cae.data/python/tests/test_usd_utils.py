@@ -558,3 +558,49 @@ class TestUsdUtils(omni.kit.test.AsyncTestCase):
 
         omni.usd.get_context().close_stage()
         del stage
+
+    async def test_get_related_data_prims_rel_names_filter(self):
+        """Test getRelatedDataPrims rel_names first-hop filtering."""
+        stage = Usd.Stage.CreateInMemory()
+
+        dataset = cae.DataSet.Define(stage, "/Root/DataSet")
+        field1 = cae.FieldArray.Define(stage, "/Root/DataSet/Field1")
+        field2 = cae.FieldArray.Define(stage, "/Root/DataSet/Field2")
+        dataset.GetPrim().CreateRelationship("field:Field1").AddTarget(field1.GetPrim().GetPath())
+        dataset.GetPrim().CreateRelationship("field:Field2").AddTarget(field2.GetPrim().GetPath())
+
+        await omni.usd.get_context().attach_stage_async(stage)
+
+        # Test 1: empty rel_names → unchanged behavior, follows all relationships
+        related = usd_utils.get_related_data_prims(dataset.GetPrim(), rel_names=[])
+        related_paths = {p.GetPath() for p in related}
+        self.assertIn(dataset.GetPrim().GetPath(), related_paths)
+        self.assertIn(field1.GetPrim().GetPath(), related_paths)
+        self.assertIn(field2.GetPrim().GetPath(), related_paths)
+
+        # Test 2: rel_names=["field:Field1"] → only field1 reachable on first hop
+        related = usd_utils.get_related_data_prims(dataset.GetPrim(), rel_names=["field:Field1"])
+        related_paths = {p.GetPath() for p in related}
+        self.assertIn(dataset.GetPrim().GetPath(), related_paths)
+        self.assertIn(field1.GetPrim().GetPath(), related_paths)
+        self.assertNotIn(field2.GetPrim().GetPath(), related_paths)
+
+        # Test 3: rel_names with no matching relationship → returns only self (includeSelf=True)
+        related = usd_utils.get_related_data_prims(dataset.GetPrim(), rel_names=["nonexistent:rel"])
+        related_paths = {p.GetPath() for p in related}
+        self.assertIn(dataset.GetPrim().GetPath(), related_paths)
+        self.assertNotIn(field1.GetPrim().GetPath(), related_paths)
+        self.assertNotIn(field2.GetPrim().GetPath(), related_paths)
+
+        # Test 4: transitive — first hop is filtered, but subsequent hops follow all relationships.
+        # field1 has an additional relationship to field2 via a different rel name.
+        field1.GetPrim().CreateRelationship("extra:link").AddTarget(field2.GetPrim().GetPath())
+        related = usd_utils.get_related_data_prims(dataset.GetPrim(), rel_names=["field:Field1"])
+        related_paths = {p.GetPath() for p in related}
+        self.assertIn(dataset.GetPrim().GetPath(), related_paths)
+        self.assertIn(field1.GetPrim().GetPath(), related_paths)
+        # field2 is reachable transitively from field1 via extra:link (no filter on transitive hops)
+        self.assertIn(field2.GetPrim().GetPath(), related_paths)
+
+        omni.usd.get_context().close_stage()
+        del stage

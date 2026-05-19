@@ -14,12 +14,37 @@ This module provides field models for NanoVDB volume data using wp.Volume.
 It supports float32 and vec3f data types with both 'ij' (Fortran) and 'xy' (Cartesian) indexing.
 """
 
-__all__ = ["get_field_model"]
+__all__ = ["get_field_model", "allocate_nanovdb_volume"]
 
 
 import warp as wp
 
 import dav
+
+
+def allocate_nanovdb_volume(min_ijk: wp.vec3i, max_ijk: wp.vec3i, voxel_size: wp.vec3f, bg_value, device, translation: wp.vec3f = wp.vec3f(0.0)) -> wp.Volume:
+    """Allocate a NanoVDB volume covering the given ijk extent.
+
+    Uses tile-based allocation (faster than ``wp.Volume.allocate`` for large volumes).
+
+    Args:
+        min_ijk: Minimum ijk coordinates (inclusive).
+        max_ijk: Maximum ijk coordinates (inclusive).
+        voxel_size: Voxel size in world space.
+        bg_value: Background fill value (must match the volume dtype).
+        device: Warp device to allocate on.
+        translation: Index-to-world translation for the NanoVDB transform.
+
+    Returns:
+        wp.Volume: Allocated NanoVDB volume.
+    """
+    import numpy as np
+
+    tile_min = min_ijk / 8  # integer division via wp.vec3i
+    tile_max = max_ijk / 8
+    tiles_shape = tile_max - tile_min + wp.vec3i(1, 1, 1)
+    tiles = wp.array((np.indices((tiles_shape[0], tiles_shape[1], tiles_shape[2])).reshape(3, -1).T + [tile_min[0], tile_min[1], tile_min[2]]) * 8, dtype=wp.vec3i, device=device)
+    return wp.Volume.allocate_by_tiles(tiles, voxel_size=voxel_size, bg_value=bg_value, translation=translation, device=device)
 
 
 @wp.struct

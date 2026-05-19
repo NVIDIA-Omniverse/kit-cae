@@ -222,12 +222,16 @@ sub-range of the data per frame.  Most simple formats won't need these.
 
 1. Add a `[repo_usd.plugin.omniCaeScae]` block to `repo_schemas.toml`
    (mirror the `omniCaeNumPy` block, replacing names).
+   Set `additional_include_dirs = ["${root}/_build/generated/schemas"]` in the
+   plugin block so generated schema C++ code can see headers from sibling schemas.
+   The one exception is the Python binding project, which still gets its include
+   path from `source/schemas/premake5.lua`.
 2. Add `"omniCaeScae"` to the `schemas` table and `schema_base_deps` in
    `source/schemas/premake5.lua`.
 3. Register in `omni.cae.schema`:
-   - `config/extension.toml` : add `[[python.module]]` and `[[native.library]]`
-   - `extension.py` : add `"OmniCaeScae"` to the schema list
-   - `cae.py` : add `from OmniCaeScae import ScaeFieldArray  # noqa: F401`
+   - `config/extension.toml` : keep the shared `[[python.module]] path = "usd/python"` entry; no per-schema module entry is needed
+   - `extension.py` : no hardcoded schema list is needed; it auto-registers every plugin copied under `usd/plugin/*/resources`
+   - `cae.py` : add `from pxr.OmniCaeScae import ScaeFieldArray  # noqa: F401`
 
 > **Track 2**: Copy the following reference files to their destinations:
 >

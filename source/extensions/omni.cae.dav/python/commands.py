@@ -19,7 +19,7 @@ from dav.data_models.openfoam import polymesh as openfoam_polymesh
 from dav.data_models.sids import nface_n as dav_sids_nface_n
 from dav.data_models.sids import sids_shapes
 from dav.data_models.sids import unstructured as dav_sids_unstructured
-from omni.cae.data import array_utils, progress, usd_utils
+from omni.cae.data import array_utils, cache, progress, usd_utils
 from omni.cae.schema import cae
 from omni.cae.schema import ensight as cae_ensight
 from omni.cae.schema import openfoam as cae_openfoam
@@ -27,12 +27,46 @@ from omni.cae.schema import sids as cae_sids
 from omni.cae.schema import vtk as cae_vtk
 from pxr import Gf, Usd, UsdGeom
 
-from .command_types import ConvertToDAVDataSet
+from .command_types import ConvertToDAVDataSet, GetField
 
 logger = getLogger(__name__)
 
 # dav.config.enable_timing = True
 # dav.config.enable_nvtx = True
+
+
+@wp.kernel
+def _map_nface_to_ngon_cell_field_indices_kernel(
+    connectivity: wp.array(dtype=wp.int32),
+    offsets: wp.array(dtype=wp.int32),
+    indices: wp.array(dtype=wp.int32),
+    ngon_start: wp.int32,
+    ngon_count: wp.int32,
+    field_offset: wp.int32,
+):
+    cell_idx = wp.tid()
+    start = offsets[cell_idx]
+    end = offsets[cell_idx + 1]
+    cell_field_idx = field_offset + cell_idx
+
+    for offset in range(start, end):
+        face_id = connectivity[offset]
+        if face_id < 0:
+            face_id = -face_id
+
+        face_idx = face_id - ngon_start
+        if face_idx >= 0 and face_idx < ngon_count:
+            wp.atomic_min(indices, face_idx, cell_field_idx)
+
+
+@wp.kernel
+def _validate_ngon_cell_field_indices_kernel(
+    indices: wp.array(dtype=wp.int32), missing_sentinel: wp.int32, missing_info: wp.array(dtype=wp.int32)
+):
+    idx = wp.tid()
+    if indices[idx] == missing_sentinel:
+        wp.atomic_add(missing_info, 0, 1)
+        wp.atomic_min(missing_info, 1, idx)
 
 
 class UsdGeomMeshConvertToDAVDataSet(ConvertToDAVDataSet):
@@ -654,3 +688,263 @@ class CaeSidsUnstructuredConvertToDAVDataSet(ConvertToDAVDataSet):
 
         nface_n_element_dataset = await self.standard_to_dav_dataset(nface_prim, grid_coordinates)
         return dav_sids_nface_n.create_dataset(nface_n_element_dataset.handle, ngon_dav_handles)
+
+
+class OmniCaeDataSetGetField(GetField):
+    """
+    Retrieve a named field from a CaeDataSet prim as a DAV field.
+    """
+
+    async def do(self) -> dav.Field:
+        logger.info("executing %s.do()", self.__class__.__name__)
+
+        field_prims = [
+            usd_utils.get_target_prim(self.dataset, f"field:{field_name}") for field_name in self.field_names
+        ]
+        assert len(field_prims) > 0, "No field names were specified"
+        timeCode = usd_utils.snap_time_code_to_prims(field_prims, self.timeCode)
+
+        if any(prim.HasAPI(cae.NanoVDBFieldArrayAPI) for prim in field_prims):
+            if len(field_prims) > 1:
+                raise ValueError(
+                    "CaeNanoVDBFieldArrayAPI only supports a single field prim; " f"{len(field_prims)} were provided."
+                )
+            prim = field_prims[0]
+            nanovdb_api = cae.NanoVDBFieldArrayAPI(prim)
+
+            origin_val = nanovdb_api.GetOriginAttr().Get(timeCode)
+            origin = wp.vec3i(*origin_val) if origin_val is not None else wp.vec3i(0, 0, 0)
+
+            dims_val = prim.GetAttribute("cae:nanovdb_field_array:dims").Get(timeCode)
+            if dims_val is None:
+                raise ValueError("CaeNanoVDBFieldArrayAPI: 'dims' attribute is not set.")
+            dims = wp.vec3i(*dims_val)
+
+            association_token = cae.FieldArray(prim).GetFieldAssociationAttr().Get(timeCode)
+            dav_association = self._get_dav_association(association_token, prim)
+
+            array = (await usd_utils.get_arrays(field_prims, timeCode))[0]
+            np_array = array.numpy().view(np.byte)
+            wp_raw = wp.array(np_array, device=self.device)
+            volume = wp.Volume(wp_raw)
+            return dav.Field.from_volume(volume, dims=dims, association=dav_association, origin=origin)
+
+        associations = [cae.FieldArray(fa).GetFieldAssociationAttr().Get(timeCode) for fa in field_prims]
+        if not all(assoc == associations[0] for assoc in associations):
+            raise ValueError("Multiple different associations found; only one is supported currently.")
+
+        dav_association = self._get_dav_association(associations[0], field_prims[0])
+        arrays = await usd_utils.get_arrays(field_prims, timeCode)
+        if len(arrays) > 1 and any(self._get_num_components(array) != 1 for array in arrays):
+            raise ValueError(
+                "FieldSelectionAPI with multiple target prims only supports arrays with a single component each."
+            )
+
+        wp_arrays = [array_utils.as_warp_array(array).to(self.device) for array in arrays]
+        return dav.Field.from_arrays(wp_arrays, dav_association)
+
+    @staticmethod
+    def _get_num_components(array) -> int:
+        if array.ndim == 1:
+            return 1
+        if array.ndim == 2:
+            return array.shape[1]
+        raise ValueError(f"Array with ndim {array.ndim} is not supported for component selection.")
+
+    @staticmethod
+    def _get_dav_association(association_token, field_prim: Usd.Prim) -> dav.AssociationType:
+        if association_token == cae.Tokens.vertex:
+            return dav.AssociationType.VERTEX
+        if association_token == cae.Tokens.cell:
+            return dav.AssociationType.CELL
+        raise ValueError(f"Unsupported field association '{association_token}' on {field_prim.GetPath()}")
+
+
+class CaeSidsUnstructuredGetField(OmniCaeDataSetGetField):
+    """
+    Retrieve a field from a SIDS unstructured dataset.
+
+    CGNS polyhedral zones store volume cell data on NFACE_n cells, while NGON_n
+    sections expose those faces as unstructured cells.  For NGON_n datasets,
+    remap cell-centered fields through the sibling NFACE_n block so each NGON
+    face receives the value from a referencing volume cell.
+    """
+
+    async def do(self) -> dav.Field:
+        field = await super().do()
+        if field.association != dav.AssociationType.CELL:
+            return field
+
+        element_type = self._get_element_type(self.dataset)
+        if element_type != sids_shapes.ET_NGON_n:
+            return field
+
+        nface_infos = self._get_nface_infos_for_ngon()
+        if not nface_infos:
+            return field
+
+        ngon_start, ngon_end = self._get_element_range(self.dataset)
+        ngon_count = ngon_end - ngon_start + 1
+        total_nface_cells = sum(info["count"] for info in nface_infos)
+        if field.size != total_nface_cells:
+            if field.size == ngon_count:
+                return field
+            raise ValueError(
+                f"Cell field size {field.size} on NGON_n dataset {self.dataset.GetPath()} does not match "
+                f"the referenced NFACE_n cell count {total_nface_cells} or NGON_n face count {ngon_count}."
+            )
+
+        indices = await self._compute_ngon_cell_field_indices(nface_infos, ngon_start, ngon_end)
+        return field.subset(indices)
+
+    @staticmethod
+    def _get_element_type(prim: Usd.Prim) -> int:
+        return sids_shapes.get_element_type_from_string(
+            usd_utils.get_attribute(prim, cae_sids.Tokens.caeSidsElementType).lower()
+        )
+
+    @staticmethod
+    def _get_element_range(prim: Usd.Prim) -> tuple[int, int]:
+        start = usd_utils.get_attribute(prim, cae_sids.Tokens.caeSidsElementRangeStart)
+        end = usd_utils.get_attribute(prim, cae_sids.Tokens.caeSidsElementRangeEnd)
+        return int(start), int(end)
+
+    def _get_nface_infos_for_ngon(self) -> list[dict[str, object]]:
+        parent = self.dataset.GetParent()
+        if not parent:
+            return []
+
+        nface_prims = []
+        for sibling in parent.GetChildren():
+            if not sibling.HasAPI(cae_sids.UnstructuredAPI):
+                continue
+            if self._get_element_type(sibling) != sids_shapes.ET_NFACE_n:
+                continue
+            ngon_prims = usd_utils.get_target_prims(sibling, cae_sids.Tokens.caeSidsNgons, quiet=True)
+            if any(ngon_prim.GetPath() == self.dataset.GetPath() for ngon_prim in ngon_prims):
+                nface_prims.append(sibling)
+
+        nface_prims.sort(key=lambda prim: self._get_element_range(prim)[0])
+        infos = []
+        field_offset = 0
+        for prim in nface_prims:
+            start, end = self._get_element_range(prim)
+            count = end - start + 1
+            infos.append({"prim": prim, "start": start, "end": end, "count": count, "field_offset": field_offset})
+            field_offset += count
+        return infos
+
+    async def _compute_ngon_cell_field_indices(
+        self, nface_infos: list[dict[str, object]], ngon_start: int, ngon_end: int
+    ) -> wp.array:
+        cache_key = self._get_ngon_cell_field_indices_cache_key(nface_infos, ngon_start, ngon_end)
+        cached_indices = cache.get(cache_key, timeCode=self.timeCode)
+        if cached_indices is not None:
+            return cached_indices
+
+        ngon_count = ngon_end - ngon_start + 1
+        total_nface_cells = sum(info["count"] for info in nface_infos)
+        int32_max = np.iinfo(np.int32).max
+        if ngon_count > int32_max or total_nface_cells > int32_max:
+            raise ValueError(
+                f"NGON_n cell field subset for {self.dataset.GetPath()} exceeds the supported int32 index range."
+            )
+
+        missing_sentinel = int(total_nface_cells)
+        indices = wp.full(shape=ngon_count, value=missing_sentinel, dtype=wp.int32, device=self.device)
+
+        for info in nface_infos:
+            nface_prim = info["prim"]
+            nface_count = info["count"]
+            field_offset = info["field_offset"]
+
+            connectivity = await usd_utils.get_array_from_relationship(
+                nface_prim, cae_sids.Tokens.caeSidsElementConnectivity, self.timeCode
+            )
+            connectivity = self._as_int32_warp_array(connectivity, "ElementConnectivity", nface_prim)
+
+            offsets = await usd_utils.get_array_from_relationship(
+                nface_prim, cae_sids.Tokens.caeSidsElementStartOffset, self.timeCode
+            )
+            offsets = self._as_int32_warp_array(offsets, "ElementStartOffset", nface_prim)
+
+            wp.launch(
+                _map_nface_to_ngon_cell_field_indices_kernel,
+                dim=nface_count,
+                inputs=[
+                    connectivity,
+                    offsets,
+                    indices,
+                    ngon_start,
+                    ngon_count,
+                    field_offset,
+                ],
+                device=self.device,
+            )
+
+        missing_info = wp.array(np.array([0, ngon_count], dtype=np.int32), dtype=wp.int32, device=self.device)
+        wp.launch(
+            _validate_ngon_cell_field_indices_kernel,
+            dim=ngon_count,
+            inputs=[indices, missing_sentinel, missing_info],
+            device=self.device,
+        )
+
+        missing_count, first_missing_idx = missing_info.numpy().tolist()
+        if missing_count:
+            first_missing_id = ngon_start + int(first_missing_idx)
+            raise ValueError(
+                f"Could not find NFACE_n cell data indices for {missing_count} NGON_n faces on "
+                f"{self.dataset.GetPath()}; first missing face id is {first_missing_id}."
+            )
+        cache.put_ex(
+            cache_key,
+            indices,
+            prims=self._get_ngon_cell_field_indices_cache_watches(nface_infos),
+            timeCode=self.timeCode,
+        )
+        return indices
+
+    def _get_ngon_cell_field_indices_cache_key(
+        self, nface_infos: list[dict[str, object]], ngon_start: int, ngon_end: int
+    ) -> tuple:
+        return (
+            "dav:CaeSidsUnstructuredGetField:ngon_cell_field_indices",
+            str(self.dataset.GetPath()),
+            self._get_device_cache_key(),
+            ngon_start,
+            ngon_end,
+            tuple(
+                (
+                    str(info["prim"].GetPath()),
+                    info["start"],
+                    info["end"],
+                    info["field_offset"],
+                )
+                for info in nface_infos
+            ),
+        )
+
+    def _get_device_cache_key(self) -> str:
+        return self.device.alias if hasattr(self.device, "alias") else str(self.device)
+
+    def _get_ngon_cell_field_indices_cache_watches(self, nface_infos: list[dict[str, object]]) -> list[cache.PrimWatch]:
+        watches = [cache.PrimWatch(self.dataset, schemas=[cae_sids.UnstructuredAPI])]
+        watches.extend(cache.PrimWatch(info["prim"], schemas=[cae_sids.UnstructuredAPI]) for info in nface_infos)
+        parent = self.dataset.GetParent()
+        if parent:
+            watches.append(cache.PrimWatch(parent, on="resync"))
+        return watches
+
+    def _as_int32_warp_array(self, array, array_name: str, prim: Usd.Prim) -> wp.array:
+        result = array_utils.as_warp_array(array).to(self.device)
+        if result.ndim != 1:
+            raise ValueError(f"NFACE_n {array_name} on {prim.GetPath()} must be one-dimensional.")
+        if result.shape[0] > np.iinfo(np.int32).max:
+            raise ValueError(
+                f"NFACE_n {array_name} on {prim.GetPath()} has {result.shape[0]} entries; "
+                "the CGNS NGON field subset path supports at most int32-sized arrays."
+            )
+        if result.dtype != wp.int32:
+            result = wp.array(result, dtype=wp.int32, device=result.device)
+        return result

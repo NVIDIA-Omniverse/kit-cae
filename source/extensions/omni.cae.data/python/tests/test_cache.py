@@ -619,3 +619,186 @@ class TestCache(omni.kit.test.AsyncTestCase):
         await self._next_frame()
 
         self.assertIsNone(cache.get(key))
+
+    # -----------------------------------------------------------------------
+    # put_ex() — multi-apply schema filtering (tuple and qualified-string forms)
+    # -----------------------------------------------------------------------
+
+    async def test_put_ex_multi_apply_tuple_matching_instance_drops_cache(self):
+        """Multi-apply tuple: a property change on the watched instance drops the cache."""
+        stage = Usd.Stage.CreateInMemory()
+        mesh = UsdGeom.Mesh.Define(stage, "/Root/Mesh")
+        cae_viz.DatasetTransformingAPI.Apply(mesh.GetPrim(), "source")
+
+        await self._attach_stage(stage)
+
+        key = "ex_multi_tuple_match"
+        cache.put_ex(
+            key,
+            {"v": 1},
+            prims=[cache.PrimWatch(mesh.GetPrim(), on="update", schemas=[(cae_viz.DatasetTransformingAPI, "source")])],
+            force=True,
+        )
+        self.assertIsNotNone(cache.get(key))
+
+        # Change a property on the "source" instance — should trigger invalidation.
+        mesh.GetPrim().GetAttribute("cae:viz:dataset_transforming:source:useGlobalTransform").Set(True)
+
+        await self._next_frame()
+
+        self.assertIsNone(cache.get(key))
+
+    async def test_put_ex_multi_apply_tuple_other_instance_does_not_drop_cache(self):
+        """Multi-apply tuple: a property change on a different instance does NOT drop the cache."""
+        stage = Usd.Stage.CreateInMemory()
+        mesh = UsdGeom.Mesh.Define(stage, "/Root/Mesh")
+        cae_viz.DatasetTransformingAPI.Apply(mesh.GetPrim(), "source")
+        cae_viz.DatasetTransformingAPI.Apply(mesh.GetPrim(), "other")
+
+        await self._attach_stage(stage)
+
+        key = "ex_multi_tuple_other"
+        cache.put_ex(
+            key,
+            {"v": 1},
+            prims=[cache.PrimWatch(mesh.GetPrim(), on="update", schemas=[(cae_viz.DatasetTransformingAPI, "source")])],
+            force=True,
+        )
+        self.assertIsNotNone(cache.get(key))
+
+        # Change a property on the "other" instance — should NOT trigger invalidation.
+        mesh.GetPrim().GetAttribute("cae:viz:dataset_transforming:other:useGlobalTransform").Set(True)
+
+        await self._next_frame()
+
+        self.assertIsNotNone(cache.get(key), "Property change on a different instance should not drop cache")
+
+    async def test_put_ex_multi_apply_string_qualified_drops_cache(self):
+        """Multi-apply string form: 'SchemaName:instance' drops cache on matching property change."""
+        stage = Usd.Stage.CreateInMemory()
+        mesh = UsdGeom.Mesh.Define(stage, "/Root/Mesh")
+        cae_viz.DatasetTransformingAPI.Apply(mesh.GetPrim(), "source")
+
+        await self._attach_stage(stage)
+
+        key = "ex_multi_str_qual"
+        cache.put_ex(
+            key,
+            {"v": 1},
+            prims=[cache.PrimWatch(mesh.GetPrim(), on="update", schemas=["CaeVizDatasetTransformingAPI:source"])],
+            force=True,
+        )
+        self.assertIsNotNone(cache.get(key))
+
+        # Change a property on the "source" instance — should trigger invalidation.
+        mesh.GetPrim().GetAttribute("cae:viz:dataset_transforming:source:useGlobalTransform").Set(True)
+
+        await self._next_frame()
+
+        self.assertIsNone(cache.get(key))
+
+
+class TestPutExExpansion(omni.kit.test.AsyncTestCase):
+    """Tests for the auto-expansion of PrimWatch prims in put_ex().
+
+    put_ex() must automatically expand each watched prim to include all
+    transitively related CaeDataSet and CaeFieldArray prims so that changes
+    to FieldArray children correctly invalidate the cache.
+    """
+
+    async def setUp(self):
+        cache._initialize()
+        settings = carb.settings.get_settings()
+        self._cache_mode_key = "/persistent/exts/omni.cae.data/cacheMode"
+        self._original_cache_mode = settings.get_as_string(self._cache_mode_key)
+        settings.set_string(self._cache_mode_key, "always")
+
+    async def tearDown(self):
+        settings = carb.settings.get_settings()
+        settings.set_string(self._cache_mode_key, self._original_cache_mode)
+        cache.clear()
+        cache._finalize()
+        ctx = omni.usd.get_context()
+        if ctx.get_stage():
+            ctx.close_stage()
+
+    async def _attach_stage(self, stage):
+        await omni.usd.get_context().attach_stage_async(stage)
+
+    async def _next_frame(self):
+        await omni.kit.app.get_app().next_update_async()
+
+    async def test_field_array_property_change_invalidates_dataset_watch(self):
+        """Core regression: PrimWatch(dataset) invalidates when a child FieldArray property changes."""
+        stage = Usd.Stage.CreateInMemory()
+        dataset = cae.DataSet.Define(stage, "/Root/DataSet")
+        field = cae.FieldArray.Define(stage, "/Root/DataSet/Field1")
+        dataset.GetPrim().CreateRelationship("field:Field1").AddTarget(field.GetPrim().GetPath())
+
+        await self._attach_stage(stage)
+
+        key = "expansion_field_change"
+        cache.put_ex(key, {"v": 1}, prims=[cache.PrimWatch(dataset.GetPrim())], force=True)
+        self.assertIsNotNone(cache.get(key))
+
+        # Change a FieldArray property — must invalidate the cache (was broken before this fix)
+        field.CreateFileNamesAttr().Set(["/new/file.dat"])
+
+        await self._next_frame()
+
+        self.assertIsNone(cache.get(key))
+
+    async def test_expansion_respects_on_mode_resync(self):
+        """Expanded watches inherit the on= mode of the original.
+
+        With on="resync", a property change on the child FieldArray must NOT invalidate;
+        a structural resync of the FieldArray MUST invalidate.
+        """
+        stage = Usd.Stage.CreateInMemory()
+        dataset = cae.DataSet.Define(stage, "/Root/DataSet")
+        field = cae.FieldArray.Define(stage, "/Root/DataSet/Field1")
+        dataset.GetPrim().CreateRelationship("field:Field1").AddTarget(field.GetPrim().GetPath())
+
+        await self._attach_stage(stage)
+
+        key = "expansion_resync_mode"
+        cache.put_ex(key, {"v": 1}, prims=[cache.PrimWatch(dataset.GetPrim(), on="resync")], force=True)
+        self.assertIsNotNone(cache.get(key))
+
+        # Property change on FieldArray — should NOT invalidate a resync-only watch
+        field.CreateFileNamesAttr().Set(["/new/file.dat"])
+        await self._next_frame()
+        self.assertIsNotNone(cache.get(key))
+
+        # Structural resync on FieldArray — SHOULD invalidate
+        cae_viz.FacesAPI.Apply(field.GetPrim())
+        await self._next_frame()
+        self.assertIsNone(cache.get(key))
+
+    async def test_schema_filtered_watch_on_operator_prim_is_noop_expansion(self):
+        """Schema-filtered watch on a non-data prim (no field relationships) → expansion is a no-op.
+
+        The cache must still be invalidated when the schema property on the operator prim changes.
+        """
+        stage = Usd.Stage.CreateInMemory()
+        op_prim = UsdGeom.Xform.Define(stage, "/Root/OpPrim").GetPrim()
+        cae_viz.DatasetSelectionAPI.Apply(op_prim, "inst0")
+
+        await self._attach_stage(stage)
+
+        key = "expansion_noop_op_prim"
+        cache.put_ex(
+            key,
+            {"v": 1},
+            prims=[cache.PrimWatch(op_prim, on="any", schemas=[(cae_viz.DatasetSelectionAPI, "inst0")])],
+            force=True,
+        )
+        self.assertIsNotNone(cache.get(key))
+
+        # Change a DatasetSelectionAPI property on the operator prim → must invalidate
+        ds_api = cae_viz.DatasetSelectionAPI(op_prim, "inst0")
+        ds_api.GetTargetRel().ClearTargets(True)
+
+        await self._next_frame()
+
+        self.assertIsNone(cache.get(key))

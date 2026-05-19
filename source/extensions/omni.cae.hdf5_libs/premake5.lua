@@ -40,7 +40,7 @@ project_ext (ext)
         { targetDeps.."/hdf5/lib/libhdf5.so.320", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
-        { targetDeps.."/hdf5/lib/libhdf5.so.320.1.0", ext.target_dir.."/lib" }, "linux"
+        { targetDeps.."/hdf5/lib/libhdf5.so.320.1.1", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
         { targetDeps.."/hdf5/lib/libhdf5_cpp.so", ext.target_dir.."/lib" }, "linux"
@@ -49,7 +49,7 @@ project_ext (ext)
         { targetDeps.."/hdf5/lib/libhdf5_cpp.so.320", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
-        { targetDeps.."/hdf5/lib/libhdf5_cpp.so.320.1.0", ext.target_dir.."/lib" }, "linux"
+        { targetDeps.."/hdf5/lib/libhdf5_cpp.so.320.1.1", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
         { targetDeps.."/hdf5/lib/libhdf5_hl.so", ext.target_dir.."/lib" }, "linux"
@@ -58,7 +58,7 @@ project_ext (ext)
         { targetDeps.."/hdf5/lib/libhdf5_hl.so.320", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
-        { targetDeps.."/hdf5/lib/libhdf5_hl.so.320.0.1", ext.target_dir.."/lib" }, "linux"
+        { targetDeps.."/hdf5/lib/libhdf5_hl.so.320.0.2", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
         { targetDeps.."/hdf5/lib/libhdf5_hl_cpp.so", ext.target_dir.."/lib" }, "linux"
@@ -67,5 +67,5 @@ project_ext (ext)
         { targetDeps.."/hdf5/lib/libhdf5_hl_cpp.so.320", ext.target_dir.."/lib" }, "linux"
     )
     repo_build.prebuild_copy (
-        { targetDeps.."/hdf5/lib/libhdf5_hl_cpp.so.320.1.0", ext.target_dir.."/lib" }, "linux"
+        { targetDeps.."/hdf5/lib/libhdf5_hl_cpp.so.320.0.2", ext.target_dir.."/lib" }, "linux"
     )

@@ -10,7 +10,14 @@
 
 import pathlib
 
+import dav
+import omni.cae.dav as cae_dav
 import omni.kit.test
+import omni.usd
+import warp as wp
+from omni.cae.schema import sids
+from omni.cae.testing import get_test_data_path
+from pxr import Usd
 
 
 class Test(omni.kit.test.AsyncTestCase):
@@ -32,3 +39,51 @@ class Test(omni.kit.test.AsyncTestCase):
             self.assertTrue(True, "DAV imported successfully")
         except ImportError as e:
             self.fail(f"Failed to import DAV: {e}")
+
+    async def test_sids_ngon_cell_field_subset(self):
+        """Cell-centered CGNS fields on NGON_n sections are remapped through NFACE_n."""
+        usd_context = omni.usd.get_context()
+        await usd_context.open_stage_async(get_test_data_path("hex_polyhedra.cgns"))
+        stage = usd_context.get_stage()
+
+        zone_path = "/World/hex_polyhedra_cgns/Base/Zone"
+        ngon = stage.GetPrimAtPath(f"{zone_path}/ElementsNgons")
+        nface = stage.GetPrimAtPath(f"{zone_path}/ElementsNfaces")
+        self.assertTrue(ngon.IsValid())
+        self.assertTrue(nface.IsValid())
+        self.assertTrue(ngon.HasRelationship("field:CellDistanceToCenter"))
+
+        ngon_field = await cae_dav.GetField.invoke(
+            ngon, "CellDistanceToCenter", device="cpu", timeCode=Usd.TimeCode.EarliestTime()
+        )
+        ngon_field_cached = await cae_dav.GetField.invoke(
+            ngon, "CellDistanceToCenter", device="cpu", timeCode=Usd.TimeCode.EarliestTime()
+        )
+        ngon_field_device_cached = await cae_dav.GetField.invoke(
+            ngon, "CellDistanceToCenter", device=wp.get_device("cpu"), timeCode=Usd.TimeCode.EarliestTime()
+        )
+        nface_field = await cae_dav.GetField.invoke(
+            nface, "CellDistanceToCenter", device="cpu", timeCode=Usd.TimeCode.EarliestTime()
+        )
+
+        ngon_count = (
+            ngon.GetAttribute(sids.Tokens.caeSidsElementRangeEnd).Get()
+            - ngon.GetAttribute(sids.Tokens.caeSidsElementRangeStart).Get()
+            + 1
+        )
+        nface_count = (
+            nface.GetAttribute(sids.Tokens.caeSidsElementRangeEnd).Get()
+            - nface.GetAttribute(sids.Tokens.caeSidsElementRangeStart).Get()
+            + 1
+        )
+
+        self.assertEqual(ngon_field.association, dav.AssociationType.CELL)
+        self.assertEqual(ngon_field.size, ngon_count)
+        self.assertEqual(ngon_field_cached.association, dav.AssociationType.CELL)
+        self.assertEqual(ngon_field_cached.size, ngon_count)
+        self.assertEqual(ngon_field_device_cached.association, dav.AssociationType.CELL)
+        self.assertEqual(ngon_field_device_cached.size, ngon_count)
+        self.assertEqual(nface_field.association, dav.AssociationType.CELL)
+        self.assertEqual(nface_field.size, nface_count)
+
+        usd_context.close_stage()

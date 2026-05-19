@@ -1,0 +1,39 @@
+# Local build products and dependency caches are regenerated inside the image.
+_build/
+_compiler/
+_install/
+_repo/
+_testoutput/
+_tools/
+cache/
+logs/
+
+# VCS and editor state.
+.git/
+.github/
+.gitlab/
+.vscode/
+.cursor/
+.claude/
+.idea/
+
+# Local environment and generated selection state.
+.env
+.kit_selection.json
+.omniverse_eula_accepted.txt
+
+# Internal repo tooling is not needed for containerized runtime builds.
+tools/deps/repo-deps-nv.packman.xml
+
+# Python and test caches.
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+*.pyc
+
+# Packaged artifacts.
+*.7z
+*.tar
+*.tar.gz
+*.tar.bz2
+*.zip

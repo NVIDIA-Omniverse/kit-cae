@@ -52,11 +52,13 @@ events trigger invalidation:
 
 Schema Filtering
 ----------------
-Pass a list of USD schema types (Python classes or schema type-name strings)
-via ``PrimWatch.schemas`` to restrict property-update checks to properties
-declared by those schemas::
+Pass a list of USD schema types (Python classes, schema type-name strings, or
+``(class_or_str, instance_name)`` tuples for multi-apply schemas) via
+``PrimWatch.schemas`` to restrict property-update checks to properties declared
+by those schemas::
 
     PrimWatch(prim, on="update", schemas=[cae.FieldArray])
+    PrimWatch(prim, on="update", schemas=[(cae.SliceOperator, "mySlice")])
 
 With the above, only a change to a property listed in the ``CaeFieldArray``
 schema definition (e.g. ``fileNames``, ``fieldAssociation``) will trigger
@@ -89,11 +91,26 @@ API
 
 Source-Prim Expansion
 ---------------------
-When :func:`put` translates ``sourcePrims`` it first expands each prim to
-include all transitively related ``CaeDataSet`` and ``CaeFieldArray`` prims
-(via field relationships) using :func:`_expand_source_prims`.  This expansion
-does **not** occur for watches registered directly via :func:`put_ex` — callers
-have explicit control over exactly which prims they watch.
+:func:`put_ex` automatically expands each :class:`PrimWatch` prim to include
+all transitively related ``CaeDataSet`` and ``CaeFieldArray`` prims (via field
+relationships) using :func:`_expand_source_prims`.  This ensures that changes
+to ``FieldArray`` children of a ``DataSet`` correctly invalidate any cached
+result that was registered against the parent ``DataSet`` prim.
+
+The original watch is always preserved unchanged (all ``on`` modes and
+``schemas`` intact).  Related data prims added by expansion inherit the
+``on`` mode of the originating watch and are deduplicated by
+``(path, on_mode)`` across all watches in a single :func:`put_ex` call.
+
+When a :class:`PrimWatch` carries ``schemas``, the resolved property-name set
+is used as a first-hop relationship-name filter during expansion: only
+authored relationships whose names appear in the schema-property set are
+followed at the first traversal hop.  Transitive hops always follow all
+relationships.  Pass ``schemas=None`` (default) to follow all relationships
+at every hop.
+
+:func:`put` calls :func:`put_ex` directly; the expansion behavior is the
+same for both.
 
 Internal Architecture
 ---------------------
@@ -173,10 +190,20 @@ class PrimWatch:
         ``"any"``.
     schemas :
         Optional list of USD schema types (Python classes such as
-        ``cae.FieldArray``) or schema type-name strings (e.g.
-        ``"CaeFieldArray"``).  When provided, property-update triggers (modes
-        ``"any"`` and ``"update"``) are restricted to properties declared by
-        those schemas.  Ignored for modes ``"resync"`` and ``"delete"``.
+        ``cae.FieldArray``), schema type-name strings (e.g.
+        ``"CaeFieldArray"``), or ``(class_or_str, instance_name)`` tuples for
+        multi-apply schemas (e.g. ``(cae.SliceOperator, "mySlice")`` or
+        equivalently ``"CaeSliceOperator:mySlice"``).  When provided,
+        property-update triggers (modes ``"any"`` and ``"update"``) are
+        restricted to properties declared by those schemas.  Ignored for modes
+        ``"resync"`` and ``"delete"``.
+
+        ``schemas`` also controls which relationships are followed when
+        :func:`put_ex` expands this prim to include related DataSet/FieldArray
+        prims: only relationships whose names appear in the resolved
+        schema-property set are traversed on the first hop.  Pass
+        ``schemas=None`` (default) to follow all relationships during
+        expansion.
 
     Notes
     -----
@@ -203,6 +230,12 @@ class PrimWatch:
 
         # Drop on CaeFieldArray property change OR structural resync
         PrimWatch(field_prim, on="any", schemas=[cae.FieldArray])
+
+        # Multi-apply schema: watch only the "mySlice" instance (tuple form)
+        PrimWatch(prim, on="update", schemas=[(cae.SliceOperator, "mySlice")])
+
+        # Multi-apply schema: equivalent string form
+        PrimWatch(prim, on="update", schemas=["CaeSliceOperator:mySlice"])
     """
 
     prim: Usd.Prim
@@ -223,8 +256,18 @@ def _get_schema_type_name(schema) -> Optional[str]:
 
     For string inputs the value is returned as-is.  For USD schema Python
     classes the type name is extracted via ``_GetStaticTfType()`` and the
-    schema registry.
+    schema registry.  For multi-apply schemas pass a ``(class_or_str,
+    instance_name)`` tuple to produce the qualified ``"TypeName:instance"``
+    form that ``FindAppliedAPIPrimDefinition`` expects.
     """
+    # (schema_class_or_str, instance_name) — multi-apply schema with instance
+    if isinstance(schema, tuple):
+        if len(schema) != 2:
+            logger.warning("[py-cache]: schema tuple must be (class_or_str, instance_name), got %r", schema)
+            return None
+        base_name = _get_schema_type_name(schema[0])
+        return f"{base_name}:{schema[1]}" if base_name else None
+
     if isinstance(schema, str):
         return schema
     if hasattr(schema, "_GetStaticTfType"):
@@ -249,7 +292,8 @@ def _resolve_schema_props(schemas: list) -> Optional[frozenset]:
     Parameters
     ----------
     schemas:
-        List of USD schema Python classes or schema type-name strings.
+        List of USD schema Python classes, schema type-name strings, or
+        ``(class_or_str, instance_name)`` tuples for multi-apply schemas.
 
     Returns
     -------
@@ -268,13 +312,27 @@ def _resolve_schema_props(schemas: list) -> Optional[frozenset]:
         if schema_name is None:
             continue
 
+        # For multi-apply schemas the registry only accepts the base type name
+        # (without the instance suffix).  The definition stores property names
+        # using "__INSTANCE_NAME__" as a placeholder, e.g.
+        # "caeVizDatasetSelection:__INSTANCE_NAME__:fieldName".  We substitute
+        # the actual instance name to produce the concrete names that USD will
+        # report in change notices.
+        instance_name: Optional[str] = None
+        lookup_name = schema_name
+        if ":" in schema_name:
+            lookup_name, instance_name = schema_name.split(":", 1)
+
         # Try API schema first (matches change_tracker.py convention), then concrete.
-        defn = registry.FindAppliedAPIPrimDefinition(schema_name) or registry.FindConcretePrimDefinition(schema_name)
+        defn = registry.FindAppliedAPIPrimDefinition(lookup_name) or registry.FindConcretePrimDefinition(lookup_name)
         if defn is None:
-            logger.warning("[py-cache]: schema %r not found in registry, skipping", schema_name)
+            logger.warning("[py-cache]: schema %r not found in registry, skipping", lookup_name)
             continue
 
-        props.update(defn.GetPropertyNames())
+        if instance_name is not None:
+            props.update(p.replace("__INSTANCE_NAME__", instance_name) for p in defn.GetPropertyNames())
+        else:
+            props.update(defn.GetPropertyNames())
 
     return frozenset(props) if props else None
 
@@ -355,7 +413,7 @@ class Listener:
         # changes, prim creation/deletion, type changes, etc.
         resyncedpaths = notice.GetResyncedPaths()
 
-        logger.info(
+        logger.debug(
             "[py-cache]:on_objects_changed: updated-prims=%d resynced-paths=%d watched-prims=%d",
             len(updatedpaths),
             len(resyncedpaths),
@@ -503,19 +561,21 @@ def remove(key: Any) -> bool:
     return True
 
 
-def _expand_source_prims(prims: list[Usd.Prim]) -> list[Usd.Prim]:
+def _expand_source_prims(prims: list[Usd.Prim], rel_names: list[str] = []) -> list[Usd.Prim]:
     """Expand source prims to include all transitively related DataSet and FieldArray prims.
 
-    For each prim in the input list, if it's a CaeDataSet or CaeFieldArray,
-    this function uses get_related_data_prims to find all transitively related
-    prims via relationships.  This ensures that changes to any related prim
-    (e.g. a FieldArray targeted by a field relationship from a DataSet) will
-    invalidate the cache.
+    For each prim in the input list, this function uses get_related_data_prims to find all
+    transitively related prims via relationships.  This ensures that changes to any related prim
+    (e.g. a FieldArray targeted by a field relationship from a DataSet) will invalidate the cache.
 
     Parameters
     ----------
     prims:
         List of source prims to expand.
+    rel_names:
+        If non-empty, only relationships whose name is in this list are followed on the first
+        traversal hop.  Subsequent transitive hops follow all relationships freely.  Defaults to
+        ``[]`` (follow all relationships at every hop).
 
     Returns
     -------
@@ -529,7 +589,7 @@ def _expand_source_prims(prims: list[Usd.Prim]) -> list[Usd.Prim]:
         if not prim or not prim.IsValid():
             continue
 
-        related_prims = usd_utils.get_related_data_prims(prim, transitive=True, include_self=True)
+        related_prims = usd_utils.get_related_data_prims(prim, transitive=True, include_self=True, rel_names=rel_names)
 
         for related_prim in related_prims:
             prim_path = related_prim.GetPath()
@@ -552,7 +612,7 @@ def put_ex(
     """Store data in the cache with explicit per-prim watch control.
 
     This is the primary cache-insertion function.  Use :func:`put` if you only
-    need the legacy ``sourcePrims`` / ``consumerPrims`` behaviour.
+    need the legacy ``sourcePrims`` / ``consumerPrims`` behavior.
 
     Parameters
     ----------
@@ -566,7 +626,13 @@ def put_ex(
         ``None``, which skips the check).
     prims:
         List of :class:`PrimWatch` instances that describe which prims to
-        observe and under which conditions to discard this entry.  Schema
+        observe and under which conditions to discard this entry.  Each
+        watch's prim is automatically expanded to include all transitively
+        related ``CaeDataSet`` and ``CaeFieldArray`` prims (via
+        :func:`_expand_source_prims`), mirroring the behavior of
+        :func:`put`.  If the watch has ``schemas``, only relationships whose
+        names appear in the resolved schema-property set are followed at the
+        first traversal hop; transitive hops are unrestricted.  Schema
         property-name sets (``PrimWatch.schemas``) are resolved once here via
         ``Usd.SchemaRegistry`` and stored on the watch object so that the
         notice callback stays as fast as possible.
@@ -627,6 +693,15 @@ def put_ex(
         _cache[key] = {}
     _cache[key][timeCode] = _CacheEntry(data, state)
 
+    # Build effective watch list by expanding each prim to include transitively related
+    # DataSet/FieldArray prims.  Schema props are resolved first so that the resolved
+    # property-name set can serve as the relationship-name filter for expansion.
+    effective_prims: list[PrimWatch] = []
+    # Deduplicate expanded (non-original) data prims by (path, on_mode).  Original watches
+    # are always kept as-is; only the extra prims produced by expansion are deduplicated so
+    # that the same prim is not registered twice with the same mode across different expansions.
+    seen_expanded: set[tuple[Sdf.Path, str]] = set()
+
     for watch in prims:
         if not watch.prim or not watch.prim.IsValid():
             continue
@@ -637,6 +712,23 @@ def put_ex(
             if watch._schema_props:
                 _has_schema_watches = True
 
+        # Always preserve the original watch (all modes and schemas intact).
+        effective_prims.append(watch)
+
+        # Use resolved schema props as a first-hop relationship-name filter.
+        # Empty list means "follow all relationships" (schemas=None case).
+        rel_names = list(watch._schema_props) if watch._schema_props else []
+
+        # Add transitively related DataSet/FieldArray prims with the same on= mode.
+        for related_prim in _expand_source_prims([watch.prim], rel_names=rel_names):
+            if related_prim == watch.prim:
+                continue  # already added as the original watch above
+            pair = (related_prim.GetPath(), watch.on)
+            if pair not in seen_expanded:
+                seen_expanded.add(pair)
+                effective_prims.append(PrimWatch(related_prim, on=watch.on))
+
+    for watch in effective_prims:
         _watches.setdefault(watch.prim, {}).setdefault(key, []).append(watch)
 
 

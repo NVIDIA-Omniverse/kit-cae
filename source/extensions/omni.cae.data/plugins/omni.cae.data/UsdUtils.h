@@ -34,7 +34,8 @@ public:
 
     std::vector<pxr::UsdPrim> getRelatedDataPrims(const pxr::UsdPrim& prim,
                                                   bool transitive = true,
-                                                  bool includeSelf = true) const override;
+                                                  bool includeSelf = true,
+                                                  const std::vector<std::string>& relNames = {}) const override;
 
 private:
     void populateTimeSamplesForDataSet(const pxr::UsdPrim& prim,
@@ -46,7 +47,8 @@ private:
     void collectRelatedDataPrims(const pxr::UsdPrim& prim,
                                  bool transitive,
                                  std::set<pxr::SdfPath>& processedPrims,
-                                 std::vector<pxr::UsdPrim>& result) const;
+                                 std::vector<pxr::UsdPrim>& result,
+                                 const std::vector<std::string>& relNames) const;
 };
 
 } // namespace data

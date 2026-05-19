@@ -1,0 +1,33 @@
+name: time_varying_video
+description: >
+  Tests the agent's ability to work with time-varying data, animate a camera,
+  and produce an H.264 MP4 video.
+graded: true
+kit_file: omni.cae.kit
+data_file: hex_timesteps.cgns
+validator: validators/validate_06.py
+
+prompt: |
+  Import `data/hex_timesteps.cgns` into Kit-CAE. This file contains 10 time
+  steps of volumetric data.
+
+  Create a volume rendering colored by the PointSinusoid field. Animate the
+  camera in a 360° orbit around the dataset. Produce an H.264 MP4 video at
+  720p (1280x720) resolution and 24fps.
+
+  The video should show the data changing over time while the camera orbits.
+
+  Save the video to `{render_dir}/eval_06_timevary.mp4`.
+
+  Use the farm-style launch args with volume rendering renderer args. Print
+  RENDER_COMPLETE when done.
+
+expected_outputs:
+  - type: file
+    path: "{render_dir}/eval_06_timevary.mp4"
+    min_size_bytes: 50000
+    format: h264
+  - type: stage
+    prims:
+      - path_contains: Volume
+      - path_contains: Camera

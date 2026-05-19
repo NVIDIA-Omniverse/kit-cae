@@ -185,11 +185,21 @@ def _convert_single_dataset(vtk_dataset: vtkDataSet, device: Union[str, wp.conte
     elif isinstance(vtk_dataset, vtkUnstructuredGrid):
         from dav.data_models.vtk import unstructured_grid
 
+        polyhedron_faces = vtk_dataset.GetPolyhedronFaces()
+        polyhedron_face_locations = vtk_dataset.GetPolyhedronFaceLocations()
+        extra_args = {}
+        if polyhedron_faces and polyhedron_face_locations and polyhedron_faces.GetNumberOfCells() > 0 and polyhedron_face_locations.GetNumberOfCells() > 0:
+            extra_args["faces_offsets"] = wp.array(numpy_support.vtk_to_numpy(polyhedron_faces.GetOffsetsArray()), dtype=wp.int32, device=device)
+            extra_args["faces_connectivity"] = wp.array(numpy_support.vtk_to_numpy(polyhedron_faces.GetConnectivityArray()), dtype=wp.int32, device=device)
+            extra_args["face_locations_offsets"] = wp.array(numpy_support.vtk_to_numpy(polyhedron_face_locations.GetOffsetsArray()), dtype=wp.int32, device=device)
+            extra_args["face_locations_connectivity"] = wp.array(numpy_support.vtk_to_numpy(polyhedron_face_locations.GetConnectivityArray()), dtype=wp.int32, device=device)
+
         dataset = unstructured_grid.create_dataset(
             points=wp.array(vtk_data.Points, dtype=wp.vec3f, device=device),
             cell_types=wp.array(numpy_support.vtk_to_numpy(vtk_dataset.GetCellTypesArray()), dtype=wp.int32, device=device),
             cell_offsets=wp.array(numpy_support.vtk_to_numpy(vtk_dataset.GetCells().GetOffsetsArray()), dtype=wp.int32, device=device),
             cell_connectivity=wp.array(numpy_support.vtk_to_numpy(vtk_dataset.GetCells().GetConnectivityArray()), dtype=wp.int32, device=device),
+            **extra_args,
         )
 
     elif isinstance(vtk_dataset, vtkImageData):

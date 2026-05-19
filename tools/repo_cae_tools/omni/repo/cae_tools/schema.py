@@ -136,7 +136,7 @@ def configure_pluginfo(options, repo_usd_config):
     invoke_tool("usd", args=["--configuration", options.config, "--configure-pluginfo"], tokens=[], silent=True)
     console.print(f"\[schema] PlugInfo.json configured for config: {options.config}", style=INFO_COLOR)
 
-    # Copy schema outputs (plugins, Python modules, native libs) to extension directory.
+    # Copy schema outputs (plugin resources, Python modules, native libs) to extension directory.
     # This replaces premake postbuildcommands which can't be used because:
     #   - omni.cae.schema is Python-only (no premake build target)
     #   - dependson with forward references corrupts premake5 on Ubuntu 24.04 / GLIBC 2.39
@@ -152,18 +152,24 @@ def configure_pluginfo(options, repo_usd_config):
     for _plugin_name, plugin_cfg in plugins.items():
         library_prefix = plugin_cfg.get("library_prefix", _plugin_name)
         display_name = library_prefix[0].upper() + library_prefix[1:]
+        resources_dir = plugin_cfg.get("resources_dir", os.path.join("plugins", display_name, "resources"))
+        module_dir = plugin_cfg.get("module_dir", display_name)
+        lib_dir = plugin_cfg.get("lib_dir", "lib")
+        bin_dir = plugin_cfg.get("bin_dir", "bin")
 
-        # Copy plugin resources (includes configured plugInfo.json)
-        src_plugins = os.path.join(schemas_root, "plugins", display_name)
-        dst_plugins = os.path.join(ext_dir, "plugins", display_name)
+        # Copy plugin resources (includes configured plugInfo.json).
+        # resources_dir points at the plugin-local resources folder, e.g.
+        # usd/plugin/OmniCae/resources, so copy the plugin root directory.
+        src_plugins = os.path.join(schemas_root, os.path.dirname(resources_dir))
+        dst_plugins = os.path.join(ext_dir, os.path.dirname(resources_dir))
         if os.path.isdir(src_plugins):
             if os.path.exists(dst_plugins):
                 shutil.rmtree(dst_plugins)
             shutil.copytree(src_plugins, dst_plugins)
 
         # Copy Python module directory
-        src_module = os.path.join(schemas_root, display_name)
-        dst_module = os.path.join(ext_dir, display_name)
+        src_module = os.path.join(schemas_root, module_dir)
+        dst_module = os.path.join(ext_dir, module_dir)
         if os.path.isdir(src_module):
             if os.path.exists(dst_module):
                 shutil.rmtree(dst_module)
@@ -173,17 +179,13 @@ def configure_pluginfo(options, repo_usd_config):
         lib_base = library_prefix[0].lower() + library_prefix[1:]
         if sys.platform == "linux":
             lib_name = f"lib{lib_base}.so"
-            src_lib = os.path.join(schemas_root, "lib", lib_name)
-            dst_lib_dir = os.path.join(ext_dir, "lib")
+            src_lib = os.path.join(schemas_root, lib_dir, lib_name)
+            dst_lib_dir = os.path.join(ext_dir, lib_dir)
         else:
-            src_lib = os.path.join(schemas_root, "bin", f"{lib_base}.dll")
-            dst_lib_dir = os.path.join(ext_dir, "bin")
-            # Also copy import lib on Windows
-            imp_src = os.path.join(schemas_root, "lib", f"{lib_base}.lib")
-            imp_dst_dir = os.path.join(ext_dir, "lib")
-            if os.path.isfile(imp_src):
-                os.makedirs(imp_dst_dir, exist_ok=True)
-                shutil.copy2(imp_src, imp_dst_dir)
+            src_lib = os.path.join(schemas_root, bin_dir, f"{lib_base}.dll")
+            dst_lib_dir = os.path.join(ext_dir, bin_dir)
+            # Do not copy the Windows import .lib into the extension package.
+            # It is a link-time artifact, not a runtime dependency.
 
         if os.path.isfile(src_lib):
             os.makedirs(dst_lib_dir, exist_ok=True)

@@ -54,20 +54,18 @@ for _, schema in ipairs(schemas) do
         if ok then
             table.insert(loaded_schemas, schema)
 
-            -- Add cross-schema include paths and visibility for the C++ plugin project
+            -- Configure the generated C++ plugin project.
+            -- Cross-schema header visibility for generated schema code comes from
+            -- `additional_include_dirs` in repo_schemas.toml, not from premake here.
             -- -fvisibility=default is required to export RTTI symbols (typeinfo, vtable)
-            -- which are needed for USD schema inheritance to work correctly
-            -- Use buildoptions to ensure this comes after Kit's -fvisibility=hidden
+            -- which are needed for USD schema inheritance to work correctly.
+            -- Use buildoptions to ensure this comes after Kit's -fvisibility=hidden.
             project(schema)
                 -- USD schema DLLs must use dynamic CRT (/MD) to match USD/Kit SDK.
                 -- Kit workspace sets staticruntime "On" (/MT), but project_ext_plugin()
                 -- overrides to "Off" for regular extensions. usd_plugin() doesn't, so
                 -- we must override here to avoid CRT heap mismatch and heap corruption.
                 staticruntime "Off"
-                includedirs {
-                    "%{root}/_build/generated/schemas",
-                    "%{root}/_build/%{platform}/%{config}/schemas/include",
-                }
                 filter { "system:linux" }
                     buildoptions { "-fvisibility=default" }
                 filter { "system:windows" }
@@ -77,12 +75,11 @@ for _, schema in ipairs(schemas) do
                     disablewarnings { "4244", "4305" }
                 filter {}
 
-            -- Add cross-schema include paths for the Python binding project
+            -- Python binding projects still need an explicit premake include path.
             project("_"..schema)
                 staticruntime "Off"
                 includedirs {
                     "%{root}/_build/generated/schemas",
-                    "%{root}/_build/%{platform}/%{config}/schemas/include",
                 }
                 filter { "system:windows" }
                     -- Suppress conversion warnings from USD headers (treated as errors by Kit's build)
@@ -105,5 +102,3 @@ if #loaded_schemas == 0 then
 elseif #loaded_schemas < #schemas then
     print("Note: Loaded "..#loaded_schemas.." of "..#schemas.." schema projects.")
 end
-
-

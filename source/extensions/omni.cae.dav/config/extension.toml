@@ -10,7 +10,7 @@
 
 [package]
 title = "CAE DAV"
-version = "1.0.0"
+version = "1.2.0"
 description = "Extension that provides DAV-specific data processing algorithms and operators."
 category = "CAE"
 changelog = "docs/CHANGELOG.md"
@@ -26,6 +26,12 @@ repository = "https://github.com/NVIDIA-Omniverse/kit-cae"
 
 [[python.module]]
 name = "omni.cae.dav"
+
+[[test]]
+dependencies = [
+    "omni.cae.delegate.cgns",
+    "omni.cae.testing",
+]
 
 [documentation]
 pages = [

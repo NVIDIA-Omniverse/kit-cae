@@ -82,11 +82,16 @@ public:
      *                   immediate relationship targets
      * @param includeSelf If true, include the input prim in the result set; if false, only return
      *                    related prims
+     * @param relNames If non-empty, only authored relationships whose name appears in this set are
+     *                 followed at the first traversal hop. Subsequent transitive hops follow all
+     *                 relationships regardless. Pass an empty vector (default) to follow all
+     *                 relationships at every hop.
      * @return Vector of related DataSet and FieldArray prims
      */
     virtual std::vector<pxr::UsdPrim> getRelatedDataPrims(const pxr::UsdPrim& prim,
                                                           bool transitive = true,
-                                                          bool includeSelf = true) const = 0;
+                                                          bool includeSelf = true,
+                                                          const std::vector<std::string>& relNames = {}) const = 0;
 };
 
 } // namespace data

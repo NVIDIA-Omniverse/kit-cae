@@ -17,8 +17,8 @@ python docs/format_tutorial_reference/autocomplete_tutorial.py
 |------|---------|
 | `autocomplete_tutorial.py` | Auto-setup script (stdlib only, idempotent) |
 | `generate_scae_data.py` | Kit launch script — generates data and imports it |
-| `repo_schemas.toml` | Updated schema config with `omniCaeScae` added |
-| `premake5.lua` | Updated schemas build script |
+| `repo_schemas.toml` | Updated schema config with `omniCaeScae` added, including the `usd/python/<SchemaName>` module layout |
+| `premake5.lua` | Updated schemas build script; Python modules keep the premake include path while generated schema C++ projects use `additional_include_dirs` from `repo_schemas.toml` |
 | `updated_extensions/` | Extension files to overlay onto `source/extensions/` |
 | `new_schemas/formats/omniCaeScae/` | New USD schema definition |
 

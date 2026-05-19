@@ -58,8 +58,13 @@ class Streamlines:
     async def exec(self, prim: Usd.Prim, device: str, context: ExecutionContext):
         # dav.config.enable_timing = True
         with dav.scoped_timer("prepare_input"):
-            seeds_dataset = await viz_utils.get_selected_dataset(
-                prim, "seeds", timeCode=context.timecode, device=device, needs_topology=False
+            seeds_dataset = await viz_utils.get_input_dataset(
+                prim,
+                "seeds",
+                timeCode=context.timecode,
+                device=device,
+                needs_topology=False,
+                needs_fields=False,
             )
             source_dataset = await self.get_source(prim, context.timecode, device)
 

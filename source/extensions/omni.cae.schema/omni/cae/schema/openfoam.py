@@ -12,4 +12,4 @@
 Python bindings for OpenFOAM schema types.
 """
 
-from OmniCaeOpenFoam import *
+from pxr.OmniCaeOpenFoam import *

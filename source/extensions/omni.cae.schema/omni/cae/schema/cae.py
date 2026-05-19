@@ -8,13 +8,13 @@
 # without an express license agreement from NVIDIA CORPORATION or
 # its affiliates is strictly prohibited.
 
-from OmniCae import *
-from OmniCaeCgns import CgnsFieldArray  # noqa: F401
-from OmniCaeHdf5 import Hdf5FieldArray  # noqa: F401
+from pxr.OmniCae import *
+from pxr.OmniCaeCgns import CgnsFieldArray  # noqa: F401
+from pxr.OmniCaeHdf5 import Hdf5FieldArray  # noqa: F401
 
 # Re-export format-specific field array types for backward compatibility.
 # These types are now defined in their own schema libraries but are re-exported
 # here so that existing code using cae.NumPyFieldArray etc. continues to work.
 # Import only the class types — do NOT use `import *` as it would overwrite
 # shared symbols like Tokens with format-specific versions.
-from OmniCaeNumPy import NumPyFieldArray  # noqa: F401
+from pxr.OmniCaeNumPy import NumPyFieldArray  # noqa: F401

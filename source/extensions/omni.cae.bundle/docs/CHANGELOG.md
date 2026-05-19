@@ -4,6 +4,10 @@ All notable changes to the CAE Extension Bundle will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.0]
+
+- Added dependency on `omni.cae.startup` so the bundled apps pick up the optional startup-USD-file behaviour.
+
 ## [2.0.0]
 
 - Added dependency on `omni.cae.viz`.

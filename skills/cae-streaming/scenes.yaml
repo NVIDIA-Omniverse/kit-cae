@@ -1,0 +1,43 @@
+# Example scene registry for the bundled `load_scene` handler in scripts/serve.py.
+#
+# This file is NOT a framework dependency — it exists only because the bundled
+# example handler reads it. Your own handler script can replace it with a
+# different config format, hard-coded paths, a database lookup, or anything
+# else. Keep or remove freely.
+#
+# Schema:
+#   scenes:
+#     <scene_id>:
+#       path:                  Filesystem path. ${KIT_CAE_DIR} expands to the env var.
+#       format:                One of "cgns", "vtk", "npz", "ensight".
+#       prim_path:             Where the data lands in the stage (e.g. /World/<name>).
+#       dataset_path:          Prim with the dataset (per-format; see formats.md).
+#       default_viz:           Short label appended to the viz prim path.
+#       default_viz_command:   One of the CreateCaeViz* commands from cae-visualization.
+#       schema_type:           NPZ-only. "Point Cloud" or "SIDS Unstructured".
+#
+# These dataset paths come from the example scripts shipped with Kit-CAE. If you
+# point at a different file you MUST verify the path with the inspect scripts in
+# cae-core (inspect_cgns.py / inspect_vtk.py).
+
+scenes:
+  static_mixer:
+    path: "${KIT_CAE_DIR}/data/StaticMixer.cgns"
+    format: cgns
+    prim_path: /World/StaticMixer
+    # See scripts/example_faces.py — sub-zone path for the boundary surface.
+    dataset_path: /World/StaticMixer/Base/StaticMixer/StaticMixer_Default
+    default_viz: Faces
+    default_viz_command: CreateCaeVizFaces
+
+  disk_out_ref:
+    path: "${KIT_CAE_DIR}/data/disk_out_ref.npz"
+    format: npz
+    schema_type: "Point Cloud"
+    prim_path: /World/disk_out_ref_npz
+    # See scripts/example_npz_point_cloud.py.
+    dataset_path: /World/disk_out_ref_npz/NumPyDataSet
+    default_viz: Volume
+    default_viz_command: CreateCaeVizVolume
+    default_viz_kwargs:
+      type: vdb
