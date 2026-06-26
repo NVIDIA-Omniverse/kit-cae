@@ -103,8 +103,8 @@ def build_cell_links(dataModel: DataModel, dataset: Any, device: Any) -> CellLin
     """
     from .operators import point_cell_counts
 
-    nb_cells = dataModel.DatasetAPI.get_num_cells(dataset)
-    nb_points = dataModel.DatasetAPI.get_num_points(dataset)
+    nb_cells = int(dataModel.DatasetAPI.get_num_cells(dataset))
+    nb_points = int(dataModel.DatasetAPI.get_num_points(dataset))
 
     # Step 1: Compute how many cells use each point
     counts = wp.zeros((nb_points,), dtype=wp.int32, device=device)

@@ -41,9 +41,11 @@ from .typing import ShapeAPI, UniformShapesLibraryAPI
 
 NUM_NODES = 4
 
+_ShapeDerivatives = wp.types.matrix(shape=(NUM_NODES, 3), dtype=wp.float32)
+
 
 @dav.func
-def compute_shape_functions(pcoords: wp.vec3f) -> wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32):
+def compute_shape_functions(pcoords: wp.vec3f) -> dav.CellWeights:
     """
     Compute barycentric shape functions for tetrahedron.
 
@@ -57,7 +59,7 @@ def compute_shape_functions(pcoords: wp.vec3f) -> wp.vec(length=dav.config.max_p
     s = pcoords[1]
     t = pcoords[2]
 
-    weights = wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32)
+    weights = dav.CellWeights()
     assert NUM_NODES <= dav.config.max_points_per_cell, "NUM_NODES exceeds max_points_per_cell in config"
 
     weights[0] = 1.0 - r - s - t  # Node 0
@@ -69,7 +71,7 @@ def compute_shape_functions(pcoords: wp.vec3f) -> wp.vec(length=dav.config.max_p
 
 
 @dav.func
-def compute_shape_derivatives(pcoords: wp.vec3f) -> wp.mat(shape=(NUM_NODES, 3), dtype=wp.float32):
+def compute_shape_derivatives(pcoords: wp.vec3f) -> _ShapeDerivatives:
     """
     Compute derivatives of shape functions with respect to parametric coordinates.
 
@@ -81,7 +83,7 @@ def compute_shape_derivatives(pcoords: wp.vec3f) -> wp.mat(shape=(NUM_NODES, 3),
     Returns:
         4x3 matrix where row i contains [dN_i/dr, dN_i/ds, dN_i/dt]
     """
-    derivs = wp.mat(shape=(NUM_NODES, 3), dtype=wp.float32)
+    derivs = _ShapeDerivatives()
 
     # Node 0: N0 = 1 - r - s - t
     derivs[0, 0] = -1.0
@@ -197,9 +199,7 @@ def get_shape(data_model: dav.DataModel, shapes_library: UniformShapesLibraryAPI
 
         @staticmethod
         @dav.func
-        def get_weights(point: wp.vec3f, cell: data_model.CellHandle, dataset: data_model.DatasetHandle, cell_type: wp.int32) -> wp.vec(
-            length=dav.config.max_points_per_cell, dtype=wp.float32
-        ):
+        def get_weights(point: wp.vec3f, cell: data_model.CellHandle, dataset: data_model.DatasetHandle, cell_type: wp.int32) -> dav.CellWeights:
             pcoords = compute_parametric_coordinates(dataset, cell, point, cell_type)
             return compute_shape_functions(pcoords)
 

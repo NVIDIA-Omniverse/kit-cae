@@ -65,9 +65,9 @@ def get_shape(data_model: dav.DataModel, shapes_library: UniformShapesLibraryAPI
     """
 
     @dav.func
-    def distribute_weights(ds: data_model.DatasetHandle, pos: wp.vec3f, cell: data_model.CellHandle, face_idx: int, pt_id_a: int, pt_id_b: int, tet_weights: wp.vec4f) -> wp.vec(
-        length=dav.config.max_points_per_cell, dtype=wp.float32
-    ):
+    def distribute_weights(
+        ds: data_model.DatasetHandle, pos: wp.vec3f, cell: data_model.CellHandle, face_idx: int, pt_id_a: int, pt_id_b: int, tet_weights: wp.vec4f
+    ) -> dav.CellWeights:
         # --- DISTRIBUTE WEIGHTS ---
 
         # 1. Direct assignment
@@ -82,8 +82,8 @@ def get_shape(data_model: dav.DataModel, shapes_library: UniformShapesLibraryAPI
         # For every node m in this cell:
         #   add (w_cell / num_cell_nodes) to output for node m
 
-        weights = wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32)
-        cell_point_ids = wp.vec(length=dav.config.max_points_per_cell, dtype=wp.int32)
+        weights = dav.CellWeights()
+        cell_point_ids = dav.CellPointIds()
 
         nb_cell_points = data_model.CellAPI.get_num_points(cell, ds)
         temp_id = wp.int32(0)
@@ -109,9 +109,7 @@ def get_shape(data_model: dav.DataModel, shapes_library: UniformShapesLibraryAPI
         return weights
 
     @dav.func
-    def compute_shape_functions_from_position(ds: data_model.DatasetHandle, pos: wp.vec3f, cell: data_model.CellHandle) -> wp.vec(
-        length=dav.config.max_points_per_cell, dtype=wp.float32
-    ):
+    def compute_shape_functions_from_position(ds: data_model.DatasetHandle, pos: wp.vec3f, cell: data_model.CellHandle) -> dav.CellWeights:
         assert data_model.CellAPI.is_valid(cell), "Invalid cell handle"
 
         found = wp.bool(False)
@@ -142,7 +140,7 @@ def get_shape(data_model: dav.DataModel, shapes_library: UniformShapesLibraryAPI
                 # FOUND IT!
                 return distribute_weights(ds, pos, cell, face_idx, pt_id_a, pt_id_b, tet_weights)
 
-        empty = wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32)
+        empty = dav.CellWeights()
         return empty
 
     @dav.func
@@ -179,9 +177,7 @@ def get_shape(data_model: dav.DataModel, shapes_library: UniformShapesLibraryAPI
 
         @staticmethod
         @dav.func
-        def get_weights(point: wp.vec3f, cell: data_model.CellHandle, dataset: data_model.DatasetHandle, cell_type: wp.int32) -> wp.vec(
-            length=dav.config.max_points_per_cell, dtype=wp.float32
-        ):
+        def get_weights(point: wp.vec3f, cell: data_model.CellHandle, dataset: data_model.DatasetHandle, cell_type: wp.int32) -> dav.CellWeights:
             return compute_shape_functions_from_position(dataset, point, cell)
 
     return PolyhedronShape

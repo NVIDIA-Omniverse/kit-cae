@@ -8,25 +8,20 @@
 # without an express license agreement from NVIDIA CORPORATION or
 # its affiliates is strictly prohibited.
 
-from pxr import UsdGeom, Usd
-
 import carb
 import carb.dictionary
 import carb.events
-import carb.settings
-import carb.tokens
-import omni.client.utils
-import omni.ext
-import omni.usd
 import omni.kit.app
 import omni.kit.livestream.messaging as messaging
-
+import omni.usd
 from carb.eventdispatcher import get_eventdispatcher
 from omni.kit.viewport.utility import get_active_viewport_camera_string
+from pxr import Usd, UsdGeom
 
 
 class StageManager:
     """This class manages the stage and its related events."""
+
     def __init__(self):
         # Internal messaging state
         self._is_external_update: bool = False
@@ -55,13 +50,13 @@ class StageManager:
         # -- register incoming events/messages
         incoming = {
             # request to get children of a prim
-            'getChildrenRequest': self._on_get_children,
+            "getChildrenRequest": self._on_get_children,
             # request to select a prim
-            'selectPrimsRequest': self._on_select_prims,
+            "selectPrimsRequest": self._on_select_prims,
             # request to make primitives pickable
-            'makePrimsPickable': self._on_make_pickable,
+            "makePrimsPickable": self._on_make_pickable,
             # request to make primitives pickable
-            'resetStage': self._on_reset_camera,
+            "resetStage": self._on_reset_camera,
         }
 
         ed = get_eventdispatcher()
@@ -123,14 +118,14 @@ class StageManager:
             child_name = child.GetName()
             child_path = str(prim.GetPath())
             # Skipping over cameras
-            if child_name.startswith('OmniverseKit_'):
+            if child_name.startswith("OmniverseKit_"):
                 continue
             # Also skipping rendering primitives.
-            if prim_path == '/' and child_name == 'Render':
+            if prim_path == "/" and child_name == "Render":
                 continue
-            child_path = child_path if child_path != '/' else ''
-            carb.log_info(f'child_path: {child_path}')
-            info = {"name": child_name, "path": f'{child_path}/{child_name}'}
+            child_path = child_path if child_path != "/" else ""
+            carb.log_info(f"child_path: {child_path}")
+            info = {"name": child_name, "path": f"{child_path}/{child_name}"}
 
             # We return an empty list here to indicate that children are
             # available, but the current app does not support pagination,
@@ -148,18 +143,9 @@ class StageManager:
         Collects a filtered collection of a given primitives children.
         """
 
-        carb.log_info(
-            "Received message to return list of a prim\'s children"
-        )
-        children = self.get_children(
-            prim_path=event.payload["prim_path"],
-            filters=event.payload["filters"]
-        )
-        payload = {
-            "prim_path": event.payload["prim_path"],
-            "children": children
-        }
-
+        carb.log_info("Received message to return list of a prim's children")
+        children = self.get_children(prim_path=event.payload["prim_path"], filters=event.payload["filters"])
+        payload = {"prim_path": event.payload["prim_path"], "children": children}
 
         get_eventdispatcher().dispatch_event("getChildrenResponse", payload=payload)
 
@@ -185,7 +171,7 @@ class StageManager:
 
     def _on_stage_event_opened(self, event):
         stage = omni.usd.get_context().get_stage()
-        stage_url = stage.GetRootLayer().identifier if stage else ''
+        stage_url = stage.GetRootLayer().identifier if stage else ""
 
         if stage_url:
             # Clear before using, so that we're sure the data is only
@@ -194,7 +180,7 @@ class StageManager:
             # Capture the active camera's camera data, used to reset
             # the scene to a known good state.
             ctx = omni.usd.get_context()
-            if (prim := ctx.get_stage().GetPrimAtPath(get_active_viewport_camera_string())):
+            if prim := ctx.get_stage().GetPrimAtPath(get_active_viewport_camera_string()):
                 for attr in prim.GetAttributes():
                     self._camera_attrs[attr.GetName()] = attr.Get()
 
@@ -205,11 +191,12 @@ class StageManager:
         if self._is_external_update:
             self._is_external_update = False
         else:
-            payload = {"prims": omni.usd.get_context().get_selection().
-                        get_selected_prim_paths()}
+            payload = {"prims": omni.usd.get_context().get_selection().get_selected_prim_paths()}
 
             get_eventdispatcher().dispatch_event("stageSelectionChanged", payload=payload)
-            carb.log_info(f"Selection changed: Path to USD prims currently selected = {omni.usd.get_context().get_selection().get_selected_prim_paths()}")
+            carb.log_info(
+                f"Selection changed: Path to USD prims currently selected = {omni.usd.get_context().get_selection().get_selected_prim_paths()}"
+            )
 
     def _on_reset_camera(self, event: carb.events.IEvent):
         """
@@ -225,12 +212,8 @@ class StageManager:
             # The camera lives on the session layer, which has a higher
             # opinion than the root stage. So we need to explicitly target
             # the session layer when resetting the camera's attributes.
-            camera_prim = ctx.get_stage().GetPrimAtPath(
-                get_active_viewport_camera_string()
-            )
-            edit_context = Usd.EditContext(
-                stage, Usd.EditTarget(stage.GetSessionLayer())
-            )
+            camera_prim = ctx.get_stage().GetPrimAtPath(get_active_viewport_camera_string())
+            edit_context = Usd.EditContext(stage, Usd.EditTarget(stage.GetSessionLayer()))
             with edit_context:
                 for name, value in self._camera_attrs.items():
                     attr = camera_prim.GetAttribute(name)

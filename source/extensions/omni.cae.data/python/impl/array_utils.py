@@ -17,8 +17,7 @@ import numpy as np
 import warp as wp
 from pxr import Gf, Usd
 from usdrt import Vt as VtRT
-from warp.context import Device
-from warp.types import DType, vector_types
+from warp.types import vector
 
 from .bindings import IFieldArray
 from .typing import FieldArrayLike
@@ -26,7 +25,32 @@ from .typing import FieldArrayLike
 logger = getLogger(__name__)
 
 
-def get_device(array: FieldArrayLike) -> Device:
+def _to_warp_vector_dtype(length: int, scalar_dtype: Any) -> Any:
+    suffix_by_dtype_name = (
+        ("int8", "b"),
+        ("uint8", "ub"),
+        ("int16", "s"),
+        ("uint16", "us"),
+        ("int32", "i"),
+        ("uint32", "ui"),
+        ("int64", "l"),
+        ("uint64", "ul"),
+        ("float16", "h"),
+        ("float32", "f"),
+        ("float64", "d"),
+    )
+
+    for dtype_name, suffix in suffix_by_dtype_name:
+        if scalar_dtype == getattr(wp, dtype_name, None):
+            vector_dtype = getattr(wp, f"vec{length}{suffix}", None)
+            if vector_dtype is not None:
+                return vector_dtype
+            break
+
+    return vector(length=length, dtype=scalar_dtype)
+
+
+def get_device(array: FieldArrayLike) -> Any:
     if isinstance(array, IFieldArray):
         if array.device_id == -1:
             return wp.get_device("cpu")
@@ -42,10 +66,13 @@ def get_device(array: FieldArrayLike) -> Device:
     raise RuntimeError("Cannot determine device %s!" % type(array))
 
 
-def to_warp_dtype(array: FieldArrayLike) -> DType:
+def to_warp_dtype(array: FieldArrayLike) -> Any:
     """
-    Returns the warp DType for the given array. This also handles 2D arrays
-    by returning the appropriate vector type.
+    Returns a Warp dtype object suitable for passing to ``wp.array``.
+
+    One-dimensional inputs return the matching scalar Warp dtype. Two-dimensional
+    inputs with multiple components return a Warp vector dtype whose length
+    matches the second dimension and whose scalar type matches the input dtype.
     """
     if isinstance(array, wp.array):
         return array.dtype
@@ -56,11 +83,8 @@ def to_warp_dtype(array: FieldArrayLike) -> DType:
     else:
         raise RuntimeError("Cannot determine warp_dtype!")
 
-    if array.ndim == 2:
-        type_args = {"length": array.shape[1], "dtype": scalar_dtype}
-        for vtype in vector_types:
-            if vtype._wp_type_args_ == type_args:
-                return vtype
+    if array.ndim == 2 and array.shape[1] > 1:
+        return _to_warp_vector_dtype(length=array.shape[1], scalar_dtype=scalar_dtype)
     return scalar_dtype
 
 

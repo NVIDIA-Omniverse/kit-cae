@@ -15,6 +15,10 @@ import dav
 from .typing import UniformShapesLibraryAPI
 
 
+def _int_vector_constant(values):
+    return wp.constant(wp.types.vector(length=len(values), dtype=wp.int32)(*values))
+
+
 @dav.cached
 def get_compute_face_centers_kernel(data_model: dav.DataModel):
     """
@@ -240,15 +244,15 @@ def build_shape_functions_library(shapes: list[dict]) -> UniformShapesLibraryAPI
 
     # Define constants
     nb_shapes = wp.constant(wp.int32(len(shapes)))
-    vtk_cell_types = wp.constant(wp.vec(length=len(shapes), dtype=wp.int32)(*[shape["cell_type"] for shape in shapes]))
-    shape_function_types_const = wp.constant(wp.vec(length=len(shapes), dtype=wp.int32)(*shape_function_types))
-    node_indices_offsets_const = wp.constant(wp.vec(length=len(node_indices_offsets), dtype=wp.int32)(*node_indices_offsets))
-    node_indices_vtk_const = wp.constant(wp.vec(length=len(node_indices_vtk), dtype=wp.int32)(*node_indices_vtk))
-    node_indices_const = wp.constant(wp.vec(length=len(node_indices), dtype=wp.int32)(*node_indices))
-    face_node_offsets_const = wp.constant(wp.vec(length=len(face_node_offsets), dtype=wp.int32)(*face_node_offsets))
-    face_node_indices_const = wp.constant(wp.vec(length=len(face_node_indices), dtype=wp.int32)(*face_node_indices))
-    element_face_offsets_const = wp.constant(wp.vec(length=len(element_face_offsets), dtype=wp.int32)(*element_face_offsets))
-    midpoint_counts_const = wp.constant(wp.vec(length=len(midpoint_counts), dtype=wp.int32)(*midpoint_counts))
+    vtk_cell_types = _int_vector_constant([shape["cell_type"] for shape in shapes])
+    shape_function_types_const = _int_vector_constant(shape_function_types)
+    node_indices_offsets_const = _int_vector_constant(node_indices_offsets)
+    node_indices_vtk_const = _int_vector_constant(node_indices_vtk)
+    node_indices_const = _int_vector_constant(node_indices)
+    face_node_offsets_const = _int_vector_constant(face_node_offsets)
+    face_node_indices_const = _int_vector_constant(face_node_indices)
+    element_face_offsets_const = _int_vector_constant(element_face_offsets)
+    midpoint_counts_const = _int_vector_constant(midpoint_counts)
 
     # Standalone helper defined before ShapesLibrary so that methods can call it without
     # referencing ShapesLibrary mid-class-body (which would leave an empty closure cell and

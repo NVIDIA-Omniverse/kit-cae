@@ -162,7 +162,7 @@ def _count_unique_cell_points_kernel(
     cf_end = cell_face_offsets[cell_idx + 1]
 
     count = wp.int32(0)
-    seen = wp.vec(length=dav.config.max_points_per_cell, dtype=wp.int32)
+    seen = dav.CellPointIds()
 
     for fi in range(cf_end - cf_start):
         global_face_id = cell_faces[cf_start + fi]

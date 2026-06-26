@@ -11,7 +11,7 @@
 """Utilities for converting VTK datasets to DAV datasets."""
 
 import logging
-from typing import Union
+from typing import Any, Union
 
 import warp as wp
 from vtkmodules.numpy_interface import dataset_adapter as dsa
@@ -36,9 +36,10 @@ from dav.field import Field
 from dav.fields import AssociationType
 
 logger = logging.getLogger(__name__)
+WarpDevice = getattr(wp, "Device", Any)
 
 
-def vtk_to_dataset(vtk_dataset: vtkDataSet, device: Union[str, wp.context.Device, None] = None) -> dict[str, Union[Dataset, DatasetCollection]]:
+def vtk_to_dataset(vtk_dataset: vtkDataSet, device: Union[str, WarpDevice, None] = None) -> dict[str, Union[Dataset, DatasetCollection]]:
     """Convert a VTK dataset to a DAV dataset with appropriate data model.
 
     Args:
@@ -154,7 +155,7 @@ def vtk_to_dataset(vtk_dataset: vtkDataSet, device: Union[str, wp.context.Device
         return {"dataset": _convert_single_dataset(vtk_dataset, device=device)}
 
 
-def _convert_single_dataset(vtk_dataset: vtkDataSet, device: Union[str, wp.context.Device, None] = None) -> Dataset:
+def _convert_single_dataset(vtk_dataset: vtkDataSet, device: Union[str, WarpDevice, None] = None) -> Dataset:
     """Convert a single VTK dataset to a DAV Dataset.
 
     Args:

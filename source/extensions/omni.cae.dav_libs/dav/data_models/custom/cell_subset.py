@@ -64,7 +64,7 @@ from typing import Any
 import warp as wp
 
 import dav
-from dav import config, locators
+from dav import locators
 
 
 @dav.cached
@@ -268,7 +268,7 @@ def get_data_model(inner_data_model):
 
         @staticmethod
         @dav.func
-        def evaluate_position(ds: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> wp.vec(length=config.max_points_per_cell, dtype=wp.float32):
+        def evaluate_position(ds: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> dav.CellWeights:
             """Interpolation weights at ``position`` within ``cell`` (delegated to the parent)."""
             inner_cell = inner_data_model.DatasetAPI.get_cell(ds.inner_handle, cell.inner_cell_id)
             return inner_data_model.CellLocatorAPI.evaluate_position(ds.inner_handle, position, inner_cell)

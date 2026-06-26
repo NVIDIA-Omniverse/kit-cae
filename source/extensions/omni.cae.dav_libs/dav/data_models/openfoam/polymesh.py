@@ -511,7 +511,7 @@ StarConvexPolyhedron = star_convex_polyhedron.get_shape(PartialDataModel)
 class CellLocatorAPI:
     @staticmethod
     @dav.func
-    def evaluate_position(ds: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32):
+    def evaluate_position(ds: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> dav.CellWeights:
         assert CellAPI.is_valid(cell), "Invalid cell handle"
         return StarConvexPolyhedron.get_weights(position, cell, ds, 0)
 

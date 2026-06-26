@@ -11,7 +11,7 @@ from typing import Any, Protocol
 
 import warp as wp
 
-from .. import config
+import dav
 
 
 class CellHandle(Protocol):
@@ -192,7 +192,7 @@ class CellLocatorAPI(Protocol):
     ...
 
     @staticmethod
-    def evaluate_position(dataset: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> wp.vec(length=config.max_points_per_cell, dtype=wp.float32):
+    def evaluate_position(dataset: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> dav.CellWeights:
         """Evaluate a position within a cell to get interpolation weights.
 
         Args:
@@ -201,7 +201,7 @@ class CellLocatorAPI(Protocol):
             cell: The cell containing the position (CellHandle)
 
         Returns:
-            wp.vec(length=config.max_points_per_cell, dtype=wp.float32):
+            dav.CellWeights:
                 A vector of interpolation weights for the points in the cell. The length of the vector is equal to the number of points
                 in the cell, and unused entries are set to 0.
         """

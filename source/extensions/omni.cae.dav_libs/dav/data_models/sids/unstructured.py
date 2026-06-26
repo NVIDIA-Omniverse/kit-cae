@@ -544,7 +544,7 @@ def get_data_model(dm_element_types: list[int | str]) -> Any:
 
         @staticmethod
         @dav.func
-        def evaluate_position(ds: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32):
+        def evaluate_position(ds: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> dav.CellWeights:
             assert SIDSCellAPI.is_valid(cell), "Cell is not valid"
             cell_element_type = _sids_get_cell_element_type(ds, cell)
             return ShapeDispatch.get_weights(position, cell, ds, cell_element_type)

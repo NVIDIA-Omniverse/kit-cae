@@ -274,7 +274,7 @@ def get_collection_data_model(data_model: dav.DataModel) -> dav.DataModel:
     class CollectionCellLocatorAPI:
         @staticmethod
         @dav.func
-        def evaluate_position(dataset: CollectionDatasetHandle, position: wp.vec3f, cell: CollectionCellHandle) -> wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32):
+        def evaluate_position(dataset: CollectionDatasetHandle, position: wp.vec3f, cell: CollectionCellHandle) -> dav.CellWeights:
             assert CollectionCellAPI.is_valid(cell), "Invalid cell handle for evaluate_position"
             piece = dataset.pieces[cell.cell_id.x]
             piece_cell = data_model.DatasetAPI.get_cell(piece, cell.piece_cell_id)

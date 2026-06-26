@@ -240,8 +240,8 @@ class DatasetAPI:
 
 
 class CellLocatorAPI:
-    def evaluate_position(dataset: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32):
-        return wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32)
+    def evaluate_position(dataset: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> dav.CellWeights:
+        return dav.CellWeights()
 
     @staticmethod
     @dav.func

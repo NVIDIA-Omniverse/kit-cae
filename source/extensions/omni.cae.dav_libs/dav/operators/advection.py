@@ -65,7 +65,7 @@ class Cursor:
 # Type aliases for the RK stage matrix
 _Mat6x6 = wp.types.matrix(shape=(6, 6), dtype=wp.float32)
 _Mat6x3 = wp.types.matrix(shape=(6, 3), dtype=wp.float32)
-_Vec6f = wp.vec(length=6, dtype=wp.float32)
+_Vec6f = wp.types.vector(length=6, dtype=wp.float32)
 
 # Cash-Karp Butcher tableau: a_ij coefficients (lower-triangular, row-major).
 # Row i gives the weights for stages k1..k_{i} used to compute the offset for stage k_{i+1}.

@@ -12,7 +12,7 @@
 
 import logging
 from pathlib import Path
-from typing import Union
+from typing import Any, Union
 
 import warp as wp
 
@@ -20,6 +20,7 @@ from dav.data_models.sids.sids_shapes import ET_MIXED, ET_NODE, ET_NFACE_n, ET_N
 from dav.dataset import Dataset
 
 logger = logging.getLogger(__name__)
+WarpDevice = getattr(wp, "Device", Any)
 
 # Type alias for CGNS zone data - dict of element blocks
 CGNSZone = dict[str, Dataset]
@@ -351,7 +352,7 @@ def _find_zone(tree, zone_name: Union[str, None] = None):
     return (zone_node, actual_zone_name, base_name)
 
 
-def read(filename: Union[str, Path], zone: Union[str, None] = None, device: Union[str, wp.context.Device, None] = None) -> CGNSZone:
+def read(filename: Union[str, Path], zone: Union[str, None] = None, device: Union[str, WarpDevice, None] = None) -> CGNSZone:
     """Load a CGNS zone using CGNS MLL and convert to DAV datasets.
 
     Reads a CGNS file and extracts the specified zone, returning a dictionary
@@ -363,7 +364,7 @@ def read(filename: Union[str, Path], zone: Union[str, None] = None, device: Unio
         zone: Name of the zone to read (e.g., "Base/Zone1"). If None, reads the
               first zone found in the first base.
         device: Device to create the datasets on. If None, uses Warp's current device context.
-                Can be a string like "cuda:0" or a warp.context.Device.
+                Can be a string like "cuda:0" or a warp.Device.
 
     Returns:
         Dictionary mapping element block names to Dataset objects. Each dataset

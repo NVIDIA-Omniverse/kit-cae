@@ -108,7 +108,7 @@ def _compute_unique_element_node_counts_kernel(piece: Piece, element_node_counts
     count = wp.int32(0)
 
     # Temporary array to store seen point IDs for this element
-    seen_point_ids = wp.vec(length=dav.config.max_points_per_cell, dtype=wp.int32)
+    seen_point_ids = dav.CellPointIds()
 
     # Iterate over all faces of this element
     for face_offset in range(face_start, face_end):

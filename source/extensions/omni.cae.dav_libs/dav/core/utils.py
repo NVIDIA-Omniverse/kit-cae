@@ -67,7 +67,7 @@ def get_scalar_dtype(wp_dtype):
 def get_vector_dtype(dtype, length: int = 3):
     """Get the vector dtype of a scalar dtype for a given length. Length must be greater than 0.
     For length 1, the scalar dtype is returned.  This prefers to return the most specific vector
-    dtype for the given length and dtype.  For example, `wp.vec3f` is preferred over `wp.vec(length=3, dtype=wp.float32)`
+    dtype for the given length and dtype.  For example, `wp.vec3f` is preferred over `wp.types.vector(length=3, dtype=wp.float32)`
     for length 3 and `wp.float32`.
     """
     assert not is_vector_dtype(dtype), "Cannot get vector dtype of a vector dtype"
@@ -117,7 +117,7 @@ def get_vector_dtype(dtype, length: int = 3):
             case wp.uint64:
                 return wp.vec4ul
     else:
-        return wp.vec(length=length, dtype=dtype)
+        return wp.types.vector(length=length, dtype=dtype)
 
 
 def get_vector_length(dtype):

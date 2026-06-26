@@ -2,6 +2,22 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.1]
+
+### Changed
+
+- **Kit SDK 110.1.2 support**: Added Kit SDK 110.1.2 to `select_kit_version` and promoted it to the
+  default Kit version. The release includes refreshed 110.1.2 app, streaming, and Kit-CAE templates,
+  plus the matching Packman/repo tooling updates needed for the newer Kit SDK.
+
+### Fixed
+
+- **Warp 1.13 compatibility** (`omni.cae.data`): Updated CAE data array helpers to avoid removed
+  `warp.context.Device`, `warp.types.DType`, and `warp.types.vector_types` APIs, allowing
+  `omni.cae.kit` and the bundled CAE extensions to start with `omni.warp.core` 1.13.
+- **Bundled DAV runtime for Warp 1.13** (`omni.cae.dav_libs`): Updated the bundled DAV snapshot and
+  submodule branch to the Kit-CAE v2 line used for Warp 1.13-compatible DAV code.
+
 ## [2.1.0]
 
 ### Added

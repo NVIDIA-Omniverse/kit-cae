@@ -31,7 +31,7 @@ wp_config.enable_backward = False  # this is simply not needed in our case
 # wp_config.verbose = True
 
 
-from .core import cached, config, recorder, register_pre_compile_hook, scoped_timer, utils
+from .core import CellPointIds, CellWeights, cached, config, recorder, register_pre_compile_hook, scoped_timer, utils
 from .data_models import CellAPI, CellHandle, CellIdHandle, CellLinksAPI, DataModel, DatasetAPI, DatasetHandle, PointIdHandle
 from .dataset import Dataset, DatasetCollection
 from .field import Field
@@ -48,6 +48,8 @@ __all__ = [
     "register_pre_compile_hook",
     "scoped_timer",
     "utils",
+    "CellWeights",
+    "CellPointIds",
     # Types and protocols
     "DatasetLike",
     "FieldLike",

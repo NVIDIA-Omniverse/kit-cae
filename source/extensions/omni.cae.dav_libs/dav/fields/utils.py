@@ -127,6 +127,7 @@ def get_compute_field_range_kernel(field_model: dav.FieldModel):
 
     if dav.utils.is_vector_dtype(value_type):
         length = dav.utils.get_vector_length(value_type)
+        f64_value_type = wp.types.vector(dtype=wp.float64, length=length)
 
         @dav.func
         def get_magnitude(value: value_type) -> wp.float64:
@@ -138,7 +139,7 @@ def get_compute_field_range_kernel(field_model: dav.FieldModel):
                 # Convert float32 components to float64
                 return wp.float64(wp.length(value))
             else:
-                f_value = wp.vec(dtype=wp.float64, length=length)
+                f_value = f64_value_type()
                 for i in range(length):
                     f_value[i] = wp.float64(value[i])
                 return wp.length(f_value)

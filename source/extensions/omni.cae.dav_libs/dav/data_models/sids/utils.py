@@ -185,7 +185,7 @@ def _compute_unique_element_node_counts_kernel(ds: nface_n.DatasetHandle, elemen
     count = wp.int32(0)
 
     # Temporary array to store seen point IDs for this cell
-    seen_point_ids = wp.vec(length=dav.config.max_points_per_cell, dtype=wp.int32)
+    seen_point_ids = dav.CellPointIds()
 
     num_faces = nface_n.CellAPI.get_num_faces(nface_cell, ds)
     for face_idx in range(num_faces):

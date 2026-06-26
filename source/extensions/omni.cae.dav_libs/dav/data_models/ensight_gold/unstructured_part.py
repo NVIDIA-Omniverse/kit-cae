@@ -648,10 +648,10 @@ def get_data_model(dm_element_types: list[int | str]):
     class EnSightCellLocatorAPI:
         @staticmethod
         @dav.func
-        def evaluate_position(ds: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32):
+        def evaluate_position(ds: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> dav.CellWeights:
             assert cell.cell_id >= 0, "Invalid cell handle"
 
-            empty = wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32)
+            empty = dav.CellWeights()
             element_type = cell.element_type
             if wp.static(ensight_shapes.EN_nsided in DATA_MODEL_ELEMENT_TYPES):
                 if element_type == ensight_shapes.EN_nsided:

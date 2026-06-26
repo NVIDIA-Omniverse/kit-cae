@@ -410,14 +410,14 @@ class DatasetAPI:
 class CellLocatorAPI:
     @staticmethod
     @dav.func
-    def evaluate_position(ds: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32):
+    def evaluate_position(ds: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> dav.CellWeights:
         """Evaluate position within a cell to get interpolation weights.
 
         Note: Interpolation is not yet implemented for surface meshes.
         This always returns an empty interpolated cell handle.
         """
         # TODO: Implement interpolation for triangles, quads, and n-gons
-        return wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32)
+        return dav.CellWeights()
 
     @staticmethod
     @dav.func

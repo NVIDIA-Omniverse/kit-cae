@@ -82,12 +82,13 @@ def _install() -> None:
 
     _orig_compile = w_module_compile
 
-    def _patched_compile(self, device=None, output_dir=None, output_name=None, output_arch=None, use_ptx=None):
+    def _patched_compile(self, *args, **kwargs):
         if _pre_compile_callbacks:
+            device = kwargs.get("device", args[0] if args else None)
             kernel_names = list(self.kernels.keys())
             for cb in _pre_compile_callbacks:
                 cb(self.name, kernel_names, device)
-        return _orig_compile(self, device, output_dir, output_name, output_arch, use_ptx)
+        return _orig_compile(self, *args, **kwargs)
 
     _patched_compile._dav_hooked = True
     setattr(w_module, compile_attr, _patched_compile)

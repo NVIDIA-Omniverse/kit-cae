@@ -12,6 +12,30 @@
     ]
   },
   "versions": {
+    "110.1.2": {
+        "variables": {
+          "KIT_VERSION_TAG": "110.1.2+production",
+          "INDEX_HEADERS_TAG": "380600.2218"
+        },
+        "templates": [
+          {
+            "src": "${root}/templates/110.1.2/apps/kit_base_editor/kit_base_editor.kit",
+            "dest": "${root}/source/apps/kit_base_editor.kit"
+          },
+          {
+            "src": "${root}/templates/110.1.2/apps/streaming_configs/default_stream.kit",
+            "dest": "${root}/source/apps/default_stream.kit"
+          },
+          {
+            "src": "${root}/templates/110.1.2/kit_cae/kit_cae_editor.kit",
+            "dest": "${root}/source/apps/kit_cae_editor.kit"
+          },
+          {
+            "src": "${root}/templates/110.1.2/kit_cae/kit_cae_streaming.kit",
+            "dest": "${root}/source/apps/kit_cae_streaming.kit"
+          }
+        ]
+    },
     "110.1.1": {
         "variables": {
           "KIT_VERSION_TAG": "110.1.1+production",
@@ -182,5 +206,5 @@
         ]
     }
   },
-  "default": "110.1.1"
+  "default": "110.1.2"
 }

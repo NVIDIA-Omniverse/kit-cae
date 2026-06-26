@@ -15,6 +15,8 @@ import warp as wp
 
 import dav
 
+_VoxelFaceLut = wp.types.vector(length=24, dtype=wp.int32)
+
 
 @dav.func
 def get_hex_vertex_offset(local_idx: wp.int32) -> wp.vec3i:
@@ -231,7 +233,7 @@ def get_voxel_face_point_local_idx(face_idx: wp.int32, local_idx: wp.int32) -> w
     # face 3 (+Y): [2,6,7,3]  face 4 (-Z): [0,2,3,1]  face 5 (+Z): [4,5,7,6]
     # NOTE: if I don't turn formatting off, Ruff puts one number/line. Which is ridiculous.
     # fmt: off
-    lut = wp.vector(
+    lut = _VoxelFaceLut(
         0, 4, 6, 2,  # face 0 (-X)
         1, 3, 7, 5,  # face 1 (+X)
         0, 1, 5, 4,  # face 2 (-Y)

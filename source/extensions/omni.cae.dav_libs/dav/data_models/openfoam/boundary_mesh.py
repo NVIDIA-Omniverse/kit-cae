@@ -364,13 +364,13 @@ class DatasetAPI:
 class CellLocatorAPI:
     @staticmethod
     @dav.func
-    def evaluate_position(ds: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32):
+    def evaluate_position(ds: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> dav.CellWeights:
         """Evaluate position within a cell to get interpolation weights.
 
         Note: Interpolation is not supported for boundary meshes (2.5D surface elements).
         This always returns an empty interpolated cell handle.
         """
-        return wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32)(0.0)
+        return dav.CellWeights(0.0)
 
     @staticmethod
     @dav.func

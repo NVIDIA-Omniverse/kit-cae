@@ -12,16 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import hashlib
 import logging
-import zipfile
-import tempfile
-import sys
 import os
 import stat
+import sys
+import tempfile
 import time
-import hashlib
+import zipfile
 from typing import Any, Callable, Union
-
 
 RENAME_RETRY_COUNT = 100
 RENAME_RETRY_DELAY = 0.1
@@ -92,16 +91,12 @@ def rename_folder(staging_dir: StagingDirectory, folder_name: str):
         # has managed to update the package before us - in all other cases we re-raise the exception
         abs_dst_folder_name = os.path.join(staging_dir.staging_path, folder_name)
         if os.path.exists(abs_dst_folder_name):
-            logger.warning(
-                f"Directory {abs_dst_folder_name} already present, package installation already completed"
-            )
+            logger.warning(f"Directory {abs_dst_folder_name} already present, package installation already completed")
         else:
             raise
 
 
-def call_with_retry(
-    op_name: str, func: Callable, retry_count: int = 3, retry_delay: float = 20
-) -> Any:
+def call_with_retry(op_name: str, func: Callable, retry_count: int = 3, retry_delay: float = 20) -> Any:
     retries_left = retry_count
     while True:
         try:
@@ -110,10 +105,7 @@ def call_with_retry(
             logger.warning(f"Failure while executing {op_name} [{str(exc)}]")
             if retries_left:
                 retry_str = "retry" if retries_left == 1 else "retries"
-                logger.warning(
-                    f"Retrying after {retry_delay} seconds"
-                    f" ({retries_left} {retry_str} left) ..."
-                )
+                logger.warning(f"Retrying after {retry_delay} seconds" f" ({retries_left} {retry_str} left) ...")
                 time.sleep(retry_delay)
             else:
                 logger.error("Maximum retries exceeded, giving up")
@@ -142,7 +134,7 @@ def generate_sha256_for_file(file_path: Union[str, os.PathLike]) -> str:
 
 
 def install_common_module(package_path, install_path):
-    COMMON_SHA256 = "09f0615cbc788ce4043c32275732bd020463f008fd90336f3a944bbafa3f81dc"
+    COMMON_SHA256 = "1ae6974274ed61cafbe6a830e56bb8e17040d5c98323f2931eff25bc2884d539"
     package_sha256 = generate_sha256_for_file(package_path)
     if package_sha256 != COMMON_SHA256:
         raise RuntimeError(

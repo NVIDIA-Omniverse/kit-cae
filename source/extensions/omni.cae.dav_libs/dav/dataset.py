@@ -288,11 +288,11 @@ class Dataset(FieldsMixin, CachedFieldsMixin, AccelerationStructuresMixin):
 
     def get_num_points(self) -> int:
         """Get the number of points in the dataset."""
-        return self.data_model.DatasetAPI.get_num_points(self.handle)
+        return int(self.data_model.DatasetAPI.get_num_points(self.handle))
 
     def get_num_cells(self) -> int:
         """Get the number of cells in the dataset."""
-        return self.data_model.DatasetAPI.get_num_cells(self.handle)
+        return int(self.data_model.DatasetAPI.get_num_cells(self.handle))
 
     def get_bounds(self) -> tuple[wp.vec3f, wp.vec3f]:
         """Get the bounding box of the dataset as (min_bounds, max_bounds) vectors.

@@ -44,10 +44,8 @@ def get_shape_dispatcher(data_model: dav.DataModel, shapes_library: UniformShape
 
         @staticmethod
         @dav.func
-        def get_weights(point: wp.vec3f, cell: data_model.CellHandle, dataset: data_model.DatasetHandle, cell_type: wp.int32) -> wp.vec(
-            length=dav.config.max_points_per_cell, dtype=wp.float32
-        ):
-            return wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32)
+        def get_weights(point: wp.vec3f, cell: data_model.CellHandle, dataset: data_model.DatasetHandle, cell_type: wp.int32) -> dav.CellWeights:
+            return dav.CellWeights()
 
     VOID_SHAPE = VoidShape
     TETRA_SHAPE = types.get_shape_module(types.ELEMENT_TYPE_TETRA).get_shape(data_model, shapes_library) if types.ELEMENT_TYPE_TETRA in SHAPE_TYPES else VOID_SHAPE
@@ -82,9 +80,7 @@ def get_shape_dispatcher(data_model: dav.DataModel, shapes_library: UniformShape
 
         @staticmethod
         @dav.func
-        def get_weights(point: wp.vec3f, cell: data_model.CellHandle, dataset: data_model.DatasetHandle, cell_type: wp.int32) -> wp.vec(
-            length=dav.config.max_points_per_cell, dtype=wp.float32
-        ):
+        def get_weights(point: wp.vec3f, cell: data_model.CellHandle, dataset: data_model.DatasetHandle, cell_type: wp.int32) -> dav.CellWeights:
             # we deliberately avoid static since that was causing the kernel hash to change which forced unnecessary recompilation.
             shape_type = shapes_library.get_shape_function_type(cell_type)
             if shape_type == types.ELEMENT_TYPE_TETRA:
@@ -99,6 +95,6 @@ def get_shape_dispatcher(data_model: dav.DataModel, shapes_library: UniformShape
                 return VOXEL_SHAPE.get_weights(point, cell, dataset, cell_type)
             elif shape_type == types.ELEMENT_TYPE_POLYHEDRON:
                 return POLYHEDRON_SHAPE.get_weights(point, cell, dataset, cell_type)
-            return wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32)
+            return dav.CellWeights()
 
     return ShapeDispatcher

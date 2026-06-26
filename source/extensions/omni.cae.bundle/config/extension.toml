@@ -9,7 +9,7 @@
 # its affiliates is strictly prohibited.
 
 [package]
-version = "2.1.0"
+version = "2.1.1"
 title = "CAE Extension Bundle"
 description = "Bundle of all CAE extensions, dependencies, and settings for Kit-CAE applications"
 category = "CAE"
@@ -125,6 +125,7 @@ stdoutFailPatterns.exclude = [
 ]
 
 [[test]]
+timeout = 900
 args = [
     "--/exts/omni.kit.viewport.ready/activity_progress/enabled=false",
     "--/exts/omni.kit.viewport.ready/background_color=4289506321",

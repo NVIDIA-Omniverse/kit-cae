@@ -537,7 +537,7 @@ def get_data_model(unique_cell_types: list[int | str]):
 
         @staticmethod
         @dav.func
-        def evaluate_position(ds: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> wp.vec(length=dav.config.max_points_per_cell, dtype=wp.float32):
+        def evaluate_position(ds: DatasetHandle, position: wp.vec3f, cell: CellHandle) -> dav.CellWeights:
             assert UGCellAPI.is_valid(cell), "Invalid cell handle"
             return ShapeDispatch.get_weights(position, cell, ds, cell.cell_type)
 

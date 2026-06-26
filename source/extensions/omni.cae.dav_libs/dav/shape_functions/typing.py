@@ -14,8 +14,6 @@ import warp as wp
 
 import dav
 
-from .. import config
-
 
 class ShapeAPI(Protocol):
     """
@@ -41,7 +39,7 @@ class ShapeAPI(Protocol):
 
     @staticmethod
     @dav.func
-    def get_weights(point: wp.vec3f, cell: Any, dataset: Any, cell_type: wp.int32) -> wp.vec(length=config.max_points_per_cell, dtype=wp.float32):
+    def get_weights(point: wp.vec3f, cell: Any, dataset: Any, cell_type: wp.int32) -> dav.CellWeights:
         """
         Get interpolation weights for a position inside a cell.
 
@@ -52,7 +50,7 @@ class ShapeAPI(Protocol):
             cell_type: The type of the cell (data model specific)
 
         Returns:
-            wp.vec(length=config.max_points_per_cell, dtype=wp.float32):
+            dav.CellWeights:
             The interpolation weights for the position inside the cell.
         """
         ...
@@ -86,7 +84,7 @@ class ShapeDispatchAPI(Protocol):
 
     @staticmethod
     @dav.func
-    def get_weights(point: wp.vec3f, cell: Any, dataset: Any, cell_type: wp.int32) -> wp.vec(length=config.max_points_per_cell, dtype=wp.float32):
+    def get_weights(point: wp.vec3f, cell: Any, dataset: Any, cell_type: wp.int32) -> dav.CellWeights:
         """
         Get interpolation weights for a position inside a cell of a specific type.
 
@@ -97,7 +95,7 @@ class ShapeDispatchAPI(Protocol):
             cell_type: The type of the cell (data model specific)
 
         Returns:
-            wp.vec(length=config.max_points_per_cell, dtype=wp.float32):
+            dav.CellWeights:
             The interpolation weights for the position inside the cell.
         """
         ...
