@@ -2,6 +2,12 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.2]
+
+### Changed
+
+- **Optional VTK dependency**: Updated VTK from 9.4 to 9.6.2 to incorporate upstream security fixes.
+
 ## [2.1.1]
 
 ### Changed

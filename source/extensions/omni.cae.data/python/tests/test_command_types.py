@@ -478,9 +478,16 @@ class TestGenerateStreamlines(omni.kit.test.AsyncTestCase):
         self.assertIsNotNone(streamlines)
         self.assertIsInstance(streamlines, Streamlines)
         self.assertEqual(streamlines.points.shape, (408, 3))
-        self.assertEqual(np.amin(streamlines.points, axis=0).tolist(), [-1.5977600812911987, -3.0, -1.6546809673309326])
-        self.assertEqual(
-            np.amax(streamlines.points, axis=0).tolist(), [1.2705073356628418, 1.662825345993042, 1.1933543682098389]
+        # Compare integrated streamline coordinates with a tolerance rather than exact equality:
+        # vtkStreamTracer's RK4 output differs at float32 round-off level (~1e-7) across VTK
+        # patch/minor releases and platforms, so exact equality is inherently brittle.
+        self.assertListAlmostEquals(
+            np.amin(streamlines.points, axis=0).tolist(), [-1.5977600812911987, -3.0, -1.6546809673309326], places=5
+        )
+        self.assertListAlmostEquals(
+            np.amax(streamlines.points, axis=0).tolist(),
+            [1.2705073356628418, 1.662825345993042, 1.1933543682098389],
+            places=5,
         )
 
         self.assertEqual(streamlines.curveVertexCounts.shape, (4, 1))
