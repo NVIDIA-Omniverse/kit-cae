@@ -2,6 +2,13 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.3]
+
+### Changed
+
+- **Kit SDK 110.1.3 support**: Added Kit SDK 110.1.3 to `select_kit_version` and promoted it to the
+  default Kit version, with refreshed app, streaming, and Kit-CAE templates.
+
 ## [2.1.2]
 
 ### Changed
