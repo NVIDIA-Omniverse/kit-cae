@@ -262,7 +262,7 @@ During the creation of a new application, you can enable streaming by selecting 
 
 The web viewer sample can be found [here](https://github.com/NVIDIA-Omniverse/web-viewer-sample)
 
-```base
+```bash
 git clone https://github.com/NVIDIA-Omniverse/web-viewer-sample.git
 ```
 
