@@ -54,8 +54,9 @@ __all__ = [
 class RtSubPrimGuard:
     """Keeps a fixed set of RT sub-prims in sync with a primary USD prim.
 
-    Mirrors visibility and deactivation state from the primary prim onto the
-    sub-prims and removes the sub-prims when the primary prim is deleted.
+    Combines visibility and deactivation state from the primary prim with each
+    sub-prim's local visibility and removes the sub-prims when the primary prim
+    is deleted.
 
     Usage
     -----
@@ -138,13 +139,13 @@ class RtSubPrimGuard:
                     )
                 return
 
-    def _apply(self, active: bool) -> None:
+    def _apply(self, primary_visible: bool) -> None:
         for path in self._sub_prim_paths:
             prim = self._rt_stage.GetPrimAtPath(path)
             if prim:
-                prim.CreateAttribute("_worldVisibility", SdfRT.ValueTypeNames.Bool).Set(active)
-                prim.GetAttribute("visibility").Set(
-                    UsdGeomRT.Tokens.inherited if active else UsdGeomRT.Tokens.invisible
+                locally_visible = prim.GetAttribute("visibility").Get() != UsdGeomRT.Tokens.invisible
+                prim.CreateAttribute("_worldVisibility", SdfRT.ValueTypeNames.Bool).Set(
+                    primary_visible and locally_visible
                 )
 
     def _remove_sub_prims(self) -> None:

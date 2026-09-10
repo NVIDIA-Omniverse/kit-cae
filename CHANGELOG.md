@@ -2,6 +2,13 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.4]
+
+### Fixed
+
+- **Planar slice visibility** (`omni.cae.viz`): Preserve the configured slice mode when hiding and showing
+  planar slice prims.
+
 ## [2.1.3]
 
 ### Changed

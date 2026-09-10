@@ -769,7 +769,48 @@ class TestUtils(omni.kit.test.AsyncTestCase):
 
 
 class TestRtSubPrimGuard(omni.kit.test.AsyncTestCase):
-    """Tests for RtSubPrimGuard stage-transition correctness."""
+    """Tests for RtSubPrimGuard visibility and stage-transition correctness."""
+
+    async def test_visibility_toggle_preserves_sub_prim_visibility(self):
+        """Parent visibility is combined with, rather than replacing, local visibility."""
+        source_path = "/World/Source"
+        visible_rt_path = SdfRT.Path("/RT/VisibleSubPrim")
+        hidden_rt_path = SdfRT.Path("/RT/HiddenSubPrim")
+
+        async with new_stage() as stage:
+            stage_id = omni.usd.get_context().get_stage_id()
+            rt_stage = UsdRT.Stage.Attach(stage_id)
+
+            source_prim = stage.DefinePrim(source_path, "Xform")
+            visible_rt_prim = rt_stage.DefinePrim(visible_rt_path)
+            hidden_rt_prim = rt_stage.DefinePrim(hidden_rt_path)
+
+            for rt_prim, locally_visible in ((visible_rt_prim, True), (hidden_rt_prim, False)):
+                rt_prim.CreateAttribute("_worldVisibility", SdfRT.ValueTypeNames.Bool).Set(locally_visible)
+                rt_prim.CreateAttribute("visibility", SdfRT.ValueTypeNames.Token).Set(
+                    UsdGeom.Tokens.inherited if locally_visible else UsdGeom.Tokens.invisible
+                )
+
+            RtSubPrimGuard.register(source_prim, rt_stage, [visible_rt_path, hidden_rt_path])
+
+            imageable = UsdGeom.Imageable(source_prim)
+            imageable.MakeInvisible()
+            await get_app().next_update_async()
+
+            self.assertFalse(visible_rt_prim.GetAttribute("_worldVisibility").Get())
+            self.assertFalse(hidden_rt_prim.GetAttribute("_worldVisibility").Get())
+            self.assertEqual(visible_rt_prim.GetAttribute("visibility").Get(), UsdGeom.Tokens.inherited)
+            self.assertEqual(hidden_rt_prim.GetAttribute("visibility").Get(), UsdGeom.Tokens.invisible)
+
+            imageable.MakeVisible()
+            await get_app().next_update_async()
+
+            self.assertTrue(visible_rt_prim.GetAttribute("_worldVisibility").Get())
+            self.assertFalse(hidden_rt_prim.GetAttribute("_worldVisibility").Get())
+            self.assertEqual(visible_rt_prim.GetAttribute("visibility").Get(), UsdGeom.Tokens.inherited)
+            self.assertEqual(hidden_rt_prim.GetAttribute("visibility").Get(), UsdGeom.Tokens.invisible)
+
+            del rt_stage  # release Fabric reference before stage closes
 
     async def test_registry_cleared_on_stage_detach(self):
         """Registry is emptied when a stage is detached.
