@@ -9,7 +9,7 @@
 # its affiliates is strictly prohibited.
 
 [package]
-version = "2.1.1"
+version = "2.1.2"
 title = "CAE Extension Bundle"
 description = "Bundle of all CAE extensions, dependencies, and settings for Kit-CAE applications"
 category = "CAE"

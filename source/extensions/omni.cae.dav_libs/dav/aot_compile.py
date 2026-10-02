@@ -53,7 +53,8 @@ Or call :func:`compile` programmatically::
 What it compiles
 ----------------
 The :func:`compile` function iterates over every operator listed by
-:func:`dav.core.aot.get_operators` and imports it.  Each operator module has a
+:func:`dav.core.aot.get_operators` and imports its owning module. Logical specialization keys such as
+``probe_masked`` remain in the configuration. Each operator module has a
 top-level ``if dav.config.compile_kernels_aot:`` block that triggers kernel
 specialization and calls ``wp.compile_aot_module`` for every combination of data
 model, field model, and other parameters relevant to that operator.
@@ -78,6 +79,10 @@ from dav.core import aot
 logging.basicConfig(level=logging.INFO, format="[%(levelname)-5s] %(name)s — %(message)s")
 
 logger = logging.getLogger(__name__)
+
+# Recorder keys identify specializations, which can share an operator module.
+# Keep those keys in the configuration so module-level AOT selects their models.
+_OPERATOR_MODULES = {"probe_masked": "probe", "voxelization_masked": "voxelization"}
 
 
 def compile(config_path: str = None, devices: list[str] = None):
@@ -135,7 +140,8 @@ def compile(config_path: str = None, devices: list[str] = None):
     # and their dependencies (data model APIs, field APIs, etc.)
     for operator_name in aot.get_operators():
         logger.info(f"Compiling operator: {operator_name}")
-        importlib.import_module(f"dav.operators.{operator_name}")
+        module_name = _OPERATOR_MODULES.get(operator_name, operator_name)
+        importlib.import_module(f"dav.operators.{module_name}")
     logger.info("AOT compilation completed successfully!")
 
 

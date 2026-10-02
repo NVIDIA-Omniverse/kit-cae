@@ -2,6 +2,14 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.5]
+
+### Fixed
+
+- **Masked operator AOT precompilation** (`omni.cae.dav_libs` 1.1.1): Recorded configurations
+  containing masked probe or voxelization operators now compile successfully. Precompilation
+  resolves each operator to its owning module while retaining the recorded specialization keys.
+
 ## [2.1.4]
 
 ### Fixed

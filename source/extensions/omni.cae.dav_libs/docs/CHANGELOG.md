@@ -2,6 +2,13 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.1]
+
+### Fixed
+
+- AOT precompilation resolves `probe_masked` and `voxelization_masked` to their
+  owning operator modules while preserving the recorded specialization keys.
+
 ## [1.1.0]
 
 - Added `Field.to_nanovdb()`: element-for-element conversion of a `Field` to a NanoVDB-backed `Field` without

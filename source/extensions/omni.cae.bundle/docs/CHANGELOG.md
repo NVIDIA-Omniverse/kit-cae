@@ -4,6 +4,10 @@ All notable changes to the CAE Extension Bundle will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.2]
+
+- Updated the bundle for Kit-CAE 2.1.5, including the masked operator AOT precompilation fix.
+
 ## [2.1.1]
 
 - Updated the Kit-CAE release to support Kit SDK 110.1.2 as the default SDK, including refreshed app and
