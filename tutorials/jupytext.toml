@@ -1,0 +1,9 @@
+# Jupytext settings for everything under tutorials/.
+#
+# The committed source of each tutorial is a percent-format .py file. Opening
+# one in JupyterLab pairs it with a generated .ipynb next to it (gitignored);
+# edits made in either file flow to the other on save. Metadata filters keep
+# kernel, widget, and execution noise out of the .py so diffs stay readable.
+formats = "ipynb,py:percent"
+notebook_metadata_filter = "-all"
+cell_metadata_filter = "-all"

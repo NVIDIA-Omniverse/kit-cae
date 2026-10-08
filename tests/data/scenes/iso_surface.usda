@@ -1,0 +1,39 @@
+#usda 1.0
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+(
+    defaultPrim = "World"
+    subLayers = [@./assets.usda@]
+)
+
+def Xform "World"
+{
+    def Scope "Recipes"
+    {
+        def Mesh "IsoSurface" (
+            prepend apiSchemas = [
+                "CaeVizOperatorAPI",
+                "CaeVizIsoSurfaceAPI",
+                "CaeVizDatasetSelectionAPI:source",
+                "CaeVizFieldSelectionAPI:contour",
+                "CaeVizFieldSelectionAPI:colors"
+            ]
+        )
+        {
+            bool cae:viz:operator:enabled = true
+            rel cae:viz:dataset_selection:source:target = </World/Assets/StaticMixer>
+            string cae:viz:dataset_selection:source:identifier = "/Base/StaticMixer/B1_P3"
+            token[] cae:viz:field_selection:contour:fieldNames = ["Temperature"]
+            token[] cae:viz:field_selection:colors:fieldNames = ["Temperature"]
+            float cae:viz:isoSurface:isoValue = 300
+        }
+    }
+}

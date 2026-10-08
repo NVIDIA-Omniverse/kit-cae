@@ -1,0 +1,65 @@
+#usda 1.0
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+(
+    defaultPrim = "World"
+    subLayers = [@./assets.usda@]
+)
+
+def Xform "World"
+{
+    def Scope "Controls"
+    {
+        def Points "Seeds"
+        {
+            point3f[] points = [
+                (1.0, 1.7320508, 0.5),
+                (1.6558933, 1.1216137, 1.1121716),
+                (-0.25716954, -1.0663241, 2.0),
+                (-0.75494856, -2.6578617, 0.5641677),
+                (-0.8992655, -2.0279686, 0.74843544),
+                (1.3887061, -1.0787921, 1.4502406),
+                (-1.0772537, -2.0021725, 0.7974226),
+                (-1.0389479, -1.5137408, 0.64242834),
+                (-0.3080468, -1.2898262, 1.047858),
+                (0.92161566, 0.9685264, 0.6376164),
+                (0.3725212, -1.2179179, 1.0938346),
+                (0.5581898, 0.60221547, 0.9858344)
+            ]
+            double3 xformOp:translate = (0, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+    }
+
+    def Scope "Recipes"
+    {
+        def BasisCurves "Streamlines" (
+            prepend apiSchemas = [
+                "CaeVizOperatorAPI",
+                "CaeVizStreamlinesAPI",
+                "CaeVizDatasetSelectionAPI:source",
+                "CaeVizDatasetSelectionAPI:seeds",
+                "CaeVizFieldSelectionAPI:velocities",
+                "CaeVizFieldSelectionAPI:colors"
+            ]
+        )
+        {
+            bool cae:viz:operator:enabled = true
+            rel cae:viz:dataset_selection:source:target = </World/Assets/StaticMixer>
+            string cae:viz:dataset_selection:source:identifier = "/Base/StaticMixer/B1_P3"
+            rel cae:viz:dataset_selection:seeds:target = </World/Controls/Seeds>
+            token[] cae:viz:field_selection:velocities:fieldNames = ["VelocityX", "VelocityY", "VelocityZ"]
+            token[] cae:viz:field_selection:colors:fieldNames = ["Temperature"]
+            token cae:viz:streamlines:direction = "forward"
+            int cae:viz:streamlines:maxSteps = 20
+        }
+    }
+}

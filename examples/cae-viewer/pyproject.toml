@@ -1,0 +1,27 @@
+[project]
+name = "ovcae-viewer-example"
+version = "0.1.0"
+description = "Standalone OVUI viewer for OVCAE recipes"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  # The Linux OVUI wheel links CUDA 12 even on hosts with a CUDA 13 toolkit.
+  "nvidia-cuda-runtime-cu12>=12.8,<13",
+  "ovcae[usd]",
+  "ovstage>=0.2.0.377349,<0.3",
+  "ovrtx>=0.5.0.377615,<0.6",
+  "ovui==0.2.0",
+  "ovui-data-adapters-common==0.2.0",
+  # Viewport imports these services through its shared settings module.
+  "ovui-data-adapters-services==0.2.0",
+  "ovui-widgets-common==0.2.0",
+  "ovui-widgets-stage==0.2.0",
+  "ovui-widgets-property==0.2.0",
+  "ovui-widgets-viewport==0.2.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.3,<10", "ruff>=0.12,<1"]
+
+[tool.uv.sources]
+ovcae = { path = "../..", editable = true }

@@ -1,0 +1,119 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ovcae"
+dynamic = ["version"]
+description = "Standalone CAE visualization operators for OVStage applications"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = "LicenseRef-NvidiaProprietary"
+license-files = ["LICENSE.md", "PRODUCT_TERMS_OMNIVERSE", "NOTICE.md"]
+authors = [{ name = "NVIDIA Corporation" }]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Science/Research",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Scientific/Engineering :: Visualization",
+]
+dependencies = [
+  "numpy>=2.2,<3",
+  "ovstage>=0.2.0.377349,<0.3",
+  # usd-core's schema registry is the runtime's source of schema definitions
+  # and the authoring layer's stage library. The cap follows the CAE plug-in
+  # wheels' support set so the `usd` extra stays coinstallable.
+  "usd-core>=25.11,<=26.8",
+  "warp-lang>=1.17,<2",
+  "warp-simdata>=0.2.0,<0.3",
+]
+
+[project.optional-dependencies]
+usd = [
+  # Combined wheels bundle native payloads for usd-core 25.11, 26.3, 26.5, and
+  # 26.8 and select the one matching the active pxr at registration time.
+  "cae-openusd-plugins>=0.1.2,<0.2",
+]
+# ovcae.stream: OVRTX frames to a browser over WebRTC. Install OVRTX
+# separately from PyPI; see docs/installation.md.
+stream = [
+  "ovstream>=0.4.5,<0.5",
+]
+
+# Reader packages register here so ovcae.setup() can initialize every installed
+# reader before the process creates its first stage. Third-party reader wheels
+# add their own entry to the same group.
+[project.entry-points."ovcae.readers"]
+native = "ovcae.readers"
+
+[dependency-groups]
+dev = [
+  "build>=1.2",
+  "pytest>=8.3,<10",
+  "ruff>=0.12,<1",
+]
+render-test = [
+  "ovrtx>=0.5.0.377615,<0.6",
+]
+# Notebook tooling for tutorials/. The tutorials are committed as percent-format
+# .py files; jupytext turns them into notebooks and nbclient executes them.
+# OVRTX is required so every tutorial can render; the pin lives in render-test.
+tutorials = [
+  { include-group = "render-test" },
+  "ipykernel>=6,<8",
+  "ipywidgets>=8,<9",
+  "jupyterlab>=4,<5",
+  "jupytext>=1.17,<2",
+  "nbclient>=0.10,<1",
+  "nbformat>=5,<6",
+  # The interactive tutorials stream through ovcae.stream; same pin as the extra.
+  "ovstream>=0.4.5,<0.5",
+  # Appendices A2 and A3 read Exodus files and clip with VTK; not a runtime dependency.
+  "vtk>=9.3",
+]
+
+[tool.hatch.version]
+path = "src/ovcae/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ovcae"]
+
+[tool.hatch.build.targets.sdist]
+# The tutorial data holds hundreds of megabytes through Git LFS; the sdist ships the notebooks without it.
+exclude = ["/docs/internal", "/docs/developer", "/tutorials/data"]
+include = [
+  "/src",
+  "/tests",
+  "/docs",
+  "/examples",
+  "/tutorials",
+  "/README.md",
+  "/CHANGELOG.md",
+  "/LICENSE.md",
+  "/PRODUCT_TERMS_OMNIVERSE",
+  "/NOTICE.md",
+  "/pyproject.toml",
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-config --strict-markers"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+extend-exclude = ["experiments"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/test_schema_ovstage.py" = ["I001"]
+# Tutorials are percent-format notebooks; imports appear where the prose introduces them.
+"tutorials/*.py" = ["E402"]
+
+[tool.ruff.format]
+docstring-code-format = true

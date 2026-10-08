@@ -1,0 +1,22 @@
+.venv/
+# OVStream's runtime writes Carbonite logs under ./logs when the tutorials stream.
+/logs/
+# Tutorials are committed as percent-format .py; notebooks are generated.
+tutorials/**/*.ipynb
+tutorials/**/.ipynb_checkpoints/
+node_modules/
+imgui.ini
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+build/
+dist/
+*.egg-info/
+.coverage
+htmlcov/
+test-results.xml
+.artifactory.netrc
+gpu-test-results.xml
+ovui-minimal-test-results.xml

@@ -1,0 +1,375 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+ *
+ * NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+ * property and proprietary rights in and to this material, related
+ * documentation and any modifications thereto. Any use, reproduction,
+ * disclosure or distribution of this material and related documentation
+ * without an express license agreement from NVIDIA CORPORATION or
+ * its affiliates is strictly prohibited.
+ */
+mdl 1.7;
+
+import ::base::*;
+import ::df::*;
+import ::state::*;
+import ::scene::*;
+import ::math::*;
+import ::tex::*;
+import ::anno::*;
+import ::nvidia::core_definitions::*;
+
+float streak_profile(float t, uniform float peak_t = 0.1f, uniform float B = 10.0f) {
+	// f(t) = A*t^k*exp(-Bx)
+	uniform float k = peak_t*B;
+	t = math::frac(t);
+
+	return math::pow((t*B)/k, k)*math::exp(-B*t+k);
+}
+
+float mapped_opacity(
+	uniform float2 opacity_domain,
+	uniform texture_2d opacity_lut,
+	uniform float opacity,
+	uniform bool enable_opacity
+) {
+	bool use_opacity_mapping = (opacity_domain.x < opacity_domain.y) && enable_opacity;
+	float opacity_field = scene::data_lookup_float("opacity", 1.0f);
+	float opacity_normalized = use_opacity_mapping ?
+		(opacity_field - opacity_domain.x) / (opacity_domain.y - opacity_domain.x) : 1.0f;
+	float opacity_from_lut = tex::texture_isvalid(opacity_lut) && use_opacity_mapping ?
+		tex::lookup_float4(
+			opacity_lut,
+			float2(opacity_normalized, 0.0f),
+			tex::wrap_clamp,
+			tex::wrap_clamp).x : 1.0f;
+	return enable_opacity ? math::clamp(opacity * opacity_from_lut, 0.0f, 1.0f) : 1.0f;
+}
+
+export material AnimatedStreaks(
+	uniform bool enable_coloring = true
+		[[ anno::display_name("Enable Coloring"),
+		   anno::description("Map scalar field values through the LUT. When disabled, uses uniform white."),
+		   anno::in_group("Coloring") ]],
+    uniform float2 domain = float2(0.0f, -1.0f)
+		[[ anno::display_name("Scalar Domain"),
+		   anno::description("Min/max scalar range mapped to the LUT. Set x < y to enable coloring."),
+		   anno::in_group("Coloring") ]],
+    uniform texture_2d lut = texture_2d()
+		[[ anno::display_name("Color LUT"),
+		   anno::description("1D color lookup table texture for scalar-to-color mapping."),
+		   anno::in_group("Coloring") ]],
+    uniform float2 opacity_domain = float2(0.0f, -1.0f)
+		[[ anno::display_name("Opacity Domain"),
+		   anno::description("Min/max scalar range mapped through the opacity LUT."),
+		   anno::in_group("Opacity") ]],
+    uniform texture_2d opacity_lut = texture_2d()
+		[[ anno::display_name("Opacity LUT"),
+		   anno::description("1D grayscale lookup table used to map the opacity field."),
+		   anno::in_group("Opacity") ]],
+	uniform float opacity = 1.0f
+		[[ anno::display_name("Opacity"),
+		   anno::description("Multiplier applied to the mapped opacity."),
+		   anno::soft_range(0.0f, 1.0f),
+		   anno::in_group("Opacity") ]],
+	uniform bool enable_opacity = false
+		[[ anno::display_name("Enable Opacity"),
+		   anno::description("Map the opacity scalar field through the opacity LUT."),
+		   anno::in_group("Opacity") ]],
+    uniform float emission_intensity = 1000.0f
+		[[ anno::display_name("Emission Intensity"),
+		   anno::description("Overall brightness multiplier for the emissive streak glow."),
+		   anno::soft_range(0.0f, 10000.0f),
+		   anno::in_group("Emission") ]],
+	uniform float animation_speed = 1.0f
+		[[ anno::display_name("Animation Speed"),
+		   anno::description("Multiplier on the global animation time, controlling how fast streaks travel."),
+		   anno::soft_range(0.0f, 10.0f),
+		   anno::in_group("Animation") ]],
+	uniform float freq = 1.0f
+		[[ anno::display_name("Frequency"),
+		   anno::description("Number of streak cycles per unit time. Higher values produce more streaks."),
+		   anno::soft_range(0.01f, 10.0f),
+		   anno::in_group("Animation") ]],
+	uniform float streaks_k = 0.1f
+		[[ anno::display_name("Streak Peak Position"),
+		   anno::description("Peak position parameter (peak_t) of the streak profile curve."),
+		   anno::soft_range(0.001f, 1.0f),
+		   anno::in_group("Streak Body") ]],
+	uniform float streaks_B = 10.0f
+		[[ anno::display_name("Streak Decay Rate"),
+		   anno::description("Exponential decay rate B of the streak profile. Higher values produce sharper tails."),
+		   anno::soft_range(1.0f, 50.0f),
+		   anno::in_group("Streak Body") ]],
+	uniform float streaks_tip_intensity = 10.0f
+		[[ anno::display_name("Tip Intensity"),
+		   anno::description("Emission intensity multiplier for the bright tip relative to the streak body."),
+		   anno::soft_range(0.0f, 100.0f),
+		   anno::in_group("Streak Tip") ]],
+	uniform float streaks_tip_k = 0.01f
+		[[ anno::display_name("Tip Peak Position"),
+		   anno::description("Peak position parameter (peak_t) of the tip profile curve."),
+		   anno::soft_range(0.001f, 0.5f),
+		   anno::in_group("Streak Tip") ]],
+	uniform float streaks_tip_B = 20.0f
+		[[ anno::display_name("Tip Decay Rate"),
+		   anno::description("Exponential decay rate B of the tip profile. Higher values produce a sharper tip."),
+		   anno::soft_range(1.0f, 100.0f),
+		   anno::in_group("Streak Tip") ]],
+	uniform color tail_color = color(0.1f)
+		[[ anno::display_name("Tail Color"),
+		   anno::description("Specular base color of the streak tail where the streak body fades out."),
+		   anno::in_group("Streak Body") ]]
+)
+ =
+    let {
+	  float animation_time = state::animation_time();
+	  float rnd = scene::data_lookup_float("rnd", 0.0f);
+	  float time_lookup = scene::data_lookup_float("times", 0.0f);
+	  float time = time_lookup - animation_time*animation_speed/freq + rnd/freq;// + max_time
+	  float local_time = math::frac(time*freq);
+
+	  // float3 field = scene::data_lookup_float3("field", float3());
+	  // float field_mag = math::length(field);
+	  bool use_coloring = (domain.x < domain.y) && enable_coloring;
+	  float field = scene::data_lookup_float("colors", 0.0f);
+	  float field_normalized = use_coloring ? (field - domain.x) / (domain.y - domain.x) : 1.0f;
+	  float emission_from_field = 1;//math::exp(-5.0f*(1.0f-math::clamp(field_mag/max_mag, 0.0f, 1.0f)));
+
+	  float streaks = streak_profile(1.0f-local_time, streaks_k, streaks_B);
+	  float streaks_tip = streak_profile(1.0f-local_time, streaks_tip_k, streaks_tip_B);
+	  color final_color = tex::lookup_color(lut, float2(field_normalized, 0.0f), tex::wrap_clamp, tex::wrap_clamp);
+	  float final_opacity = mapped_opacity(opacity_domain, opacity_lut, opacity, enable_opacity);
+
+      float3 emission_color = final_color*emission_from_field*(streaks + streaks_tip_intensity*streaks_tip);
+
+      material_emission emission(
+              emission: df::diffuse_edf(), intensity: color(emission_intensity*emission_color));
+
+      material_surface surface(
+              scattering: df::weighted_layer(
+				weight: streaks,
+				layer: df::diffuse_reflection_bsdf(tint:final_color),
+				base: df::specular_bsdf(tint:tail_color, mode:df::scatter_reflect)),
+              emission: emission);
+
+} in material
+(
+	surface: surface,
+	geometry: material_geometry(cutout_opacity: final_opacity),
+    ior: color(1.0f),
+    thin_walled: false
+);
+
+
+export material AnimatedDot(
+	uniform bool enable_coloring = true
+		[[ anno::display_name("Enable Coloring"),
+		   anno::description("Map scalar field values through the LUT. When disabled, uses uniform white."),
+		   anno::in_group("Coloring") ]],
+	uniform float2 domain = float2(0.0f, -1.0f)
+		[[ anno::display_name("Scalar Domain"),
+		   anno::description("Min/max scalar range mapped to the LUT. Set x < y to enable coloring."),
+		   anno::in_group("Coloring") ]],
+	uniform texture_2d lut = texture_2d()
+		[[ anno::display_name("Color LUT"),
+		   anno::description("1D color lookup table texture for scalar-to-color mapping."),
+		   anno::in_group("Coloring") ]],
+	uniform float2 opacity_domain = float2(0.0f, -1.0f)
+		[[ anno::display_name("Opacity Domain"),
+		   anno::description("Min/max scalar range mapped through the opacity LUT."),
+		   anno::in_group("Opacity") ]],
+	uniform texture_2d opacity_lut = texture_2d()
+		[[ anno::display_name("Opacity LUT"),
+		   anno::description("1D grayscale lookup table used to map the opacity field."),
+		   anno::in_group("Opacity") ]],
+	uniform float opacity = 1.0f
+		[[ anno::display_name("Opacity"),
+		   anno::description("Multiplier applied to the mapped opacity."),
+		   anno::soft_range(0.0f, 1.0f),
+		   anno::in_group("Opacity") ]],
+	uniform bool enable_opacity = false
+		[[ anno::display_name("Enable Opacity"),
+		   anno::description("Map the opacity scalar field through the opacity LUT."),
+		   anno::in_group("Opacity") ]],
+	uniform float emission_intensity = 1000.0f
+		[[ anno::display_name("Emission Intensity"),
+		   anno::description("Overall brightness multiplier for the emissive dot glow."),
+		   anno::soft_range(0.0f, 10000.0f),
+		   anno::in_group("Emission") ]],
+	uniform float animation_speed = 1.0f
+		[[ anno::display_name("Animation Speed"),
+		   anno::description("Multiplier on the global animation time, controlling how fast dots travel."),
+		   anno::soft_range(0.0f, 10.0f),
+		   anno::in_group("Animation") ]],
+	uniform float freq = 1.0f
+		[[ anno::display_name("Frequency"),
+		   anno::description("Number of dot cycles per unit time. Higher values produce more dots."),
+		   anno::soft_range(0.01f, 10.0f),
+		   anno::in_group("Animation") ]],
+	uniform float dot_size = 0.05f
+		[[ anno::display_name("Dot Size"),
+		   anno::description("Gaussian sigma controlling the spatial width of the emissive dot."),
+		   anno::soft_range(0.001f, 0.5f),
+		   anno::in_group("Dot") ]],
+	uniform float dot_intensity = 20.0f
+		[[ anno::display_name("Dot Intensity"),
+		   anno::description("Emission intensity multiplier for the dot on top of the base diffuse."),
+		   anno::soft_range(0.0f, 100.0f),
+		   anno::in_group("Dot") ]],
+	uniform color base_color = color(1.0f)
+		[[ anno::display_name("Base Color"),
+		   anno::description("Color used when scalar coloring is disabled."),
+		   anno::in_group("Coloring") ]]
+) =
+    let {
+	  float animation_time = state::animation_time();
+	  float rnd = scene::data_lookup_float("rnd", 0.0f);
+	  float time_lookup = scene::data_lookup_float("times", 0.0f);
+	  float time = time_lookup - animation_time*animation_speed/freq + rnd/freq;
+	  float local_time = math::frac(time*freq);
+
+	  bool use_coloring = (domain.x < domain.y) && enable_coloring;
+	  float field = scene::data_lookup_float("colors", 0.0f);
+	  float field_normalized = use_coloring ? (field - domain.x) / (domain.y - domain.x) : 1.0f;
+	  color final_color = use_coloring ?
+		(tex::texture_isvalid(lut) ? tex::lookup_color(lut, float2(field_normalized, 0.0f), tex::wrap_clamp, tex::wrap_clamp) : color(field_normalized)) :
+		base_color;
+	  float final_opacity = mapped_opacity(opacity_domain, opacity_lut, opacity, enable_opacity);
+
+	  // Gaussian dot at local_time=1 (tail/end), fades out toward head
+	  float d = 1.0f - local_time;
+	  float dot = math::exp(-0.5f * d * d / (dot_size * dot_size));
+
+	  material_emission emission(
+	          emission: df::diffuse_edf(), intensity: color(emission_intensity * final_color * dot * dot_intensity));
+
+	  // Base diffuse matches ScalarColor exactly; dot only adds emission on top
+	  material_surface surface(
+	          scattering: df::diffuse_reflection_bsdf(tint: final_color, roughness: 0.1),
+	          emission: emission);
+
+} in material
+(
+	surface: surface,
+	geometry: material_geometry(cutout_opacity: final_opacity),
+    ior: color(1.0f),
+    thin_walled: false
+);
+
+
+export material ScalarColor(
+    uniform float2 domain = float2(0.0f, -1.0f)
+		[[ anno::display_name("Scalar Domain"),
+		   anno::description("Min/max scalar range mapped to the LUT. Set x < y to enable coloring."),
+		   anno::in_group("Coloring") ]],
+    uniform texture_2d lut = texture_2d()
+		[[ anno::display_name("Color LUT"),
+		   anno::description("1D color lookup table texture for scalar-to-color mapping."),
+		   anno::in_group("Coloring") ]],
+	uniform bool enable_coloring = true
+		[[ anno::display_name("Enable Coloring"),
+		   anno::description("Map scalar field values through the LUT. When disabled, uses the raw scalar as grayscale."),
+		   anno::in_group("Coloring") ]],
+    uniform float2 opacity_domain = float2(0.0f, -1.0f)
+		[[ anno::display_name("Opacity Domain"),
+		   anno::description("Min/max scalar range mapped through the opacity LUT."),
+		   anno::in_group("Opacity") ]],
+    uniform texture_2d opacity_lut = texture_2d()
+		[[ anno::display_name("Opacity LUT"),
+		   anno::description("1D grayscale lookup table used to map the opacity field."),
+		   anno::in_group("Opacity") ]],
+	uniform float opacity = 1.0f
+		[[ anno::display_name("Opacity"),
+		   anno::description("Multiplier applied to the mapped opacity."),
+		   anno::soft_range(0.0f, 1.0f),
+		   anno::in_group("Opacity") ]],
+	uniform bool enable_opacity = false
+		[[ anno::display_name("Enable Opacity"),
+		   anno::description("Map the opacity scalar field through the opacity LUT."),
+		   anno::in_group("Opacity") ]]
+)
+ =
+    let {
+	  bool use_coloring = (domain.x < domain.y) && enable_coloring;
+	  float field = scene::data_lookup_float("colors", 0.0f);
+	  float field_normalized = use_coloring ? (field - domain.x) / (domain.y - domain.x) : 1.0f;
+
+	  color final_color = tex::texture_isvalid(lut) && use_coloring ?
+		tex::lookup_color(lut, float2(field_normalized, 0.0f), tex::wrap_clamp, tex::wrap_clamp) : color(field_normalized);
+
+	  float final_opacity = mapped_opacity(opacity_domain, opacity_lut, opacity, enable_opacity);
+
+	  material_surface surface(
+		scattering: df::diffuse_reflection_bsdf(tint:final_color, roughness:0.1));
+
+} in material
+(
+	surface: surface,
+	geometry: material_geometry(cutout_opacity: final_opacity),
+    ior: color(1.0f),
+    thin_walled: false
+);
+
+
+export material UnlitScalarColor(
+    uniform float2 domain = float2(0.0f, -1.0f)
+		[[ anno::display_name("Scalar Domain"),
+		   anno::description("Min/max scalar range mapped to the LUT. Set x < y to enable coloring."),
+		   anno::in_group("Coloring") ]],
+    uniform texture_2d lut = texture_2d()
+		[[ anno::display_name("Color LUT"),
+		   anno::description("1D color lookup table texture for scalar-to-color mapping."),
+		   anno::in_group("Coloring") ]],
+	uniform bool enable_coloring = true
+		[[ anno::display_name("Enable Coloring"),
+		   anno::description("Map scalar field values through the LUT. When disabled, uses the raw scalar as grayscale."),
+		   anno::in_group("Coloring") ]],
+    uniform float2 opacity_domain = float2(0.0f, -1.0f)
+		[[ anno::display_name("Opacity Domain"),
+		   anno::description("Min/max scalar range mapped through the opacity LUT."),
+		   anno::in_group("Opacity") ]],
+    uniform texture_2d opacity_lut = texture_2d()
+		[[ anno::display_name("Opacity LUT"),
+		   anno::description("1D grayscale lookup table used to map the opacity field."),
+		   anno::in_group("Opacity") ]],
+	uniform float opacity = 1.0f
+		[[ anno::display_name("Opacity"),
+		   anno::description("Multiplier applied to the mapped opacity."),
+		   anno::soft_range(0.0f, 1.0f),
+		   anno::in_group("Opacity") ]],
+	uniform bool enable_opacity = false
+		[[ anno::display_name("Enable Opacity"),
+		   anno::description("Map the opacity scalar field through the opacity LUT."),
+		   anno::in_group("Opacity") ]],
+	uniform float emission_intensity = 1000.0f
+		[[ anno::display_name("Emission Intensity"),
+		   anno::description("Brightness multiplier for the unlit scalar color."),
+		   anno::soft_range(0.0f, 10000.0f),
+		   anno::in_group("Coloring") ]]
+)
+ =
+    let {
+	  bool use_coloring = (domain.x < domain.y) && enable_coloring;
+	  float field = scene::data_lookup_float("colors", 0.0f);
+	  float field_normalized = use_coloring ? (field - domain.x) / (domain.y - domain.x) : 1.0f;
+
+	  color final_color = tex::texture_isvalid(lut) && use_coloring ?
+		tex::lookup_color(lut, float2(field_normalized, 0.0f), tex::wrap_clamp, tex::wrap_clamp) : color(field_normalized);
+	  float final_opacity = mapped_opacity(opacity_domain, opacity_lut, opacity, enable_opacity);
+
+	  material_emission emission(
+		emission: df::diffuse_edf(), intensity: color(emission_intensity * final_color));
+
+	  material_surface surface(
+		emission: emission);
+
+} in material
+(
+	surface: surface,
+	backface: surface,
+	geometry: material_geometry(cutout_opacity: final_opacity),
+    ior: color(1.0f),
+    thin_walled: true
+);

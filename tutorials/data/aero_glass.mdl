@@ -1,0 +1,122 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+ *
+ * NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+ * property and proprietary rights in and to this material, related
+ * documentation and any modifications thereto. Any use, reproduction,
+ * disclosure or distribution of this material and related documentation
+ * without an express license agreement from NVIDIA CORPORATION or
+ * its affiliates is strictly prohibited.
+ *
+ * A custom material that lives next to the tutorial scene rather than in the
+ * OVCAE material library. It shows that a scene can bring its own MDL: the
+ * shader prim references this file, and the renderer resolves it like any
+ * other module once the scene's directory is on the MDL search path.
+ */
+mdl 1.7;
+
+import ::df::*;
+import ::scene::*;
+import ::math::*;
+import ::tex::*;
+import ::anno::*;
+
+// Same contract as the library's ScalarColor: an OVCAE operator publishes the
+// selected "colors" field as a primvar, and an optional "opacity" primvar.
+float mapped_opacity(
+	uniform float2 opacity_domain,
+	uniform texture_2d opacity_lut,
+	uniform float opacity,
+	uniform bool enable_opacity
+) {
+	bool use_opacity_mapping = (opacity_domain.x < opacity_domain.y) && enable_opacity;
+	float opacity_field = scene::data_lookup_float("opacity", 1.0f);
+	float opacity_normalized = use_opacity_mapping ?
+		(opacity_field - opacity_domain.x) / (opacity_domain.y - opacity_domain.x) : 1.0f;
+	float opacity_from_lut = tex::texture_isvalid(opacity_lut) && use_opacity_mapping ?
+		tex::lookup_float4(opacity_lut, float2(opacity_normalized, 0.0f), tex::wrap_clamp, tex::wrap_clamp).x : 1.0f;
+	return enable_opacity ? math::clamp(opacity * opacity_from_lut, 0.0f, 1.0f) : 1.0f;
+}
+
+// Colormapped thin glass: the scalar field tints a transmissive shell under a
+// glossy Fresnel coat. Cutout opacity below 1 lets a share of camera rays skip
+// the shell entirely, which is what makes the geometry inside readable.
+export material ScalarColorGlass(
+    uniform float2 domain = float2(0.0f, -1.0f)
+		[[ anno::display_name("Scalar Domain"),
+		   anno::description("Min/max scalar range mapped to the LUT. Set x < y to enable coloring."),
+		   anno::in_group("Coloring") ]],
+    uniform texture_2d lut = texture_2d()
+		[[ anno::display_name("Color LUT"),
+		   anno::description("1D color lookup table texture for scalar-to-color mapping."),
+		   anno::in_group("Coloring") ]],
+	uniform bool enable_coloring = true
+		[[ anno::display_name("Enable Coloring"),
+		   anno::description("Map scalar field values through the LUT. When disabled, uses the raw scalar as grayscale."),
+		   anno::in_group("Coloring") ]],
+	uniform float transmission = 0.6f
+		[[ anno::display_name("Transmission"),
+		   anno::description("Fraction of light passing through the shell; the rest is diffuse color."),
+		   anno::soft_range(0.0f, 1.0f),
+		   anno::in_group("Glass") ]],
+	uniform float roughness = 0.05f
+		[[ anno::display_name("Roughness"),
+		   anno::description("Roughness of the reflective coat; 0 is a mirror finish."),
+		   anno::soft_range(0.0f, 1.0f),
+		   anno::in_group("Glass") ]],
+	uniform float glass_ior = 1.5f
+		[[ anno::display_name("IOR"),
+		   anno::description("Index of refraction driving the strength of the Fresnel reflection."),
+		   anno::soft_range(1.0f, 2.5f),
+		   anno::in_group("Glass") ]],
+    uniform float2 opacity_domain = float2(0.0f, -1.0f)
+		[[ anno::display_name("Opacity Domain"),
+		   anno::description("Min/max scalar range mapped through the opacity LUT."),
+		   anno::in_group("Opacity") ]],
+    uniform texture_2d opacity_lut = texture_2d()
+		[[ anno::display_name("Opacity LUT"),
+		   anno::description("1D grayscale lookup table used to map the opacity field."),
+		   anno::in_group("Opacity") ]],
+	uniform float opacity = 1.0f
+		[[ anno::display_name("Opacity"),
+		   anno::description("Multiplier applied to the mapped opacity; below 1 the shell is partly cut away."),
+		   anno::soft_range(0.0f, 1.0f),
+		   anno::in_group("Opacity") ]],
+	uniform bool enable_opacity = false
+		[[ anno::display_name("Enable Opacity"),
+		   anno::description("Apply the opacity multiplier and, when a domain is set, the opacity LUT."),
+		   anno::in_group("Opacity") ]]
+)
+ =
+    let {
+	  bool use_coloring = (domain.x < domain.y) && enable_coloring;
+	  float field = scene::data_lookup_float("colors", 0.0f);
+	  float field_normalized = use_coloring ? (field - domain.x) / (domain.y - domain.x) : 1.0f;
+
+	  color final_color = tex::texture_isvalid(lut) && use_coloring ?
+		tex::lookup_color(lut, float2(field_normalized, 0.0f), tex::wrap_clamp, tex::wrap_clamp) : color(field_normalized);
+
+	  bsdf coat = df::microfacet_ggx_smith_bsdf(
+		roughness_u: roughness * roughness,
+		roughness_v: roughness * roughness,
+		tint: color(1.0f),
+		mode: df::scatter_reflect);
+	  bsdf through = df::tint(tint: final_color, base: df::specular_bsdf(mode: df::scatter_transmit));
+	  bsdf body = df::weighted_layer(
+		weight: transmission,
+		layer: through,
+		base: df::diffuse_reflection_bsdf(tint: final_color, roughness: 0.1));
+
+	  float final_opacity = mapped_opacity(opacity_domain, opacity_lut, opacity, enable_opacity);
+
+	  material_surface surface(
+		scattering: df::fresnel_layer(ior: glass_ior, layer: coat, base: body));
+
+} in material
+(
+	surface: surface,
+	geometry: material_geometry(cutout_opacity: final_opacity),
+    ior: color(glass_ior),
+    thin_walled: true
+);

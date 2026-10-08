@@ -1,0 +1,10 @@
+# Scientific test assets are binary and shared through Git LFS. Authored USDA
+# scenes remain regular text so recipe changes are reviewable.
+tests/data/**/*.cgns filter=lfs diff=lfs merge=lfs -text
+tests/data/**/*.vtk filter=lfs diff=lfs merge=lfs -text
+tests/data/**/*.vtu filter=lfs diff=lfs merge=lfs -text
+tests/data/**/*.vti filter=lfs diff=lfs merge=lfs -text
+tests/data/**/*.vtr filter=lfs diff=lfs merge=lfs -text
+tests/data/**/*.vts filter=lfs diff=lfs merge=lfs -text
+tutorials/data/**/*.ex2 filter=lfs diff=lfs merge=lfs -text
+tutorials/data/**/*.cgns filter=lfs diff=lfs merge=lfs -text

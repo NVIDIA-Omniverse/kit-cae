@@ -1,0 +1,544 @@
+#usda 1.0
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+(
+    customLayerData = {
+        dictionary cameraSettings = {
+            dictionary Front = {
+                double3 position = (50000, 0, 0)
+                double radius = 500
+            }
+            dictionary Perspective = {
+                double3 position = (-4.711383515749897, -3.006705681767785, 2.0344849694166767)
+                double3 target = (1.176877825375919, 0.26256385606006827, 0.22010272704756018)
+            }
+            dictionary Right = {
+                double3 position = (0, -50000, 0)
+                double radius = 500
+            }
+            dictionary Top = {
+                double3 position = (0, 0, 50000)
+                double radius = 500
+            }
+            string boundCamera = "/World/Camera"
+        }
+        dictionary omni_layer = {
+            string authoring_layer = "./aero_isosurface.usda"
+            dictionary locked = {
+            }
+            dictionary muteness = {
+            }
+        }
+        dictionary renderSettings = {
+            double "rtx:directLighting:sampledLighting:maxRayUnexposedIntensity" = 6399.9990234375
+            float3 "rtx:index:regionOfInterestMax" = (10, 10, 10)
+            double "rtx:indirectDiffuse:maxRayUnexposedIntensity" = 6399.9990234375
+            double "rtx:pathtracing:fireflyFilter:maxPerEmissiveUnexposedIntensity" = 3199.99951171875
+            double "rtx:pathtracing:fireflyFilter:maxUnexposedIntensityPerSample" = 3199.99951171875
+            double "rtx:pathtracing:fireflyFilter:maxUnexposedIntensityPerSampleDiffuse" = 3199.99951171875
+            double "rtx:raytracing:inscattering:maxRTSampleUnexposedIntensity" = 204799.96875
+            double "rtx:translucency:maxRayUnexposedIntensity" = 19199.998046875
+        }
+    }
+    defaultPrim = "World"
+    endTimeCode = 100
+    metersPerUnit = 0.01
+    startTimeCode = 0
+    timeCodesPerSecond = 60
+    upAxis = "Z"
+)
+
+def Xform "World"
+{
+    def Scope "Looks"
+    {
+        def Material "SourceGlossyGrey"
+        {
+            token outputs:mdl:surface.connect = </World/Looks/SourceGlossyGrey/Shader.outputs:out>
+            token outputs:surface.connect = </World/Looks/SourceGlossyGrey/PreviewSurface.outputs:surface>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @OmniPBR.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "OmniPBR"
+                color3f inputs:diffuse_color_constant = (0.28, 0.3, 0.33)
+                float inputs:metallic_constant = 0
+                float inputs:reflection_roughness_constant = 0.12
+                float inputs:specular_level = 0.5
+                token outputs:out (
+                    renderType = "material"
+                )
+            }
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.28, 0.3, 0.33)
+                float inputs:metallic = 0
+                float inputs:roughness = 0.12
+                token outputs:surface
+            }
+        }
+
+        def Material "TireRubber"
+        {
+            token outputs:mdl:surface.connect = </World/Looks/TireRubber/Shader.outputs:out>
+            token outputs:surface.connect = </World/Looks/TireRubber/PreviewSurface.outputs:surface>
+
+            def Shader "Shader"
+            {
+                uniform token info:implementationSource = "sourceAsset"
+                uniform asset info:mdl:sourceAsset = @OmniPBR.mdl@
+                uniform token info:mdl:sourceAsset:subIdentifier = "OmniPBR"
+                color3f inputs:diffuse_color_constant = (0.045, 0.047, 0.05)
+                float inputs:metallic_constant = 0
+                float inputs:reflection_roughness_constant = 0.48
+                float inputs:specular_level = 0.5
+                token outputs:out (
+                    renderType = "material"
+                )
+            }
+
+            def Shader "PreviewSurface"
+            {
+                uniform token info:id = "UsdPreviewSurface"
+                color3f inputs:diffuseColor = (0.045, 0.047, 0.05)
+                float inputs:metallic = 0
+                float inputs:roughness = 0.48
+                token outputs:surface
+            }
+        }
+    }
+
+    def "auto_aero_solver_result" (
+        prepend apiSchemas = ["OmniSciFileFormatArgsCgnsAPI"]
+        prepend payload = @./auto_aero_solver_result.cgns@
+    )
+    {
+    }
+
+    def Xform "CAE"
+    {
+        def Mesh "Faces_body_Surface" (
+            prepend apiSchemas = ["CaeVizOperatorAPI", "CaeVizFacesAPI", "CaeVizDatasetSelectionAPI:source", "CaeVizDatasetSubsetAPI:source", "CaeVizFieldSelectionAPI:colors", "CaeVizRescaleRangeAPI:colors", "CaeVizFieldSelectionAPI:opacity", "CaeVizRescaleRangeAPI:opacity", "MaterialBindingAPI"]
+        )
+        {
+            rel cae:viz:dataset_selection:source:target = </World/auto_aero_solver_result/Base/Fluid_Domain/body_Surface>
+            token[] cae:viz:field_selection:colors:fieldNames = ["Pressure"]
+            bool cae:viz:operator:enabled = 1
+            prepend rel cae:viz:rescale_range:colors:enableIncludes = </World/CAE/Faces_body_Surface/Materials/ScalarColor/Shader.inputs:enable_coloring>
+            prepend rel cae:viz:rescale_range:colors:includes = </World/CAE/Faces_body_Surface/Materials/ScalarColor/Shader.inputs:domain>
+            prepend rel cae:viz:rescale_range:opacity:enableIncludes = </World/CAE/Faces_body_Surface/Materials/ScalarColor/Shader.inputs:enable_opacity>
+            prepend rel cae:viz:rescale_range:opacity:includes = </World/CAE/Faces_body_Surface/Materials/ScalarColor/Shader.inputs:opacity_domain>
+            rel material:binding = </World/CAE/Faces_body_Surface/Materials/ScalarColor> (
+                bindMaterialAs = "weakerThanDescendants"
+            )
+            point3f[] points
+            uniform token subdivisionScheme = "bilinear"
+
+            def Scope "Materials"
+            {
+                def Material "ScalarColor"
+                {
+                    custom bool omni:rtx:enableCutoutOpacity = 1
+                    token outputs:mdl:displacement.connect = </World/CAE/Faces_body_Surface/Materials/ScalarColor/Shader.outputs:out>
+                    token outputs:mdl:surface.connect = </World/CAE/Faces_body_Surface/Materials/ScalarColor/Shader.outputs:out>
+                    token outputs:mdl:volume.connect = </World/CAE/Faces_body_Surface/Materials/ScalarColor/Shader.outputs:out>
+
+                    def Shader "Shader"
+                    {
+                        uniform token info:implementationSource = "sourceAsset"
+                        uniform asset info:mdl:sourceAsset = @cae/mdl/basic.mdl@
+                        uniform token info:mdl:sourceAsset:subIdentifier = "ScalarColor"
+                        float2 inputs:domain = (-2306.7585, 579.8882)
+                        bool inputs:enable_coloring = 1
+                        bool inputs:enable_opacity = 0
+                        asset inputs:lut = @cae/colormaps/coolwarm.png@
+                        float inputs:opacity = 1
+                        float2 inputs:opacity_domain = (0, -1)
+                        asset inputs:opacity_lut = @cae/colormaps/gist_gray.png@
+                        token outputs:out (
+                            renderType = "material"
+                        )
+                    }
+                }
+            }
+        }
+
+        def Mesh "IsoSurface_Fluid_Domain" (
+            prepend apiSchemas = ["CaeVizOperatorAPI", "CaeVizIsoSurfaceAPI", "CaeVizDatasetSelectionAPI:source", "CaeVizFieldSelectionAPI:contour", "CaeVizFieldSelectionAPI:colors", "CaeVizRescaleRangeAPI:colors", "MaterialBindingAPI"]
+        )
+        {
+            rel cae:viz:dataset_selection:source:target = </World/auto_aero_solver_result/Base/Fluid_Domain/Fluid_Domain>
+            token[] cae:viz:field_selection:colors:fieldNames = ["Velocity_2"]
+            token[] cae:viz:field_selection:contour:fieldNames = ["Pressure"]
+            uniform float cae:viz:isoSurface:isoValue = -200
+            bool cae:viz:operator:enabled = 1
+            prepend rel cae:viz:rescale_range:colors:enableIncludes = </World/CAE/IsoSurface_Fluid_Domain/Materials/ScalarColor/Shader.inputs:enable_coloring>
+            prepend rel cae:viz:rescale_range:colors:includes = </World/CAE/IsoSurface_Fluid_Domain/Materials/ScalarColor/Shader.inputs:domain>
+            int[] faceVertexCounts = []
+            int[] faceVertexIndices = []
+            rel material:binding = </World/CAE/IsoSurface_Fluid_Domain/Materials/ScalarColor> (
+                bindMaterialAs = "weakerThanDescendants"
+            )
+            point3f[] points = []
+            uniform token subdivisionScheme = "none"
+
+            def Scope "Materials"
+            {
+                def Material "ScalarColor"
+                {
+                    custom bool omni:rtx:enableCutoutOpacity = 1
+                    token outputs:mdl:displacement.connect = </World/CAE/IsoSurface_Fluid_Domain/Materials/ScalarColor/Shader.outputs:out>
+                    token outputs:mdl:surface.connect = </World/CAE/IsoSurface_Fluid_Domain/Materials/ScalarColor/Shader.outputs:out>
+                    token outputs:mdl:volume.connect = </World/CAE/IsoSurface_Fluid_Domain/Materials/ScalarColor/Shader.outputs:out>
+
+                    def Shader "Shader"
+                    {
+                        uniform token info:implementationSource = "sourceAsset"
+                        uniform asset info:mdl:sourceAsset = @./aero_glass.mdl@
+                        uniform token info:mdl:sourceAsset:subIdentifier = "ScalarColorGlass"
+                        float2 inputs:domain = (-15, 15)
+                        bool inputs:enable_coloring = 1
+                        asset inputs:lut = @cae/colormaps/gist_rainbow.png@
+                        float inputs:transmission = 0.6
+                        float inputs:roughness = 0.05
+                        bool inputs:enable_opacity = 1
+                        float inputs:opacity = 0.5
+                        token outputs:out (
+                            renderType = "material"
+                        )
+                    }
+                }
+            }
+        }
+
+        def Mesh "Faces_rear_wheels_Surface" (
+            prepend apiSchemas = ["CaeVizOperatorAPI", "CaeVizFacesAPI", "CaeVizDatasetSelectionAPI:source", "CaeVizDatasetSubsetAPI:source", "CaeVizFieldSelectionAPI:colors", "CaeVizRescaleRangeAPI:colors", "CaeVizFieldSelectionAPI:opacity", "CaeVizRescaleRangeAPI:opacity", "MaterialBindingAPI"]
+        )
+        {
+            rel cae:viz:dataset_selection:source:target = </World/auto_aero_solver_result/Base/Fluid_Domain/rear_wheels_Surface>
+            bool cae:viz:operator:enabled = 1
+            prepend rel cae:viz:rescale_range:colors:enableIncludes = </World/CAE/Faces_rear_wheels_Surface/Materials/ScalarColor/Shader.inputs:enable_coloring>
+            prepend rel cae:viz:rescale_range:colors:includes = </World/CAE/Faces_rear_wheels_Surface/Materials/ScalarColor/Shader.inputs:domain>
+            prepend rel cae:viz:rescale_range:opacity:enableIncludes = </World/CAE/Faces_rear_wheels_Surface/Materials/ScalarColor/Shader.inputs:enable_opacity>
+            prepend rel cae:viz:rescale_range:opacity:includes = </World/CAE/Faces_rear_wheels_Surface/Materials/ScalarColor/Shader.inputs:opacity_domain>
+            rel material:binding = </World/Looks/TireRubber> (
+                bindMaterialAs = "weakerThanDescendants"
+            )
+            point3f[] points
+            uniform token subdivisionScheme = "bilinear"
+
+            def Scope "Materials"
+            {
+                def Material "ScalarColor"
+                {
+                    custom bool omni:rtx:enableCutoutOpacity = 1
+                    token outputs:mdl:displacement.connect = </World/CAE/Faces_rear_wheels_Surface/Materials/ScalarColor/Shader.outputs:out>
+                    token outputs:mdl:surface.connect = </World/CAE/Faces_rear_wheels_Surface/Materials/ScalarColor/Shader.outputs:out>
+                    token outputs:mdl:volume.connect = </World/CAE/Faces_rear_wheels_Surface/Materials/ScalarColor/Shader.outputs:out>
+
+                    def Shader "Shader"
+                    {
+                        uniform token info:implementationSource = "sourceAsset"
+                        uniform asset info:mdl:sourceAsset = @cae/mdl/basic.mdl@
+                        uniform token info:mdl:sourceAsset:subIdentifier = "ScalarColor"
+                        float2 inputs:domain = (0, -1)
+                        bool inputs:enable_coloring = 0
+                        bool inputs:enable_opacity = 0
+                        asset inputs:lut = @cae/colormaps/gist_rainbow.png@
+                        float inputs:opacity = 1
+                        float2 inputs:opacity_domain = (0, -1)
+                        asset inputs:opacity_lut = @cae/colormaps/gist_gray.png@
+                        token outputs:out (
+                            renderType = "material"
+                        )
+                    }
+                }
+            }
+        }
+
+        def Mesh "Faces_front_wheels_Surface" (
+            prepend apiSchemas = ["CaeVizOperatorAPI", "CaeVizFacesAPI", "CaeVizDatasetSelectionAPI:source", "CaeVizDatasetSubsetAPI:source", "CaeVizFieldSelectionAPI:colors", "CaeVizRescaleRangeAPI:colors", "CaeVizFieldSelectionAPI:opacity", "CaeVizRescaleRangeAPI:opacity", "MaterialBindingAPI"]
+        )
+        {
+            rel cae:viz:dataset_selection:source:target = </World/auto_aero_solver_result/Base/Fluid_Domain/front_wheels_Surface>
+            bool cae:viz:operator:enabled = 1
+            prepend rel cae:viz:rescale_range:colors:enableIncludes = </World/CAE/Faces_front_wheels_Surface/Materials/ScalarColor/Shader.inputs:enable_coloring>
+            prepend rel cae:viz:rescale_range:colors:includes = </World/CAE/Faces_front_wheels_Surface/Materials/ScalarColor/Shader.inputs:domain>
+            prepend rel cae:viz:rescale_range:opacity:enableIncludes = </World/CAE/Faces_front_wheels_Surface/Materials/ScalarColor/Shader.inputs:enable_opacity>
+            prepend rel cae:viz:rescale_range:opacity:includes = </World/CAE/Faces_front_wheels_Surface/Materials/ScalarColor/Shader.inputs:opacity_domain>
+            rel material:binding = </World/Looks/TireRubber> (
+                bindMaterialAs = "weakerThanDescendants"
+            )
+            point3f[] points
+            uniform token subdivisionScheme = "bilinear"
+
+            def Scope "Materials"
+            {
+                def Material "ScalarColor"
+                {
+                    custom bool omni:rtx:enableCutoutOpacity = 1
+                    token outputs:mdl:displacement.connect = </World/CAE/Faces_front_wheels_Surface/Materials/ScalarColor/Shader.outputs:out>
+                    token outputs:mdl:surface.connect = </World/CAE/Faces_front_wheels_Surface/Materials/ScalarColor/Shader.outputs:out>
+                    token outputs:mdl:volume.connect = </World/CAE/Faces_front_wheels_Surface/Materials/ScalarColor/Shader.outputs:out>
+
+                    def Shader "Shader"
+                    {
+                        uniform token info:implementationSource = "sourceAsset"
+                        uniform asset info:mdl:sourceAsset = @cae/mdl/basic.mdl@
+                        uniform token info:mdl:sourceAsset:subIdentifier = "ScalarColor"
+                        float2 inputs:domain = (0, -1)
+                        bool inputs:enable_coloring = 0
+                        bool inputs:enable_opacity = 0
+                        asset inputs:lut = @cae/colormaps/gist_rainbow.png@
+                        float inputs:opacity = 1
+                        float2 inputs:opacity_domain = (0, -1)
+                        asset inputs:opacity_lut = @cae/colormaps/gist_gray.png@
+                        token outputs:out (
+                            renderType = "material"
+                        )
+                    }
+                }
+            }
+        }
+
+        def Mesh "Faces_front_wheels_Seal" (
+            prepend apiSchemas = ["CaeVizOperatorAPI", "CaeVizFacesAPI", "CaeVizDatasetSelectionAPI:source", "CaeVizDatasetSubsetAPI:source", "CaeVizFieldSelectionAPI:colors", "CaeVizRescaleRangeAPI:colors", "CaeVizFieldSelectionAPI:opacity", "CaeVizRescaleRangeAPI:opacity", "MaterialBindingAPI"]
+        )
+        {
+            rel cae:viz:dataset_selection:source:target = </World/auto_aero_solver_result/Base/Fluid_Domain/front_wheels_Seal>
+            bool cae:viz:operator:enabled = 1
+            prepend rel cae:viz:rescale_range:colors:enableIncludes = </World/CAE/Faces_front_wheels_Seal/Materials/ScalarColor/Shader.inputs:enable_coloring>
+            prepend rel cae:viz:rescale_range:colors:includes = </World/CAE/Faces_front_wheels_Seal/Materials/ScalarColor/Shader.inputs:domain>
+            prepend rel cae:viz:rescale_range:opacity:enableIncludes = </World/CAE/Faces_front_wheels_Seal/Materials/ScalarColor/Shader.inputs:enable_opacity>
+            prepend rel cae:viz:rescale_range:opacity:includes = </World/CAE/Faces_front_wheels_Seal/Materials/ScalarColor/Shader.inputs:opacity_domain>
+            rel material:binding = </World/Looks/TireRubber> (
+                bindMaterialAs = "weakerThanDescendants"
+            )
+            point3f[] points
+            uniform token subdivisionScheme = "bilinear"
+
+            def Scope "Materials"
+            {
+                def Material "ScalarColor"
+                {
+                    custom bool omni:rtx:enableCutoutOpacity = 1
+                    token outputs:mdl:displacement.connect = </World/CAE/Faces_front_wheels_Seal/Materials/ScalarColor/Shader.outputs:out>
+                    token outputs:mdl:surface.connect = </World/CAE/Faces_front_wheels_Seal/Materials/ScalarColor/Shader.outputs:out>
+                    token outputs:mdl:volume.connect = </World/CAE/Faces_front_wheels_Seal/Materials/ScalarColor/Shader.outputs:out>
+
+                    def Shader "Shader"
+                    {
+                        uniform token info:implementationSource = "sourceAsset"
+                        uniform asset info:mdl:sourceAsset = @cae/mdl/basic.mdl@
+                        uniform token info:mdl:sourceAsset:subIdentifier = "ScalarColor"
+                        float2 inputs:domain = (0, -1)
+                        bool inputs:enable_coloring = 0
+                        bool inputs:enable_opacity = 0
+                        asset inputs:lut = @cae/colormaps/gist_rainbow.png@
+                        float inputs:opacity = 1
+                        float2 inputs:opacity_domain = (0, -1)
+                        asset inputs:opacity_lut = @cae/colormaps/gist_gray.png@
+                        token outputs:out (
+                            renderType = "material"
+                        )
+                    }
+                }
+            }
+        }
+
+        def Mesh "Faces_rear_wheels_Seal" (
+            prepend apiSchemas = ["CaeVizOperatorAPI", "CaeVizFacesAPI", "CaeVizDatasetSelectionAPI:source", "CaeVizDatasetSubsetAPI:source", "CaeVizFieldSelectionAPI:colors", "CaeVizRescaleRangeAPI:colors", "CaeVizFieldSelectionAPI:opacity", "CaeVizRescaleRangeAPI:opacity", "MaterialBindingAPI"]
+        )
+        {
+            rel cae:viz:dataset_selection:source:target = </World/auto_aero_solver_result/Base/Fluid_Domain/rear_wheels_Seal>
+            bool cae:viz:operator:enabled = 1
+            prepend rel cae:viz:rescale_range:colors:enableIncludes = </World/CAE/Faces_rear_wheels_Seal/Materials/ScalarColor/Shader.inputs:enable_coloring>
+            prepend rel cae:viz:rescale_range:colors:includes = </World/CAE/Faces_rear_wheels_Seal/Materials/ScalarColor/Shader.inputs:domain>
+            prepend rel cae:viz:rescale_range:opacity:enableIncludes = </World/CAE/Faces_rear_wheels_Seal/Materials/ScalarColor/Shader.inputs:enable_opacity>
+            prepend rel cae:viz:rescale_range:opacity:includes = </World/CAE/Faces_rear_wheels_Seal/Materials/ScalarColor/Shader.inputs:opacity_domain>
+            rel material:binding = </World/Looks/TireRubber> (
+                bindMaterialAs = "weakerThanDescendants"
+            )
+            point3f[] points
+            uniform token subdivisionScheme = "bilinear"
+
+            def Scope "Materials"
+            {
+                def Material "ScalarColor"
+                {
+                    custom bool omni:rtx:enableCutoutOpacity = 1
+                    token outputs:mdl:displacement.connect = </World/CAE/Faces_rear_wheels_Seal/Materials/ScalarColor/Shader.outputs:out>
+                    token outputs:mdl:surface.connect = </World/CAE/Faces_rear_wheels_Seal/Materials/ScalarColor/Shader.outputs:out>
+                    token outputs:mdl:volume.connect = </World/CAE/Faces_rear_wheels_Seal/Materials/ScalarColor/Shader.outputs:out>
+
+                    def Shader "Shader"
+                    {
+                        uniform token info:implementationSource = "sourceAsset"
+                        uniform asset info:mdl:sourceAsset = @cae/mdl/basic.mdl@
+                        uniform token info:mdl:sourceAsset:subIdentifier = "ScalarColor"
+                        float2 inputs:domain = (0, -1)
+                        bool inputs:enable_coloring = 0
+                        bool inputs:enable_opacity = 0
+                        asset inputs:lut = @cae/colormaps/gist_rainbow.png@
+                        float inputs:opacity = 1
+                        float2 inputs:opacity_domain = (0, -1)
+                        asset inputs:opacity_lut = @cae/colormaps/gist_gray.png@
+                        token outputs:out (
+                            renderType = "material"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    def Camera "Camera" (
+        prepend apiSchemas = ["OmniRtxCameraAutoExposureAPI_1", "OmniRtxCameraExposureAPI_1"]
+        hide_in_stage_window = false
+        no_delete = false
+    )
+    {
+        float4[] clippingPlanes = []
+        float2 clippingRange = (1, 10000000)
+        float exposure = 0
+        float exposure:fStop = 5
+        float exposure:iso = 100
+        float exposure:responsivity = 1.1026709
+        float exposure:time = 0.02
+        float focalLength = 18.147562
+        float focusDistance = 400
+        float fStop = 0
+        float horizontalAperture = 20.955
+        float horizontalApertureOffset = 0
+        custom vector3d omni:kit:centerOfInterest = (0, 0, -6.975079057171347)
+        custom float omni:rtx:autoExposure:adaptationSpeed = 3.5
+        custom bool omni:rtx:autoExposure:enabled = 0
+        custom bool omni:rtx:autoExposure:histogramClamping:enabled = 1
+        custom float omni:rtx:autoExposure:histogramClamping:maxLuminance = 100000
+        custom float omni:rtx:autoExposure:histogramClamping:minLuminance = 50
+        custom token omni:rtx:autoExposure:histogramFilter = "median"
+        custom float omni:rtx:autoExposure:whitePointScale = 10
+        token projection = "perspective"
+        uniform token purpose = "default"
+        double shutter:close = 0
+        double shutter:open = 0
+        uniform token stereoRole = "mono"
+        float verticalAperture = 15.2908
+        float verticalApertureOffset = 0
+        token visibility = "inherited"
+        float3 xformOp:rotateYXZ = (74.92261, 3.668128e-14, -60.96017)
+        float3 xformOp:scale = (1, 1, 1)
+        double3 xformOp:translate = (-4.711383515749897, -3.006705681767785, 2.0344849694166767)
+        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateYXZ", "xformOp:scale"]
+    }
+}
+
+def Xform "Environment"
+{
+    def RectLight "defaultLight"
+    {
+        color3f inputs:color = (1, 1, 1)
+        float inputs:exposure = 0
+        float inputs:height = 4
+        float inputs:intensity = 1200
+        bool inputs:normalize = 0
+        float inputs:width = 6
+        custom int omni:rtx:usdluxVersion = 2505
+        matrix4d xformOp:transform = ( (0.8636982837999649, -0.16356205944004198, 0.4767312946227961, 0), (-0.16356205944004198, 0.8037255286719496, 0.5720775535473553, 0), (-0.4767312946227961, -0.5720775535473553, 0.6674238124719146, 0), (-2, -3, 4, 1) )
+        uniform token[] xformOpOrder = ["xformOp:transform"]
+    }
+
+    def RectLight "FillLight"
+    {
+        color3f inputs:color = (1, 1, 1)
+        float inputs:exposure = 0
+        float inputs:height = 4
+        float inputs:intensity = 1360
+        bool inputs:normalize = 0
+        float inputs:width = 6
+        custom int omni:rtx:usdluxVersion = 2505
+        matrix4d xformOp:transform = ( (1, 0, 0, 0), (0, 0.39114064034485163, 0.9203309184584747, 0), (0, -0.9203309184584747, 0.39114064034485163, 0), (0.5, -4, 2.2, 1) )
+        uniform token[] xformOpOrder = ["xformOp:transform"]
+    }
+
+    def RectLight "RimLight"
+    {
+        color3f inputs:color = (1, 1, 1)
+        float inputs:exposure = 0
+        float inputs:height = 4
+        float inputs:intensity = 880
+        bool inputs:normalize = 0
+        float inputs:width = 5
+        custom int omni:rtx:usdluxVersion = 2505
+        matrix4d xformOp:transform = ( (0.8977033316576085, -0.12787083542798935, -0.4216370213557839, 0), (-0.12787083542798935, 0.8401614557150133, -0.5270462766947299, 0), (0.4216370213557839, 0.5270462766947299, 0.7378647873726218, 0), (3, 2.5, 4, 1) )
+        uniform token[] xformOpOrder = ["xformOp:transform"]
+    }
+
+    def RectLight "SourceSoftbox"
+    {
+        color3f inputs:color = (1, 1, 1)
+        float inputs:exposure = 0
+        float inputs:height = 1.2
+        float inputs:intensity = 560
+        bool inputs:normalize = 0
+        float inputs:width = 3
+        custom int omni:rtx:usdluxVersion = 2505
+        matrix4d xformOp:transform = ( (0.9122464107342774, -0.15531608719596923, 0.37905593144094474, 0), (-0.15531608719596923, 0.725104270449612, 0.6708954538777783, 0), (-0.37905593144094474, -0.6708954538777783, 0.6373506811838894, 0), (-3, -2, 2, 1) )
+        uniform token[] xformOpOrder = ["xformOp:transform"]
+    }
+
+    def RectLight "WakeSoftbox"
+    {
+        color3f inputs:color = (1, 1, 1)
+        float inputs:height = 6
+        float inputs:intensity = 1040
+        bool inputs:normalize = 0
+        float inputs:width = 12
+        custom int omni:rtx:usdluxVersion = 2505
+        matrix4d xformOp:transform = ( (1, 0, 0, 0), (0, 0.9138115486202573, 0.40613846605344733, 0), (0, -0.40613846605344733, 0.9138115486202573, 0), (8, -2, 5, 1) )
+        uniform token[] xformOpOrder = ["xformOp:transform"]
+    }
+
+    def RectLight "UnderFill" (
+        doc = "Broad upward-facing fill for the underside of the car, source, and downstream streamlines."
+    )
+    {
+        color3f inputs:color = (1, 1, 1)
+        float inputs:exposure = 0
+        float inputs:height = 7
+        float inputs:intensity = 560
+        bool inputs:normalize = 0
+        float inputs:width = 18
+        custom int omni:rtx:usdluxVersion = 2505
+        float3 xformOp:rotateXYZ = (180, 0, 0)
+        double3 xformOp:translate = (5, 0, -3)
+        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+    }
+}
+
+def Scope "Render"
+{
+    def RenderProduct "Camera"
+    {
+        uniform int2 resolution = (1280, 720)
+        rel camera = </World/Camera>
+        rel orderedVars = [<LdrColor>]
+
+        def RenderVar "LdrColor"
+        {
+            uniform string sourceName = "LdrColor"
+            opaque omni:rtx:aov
+        }
+    }
+}

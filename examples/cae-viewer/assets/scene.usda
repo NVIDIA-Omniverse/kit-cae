@@ -1,0 +1,193 @@
+#usda 1.0
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+(
+    defaultPrim = "World"
+    metersPerUnit = 1
+    upAxis = "Y"
+)
+
+def Xform "World"
+{
+    def Scope "Assets"
+    {
+        def "StaticMixer" (
+            prepend apiSchemas = ["OmniSciFileFormatArgsCgnsAPI"]
+            prepend payload = @./StaticMixer.cgns@
+        )
+        {
+        }
+    }
+
+    def Scope "Controls"
+    {
+        def Points "Seeds"
+        {
+            token visibility = "invisible"
+            point3f[] points = [
+                (1.0, 1.7320508, 0.5),
+                (1.6558933, 1.1216137, 1.1121716),
+                (-0.25716954, -1.0663241, 2.0),
+                (-0.75494856, -2.6578617, 0.5641677),
+                (-0.8992655, -2.0279686, 0.74843544),
+                (1.3887061, -1.0787921, 1.4502406),
+                (-1.0772537, -2.0021725, 0.7974226),
+                (-1.0389479, -1.5137408, 0.64242834),
+                (-0.3080468, -1.2898262, 1.047858),
+                (0.92161566, 0.9685264, 0.6376164),
+                (0.3725212, -1.2179179, 1.0938346),
+                (0.5581898, 0.60221547, 0.9858344)
+            ]
+            double3 xformOp:translate = (0, 0, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+    }
+
+    def Scope "Recipes"
+    {
+        def Mesh "Surface" (
+            prepend apiSchemas = [
+                "CaeVizOperatorAPI",
+                "CaeVizFacesAPI",
+                "CaeVizDatasetSelectionAPI:source"
+            ]
+        )
+        {
+            bool cae:viz:operator:enabled = true
+            bool cae:viz:faces:externalOnly = true
+            token visibility = "inherited"
+            rel cae:viz:dataset_selection:source:target = </World/Assets/StaticMixer>
+            string cae:viz:dataset_selection:source:identifier = "/Base/StaticMixer/StaticMixer_Default"
+            int[] faceVertexCounts = []
+            int[] faceVertexIndices = []
+            point3f[] points = []
+            color3f[] primvars:displayColor = [(0.15, 0.5, 0.9)] (
+                interpolation = "constant"
+            )
+            uniform token subdivisionScheme = "none"
+        }
+
+        def BasisCurves "Streamlines" (
+            prepend apiSchemas = [
+                "CaeVizOperatorAPI",
+                "CaeVizStreamlinesAPI",
+                "CaeVizDatasetSelectionAPI:source",
+                "CaeVizDatasetSelectionAPI:seeds",
+                "CaeVizFieldSelectionAPI:velocities"
+            ]
+        )
+        {
+            bool cae:viz:operator:enabled = true
+            rel cae:viz:dataset_selection:source:target = </World/Assets/StaticMixer>
+            string cae:viz:dataset_selection:source:identifier = "/Base/StaticMixer/B1_P3"
+            rel cae:viz:dataset_selection:seeds:target = </World/Controls/Seeds>
+            token visibility = "invisible"
+            token[] cae:viz:field_selection:velocities:fieldNames = ["VelocityX", "VelocityY", "VelocityZ"]
+            token cae:viz:streamlines:direction = "forward"
+            int cae:viz:streamlines:maxSteps = 20
+            float cae:viz:streamlines:width = 0.01
+            # Kit-style placeholder: valid curve buffers before first evaluation.
+            # Hidden until selected, then replaced by the computed streamlines.
+            int[] curveVertexCounts = [4]
+            point3f[] points = [(0, 0, 0), (0.1, 0, 0), (0.2, 0, 0), (0.3, 0, 0)]
+            token type = "linear"
+            float[] widths = [0.01] (
+                interpolation = "constant"
+            )
+            token wrap = "nonperiodic"
+            color3f[] primvars:displayColor = [(0.0, 0.0, 1.0)] (
+                interpolation = "constant"
+            )
+        }
+
+        def Mesh "IsoSurface" (
+            prepend apiSchemas = [
+                "CaeVizOperatorAPI",
+                "CaeVizIsoSurfaceAPI",
+                "CaeVizDatasetSelectionAPI:source",
+                "CaeVizFieldSelectionAPI:contour",
+                "CaeVizFieldSelectionAPI:colors"
+            ]
+        )
+        {
+            bool cae:viz:operator:enabled = true
+            rel cae:viz:dataset_selection:source:target = </World/Assets/StaticMixer>
+            string cae:viz:dataset_selection:source:identifier = "/Base/StaticMixer/B1_P3"
+            token[] cae:viz:field_selection:contour:fieldNames = ["Temperature"]
+            token[] cae:viz:field_selection:colors:fieldNames = ["Temperature"]
+            float cae:viz:isoSurface:isoValue = 300
+            token visibility = "invisible"
+            int[] faceVertexCounts = []
+            int[] faceVertexIndices = []
+            point3f[] points = []
+            color3f[] primvars:displayColor = [(1.0, 0.75, 0.1)] (
+                interpolation = "constant"
+            )
+            uniform token subdivisionScheme = "none"
+        }
+
+        def Points "Points" (
+            prepend apiSchemas = [
+                "CaeVizOperatorAPI",
+                "CaeVizPointsAPI",
+                "CaeVizDatasetSelectionAPI:source",
+                "CaeVizFieldSelectionAPI:colors"
+            ]
+        )
+        {
+            bool cae:viz:operator:enabled = true
+            rel cae:viz:dataset_selection:source:target = </World/Assets/StaticMixer>
+            string cae:viz:dataset_selection:source:identifier = "/Base/StaticMixer/B1_P3"
+            token[] cae:viz:field_selection:colors:fieldNames = ["Temperature"]
+            int cae:viz:points:maxCount = 4000
+            token visibility = "invisible"
+            float cae:viz:points:width = 0.05
+            bool cae:viz:points:useCellPoints = true
+            point3f[] points = []
+            float[] widths = [] (
+                interpolation = "constant"
+            )
+            color3f[] primvars:displayColor = [(0.3, 0.9, 0.45)] (
+                interpolation = "constant"
+            )
+        }
+    }
+
+    def Camera "Camera"
+    {
+        float2 clippingRange = (0.1, 10000)
+        float focalLength = 28
+        double3 xformOp:translate = (0, 0, 12)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+
+    def DomeLight "DomeLight"
+    {
+        float inputs:intensity = 1000
+        token inputs:texture:format = "latlong"
+    }
+}
+
+def Scope "Render"
+{
+    def RenderProduct "Camera"
+    {
+        uniform int2 resolution = (1280, 720)
+        rel camera = </World/Camera>
+        rel orderedVars = [<LdrColor>]
+
+        def RenderVar "LdrColor"
+        {
+            uniform string sourceName = "LdrColor"
+            opaque omni:rtx:aov
+        }
+    }
+}
