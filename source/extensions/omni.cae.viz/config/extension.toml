@@ -10,7 +10,7 @@
 
 [package]
 # Semantic Versionning is used: https://semver.org/
-version = "1.5.1"
+version = "1.5.2"
 
 # The title and description fields are primarly for displaying extension info in UI
 title = "CAE Visualization"

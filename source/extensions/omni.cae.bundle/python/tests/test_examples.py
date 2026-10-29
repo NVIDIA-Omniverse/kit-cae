@@ -11,12 +11,22 @@
 from logging import getLogger
 
 import omni.kit.test
-from omni.cae.testing import new_stage
+from omni.cae.testing import new_stage, wait_for_rtx_renderer_ready
 
 logger = getLogger(__name__)
 
 
 class Test(omni.kit.test.AsyncTestCase):
+    _rtx_renderer_ready = False
+
+    async def setUp(self):
+        if not type(self)._rtx_renderer_ready:
+            logger.info("Waiting for RTX renderer readiness")
+            print("Waiting for RTX renderer readiness")
+            await wait_for_rtx_renderer_ready()
+            type(self)._rtx_renderer_ready = True
+            logger.info("RTX renderer is ready")
+            print("RTX renderer is ready")
 
     def is_windows(self):
         import platform

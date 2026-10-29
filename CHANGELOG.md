@@ -2,6 +2,17 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.6]
+
+### Added
+
+- Add Kit 110.4.1 support and make it the default SDK. Older Kit versions remain selectable.
+
+### Fixed
+
+- Preserve planar slice visibility across frame updates when hiding and showing slices
+  with Kit 110.4.1.
+
 ## [2.1.5]
 
 ### Fixed

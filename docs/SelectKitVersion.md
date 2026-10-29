@@ -4,6 +4,9 @@ Kit-CAE can be built against different versions of the Omniverse Kit SDK. The av
 are managed in `tools/kit-versions.json`. Use the `select_kit_version` tool to manage Kit SDK version selection and
 generate configuration files from templates.
 
+Kit 110.4.1 is the default for new checkouts. Existing checkouts keep their saved
+selection; run `./repo.sh select_kit_version --default` to switch to the new default.
+
 ## Quick Start
 
 **Interactive Version Selection:**
@@ -203,3 +206,16 @@ The structure includes:
 - **`versions.<label>.variables`**: Version-specific variable substitutions
 - **`versions.<label>.templates`**: Version-specific template files
 - **`default`**: Default version label to use
+
+### Validate a new SDK's dependency locks
+
+Resolve editor and streaming dependencies with the selected SDK's default
+registries. Do not force the shared registry to the Kit major version: SDKs
+such as 110.4.1 use a minor-version registry (`110.4/shared`). A lock generated
+against a different registry can build locally but fail when a clean thin
+package downloads its dependencies.
+
+Regenerate the new SDK's locks with an empty extension cache, then validate the
+thin package with `./repo.sh test --config release --from-package`. This checks
+the package's dependency-download path and installs the optional test packages;
+testing only the development build does not exercise that path.

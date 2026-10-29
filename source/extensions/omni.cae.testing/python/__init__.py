@@ -14,6 +14,7 @@ __all__ = [
     "get_test_stage_path",
     "get_vtrt_array_as_numpy",
     "wait_for_update",
+    "wait_for_rtx_renderer_ready",
     "new_stage",
     "frame_prims",
 ]
@@ -98,6 +99,69 @@ async def wait_for_update(cycles: int = 10):
         for i in range(cycles):
             await get_app().next_update_async()
             await asyncio.sleep(0.01)
+
+
+async def wait_for_rtx_renderer_ready(timeout: float = 120.0, settle_cycles: int = 2):
+    """
+    Wait until RTX can be used by headless tests.
+
+    This deliberately avoids viewport frame events: bundle tests run with
+    --no-window, so there may never be a viewport NEW_FRAME signal.
+    """
+    import time
+
+    import omni.kit.app
+    import omni.usd
+
+    app = omni.kit.app.get_app()
+    deadline = time.monotonic() + timeout
+
+    async def wait_for_next_update(message: str):
+        if time.monotonic() >= deadline:
+            raise TimeoutError(message)
+        await app.next_update_async()
+
+    while not app.is_app_ready():
+        await wait_for_next_update("Timed out waiting for Kit app readiness before RTX setup.")
+
+    ext_manager = app.get_extension_manager()
+    while not ext_manager.is_extension_enabled("omni.hydra.rtx"):
+        await wait_for_next_update("Timed out waiting for omni.hydra.rtx to be enabled.")
+
+    try:
+        import omni.mdl.neuraylib
+    except ImportError:
+        logger.debug("omni.mdl.neuraylib is not available while waiting for RTX readiness.", exc_info=True)
+    else:
+        omni.mdl.neuraylib.ensure_running()
+
+    usd_context = omni.usd.get_context()
+    last_attach_error = None
+
+    def is_rtx_attached():
+        return "rtx" in usd_context.get_attached_hydra_engine_names()
+
+    create_requested = False
+    invalid_uid = getattr(omni.usd, "HydraEngineInvalidUniqueId", None)
+
+    while not is_rtx_attached():
+        if not create_requested:
+            try:
+                engine_uid = omni.usd.create_hydra_engine("rtx", usd_context)
+                create_requested = invalid_uid is None or engine_uid != invalid_uid
+            except Exception as exc:
+                last_attach_error = exc
+                logger.debug("RTX Hydra engine is not attachable yet.", exc_info=True)
+
+        if is_rtx_attached():
+            break
+
+        if time.monotonic() >= deadline:
+            raise TimeoutError("Timed out waiting for the RTX Hydra engine to attach.") from last_attach_error
+        await app.next_update_async()
+
+    for _ in range(settle_cycles):
+        await app.next_update_async()
 
 
 async def frame_prims(prim_paths: list[str], zoom: float = 1.0):

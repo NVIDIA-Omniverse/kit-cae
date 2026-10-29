@@ -117,6 +117,9 @@ class RtSubPrimGuard:
         self._prim_path = primary_prim.GetPath()
         self._rt_stage = rt_stage
         self._sub_prim_paths = [SdfRT.Path(str(p)) for p in sub_prim_paths]
+        # Own temporary visibility overrides only while the source is hidden.
+        # Restore each child's original token when the source becomes visible.
+        self._hidden_local_visibility = {}
         self._imageable = UsdGeom.Imageable(primary_prim)
         self._listener = Tf.Notice.Register(Usd.Notice.ObjectsChanged, self, primary_prim.GetStage())
 
@@ -143,9 +146,18 @@ class RtSubPrimGuard:
         for path in self._sub_prim_paths:
             prim = self._rt_stage.GetPrimAtPath(path)
             if prim:
-                locally_visible = prim.GetAttribute("visibility").Get() != UsdGeomRT.Tokens.invisible
+                visibility = prim.CreateAttribute("visibility", SdfRT.ValueTypeNames.Token)
+                local_visibility = visibility.Get() or UsdGeomRT.Tokens.inherited
+                if primary_visible:
+                    local_visibility = self._hidden_local_visibility.pop(path, local_visibility)
+                    visibility.Set(local_visibility)
+                else:
+                    self._hidden_local_visibility.setdefault(path, local_visibility)
+                    # Kit 110.4 recomputes _worldVisibility from this token each
+                    # frame. Override both attributes so hidden output stays hidden.
+                    visibility.Set(UsdGeomRT.Tokens.invisible)
                 prim.CreateAttribute("_worldVisibility", SdfRT.ValueTypeNames.Bool).Set(
-                    primary_visible and locally_visible
+                    primary_visible and local_visibility != UsdGeomRT.Tokens.invisible
                 )
 
     def _remove_sub_prims(self) -> None:
