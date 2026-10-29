@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1
+
+- Missing command diagnostics now list the attempted schema and type command
+  names and identify the compatibility bundle for legacy `CaeDataSet` prims.
+- Command dispatch no longer treats the internal `Tf.Type` root sentinel as a
+  schema command candidate.
+
 ## 1.1.0
 
 - Added `array_utils.get_magnitude`, a Warp-kernel helper returning per-element L2

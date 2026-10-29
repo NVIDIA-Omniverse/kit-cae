@@ -10,7 +10,7 @@
 
 [package]
 title = "CAE SimData Legacy Converters"
-version = "1.0.0"
+version = "1.0.1"
 description = "Deprecated SimData converters for delegate-backed CaeDataSet and CaeFieldArray stages."
 category = "CAE"
 changelog = "docs/CHANGELOG.md"
@@ -25,6 +25,11 @@ repository = "https://github.com/NVIDIA-Omniverse/kit-cae"
 
 [[python.module]]
 name = "omni.cae.simdata_legacy"
+
+[[test]]
+dependencies = [
+    "omni.cae.testing",
+]
 
 [documentation]
 pages = [

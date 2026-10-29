@@ -88,6 +88,20 @@ _ROI_TRANSFORM_DEPENDENCY_SPECS: tuple[_RoiTransformDependencySpec, ...] = (
 )
 
 
+def _format_exception_diagnostic(exc: BaseException) -> str:
+    """Format an exception without discarding its explicit or implicit causes."""
+    messages = []
+    seen = set()
+    current: BaseException | None = exc
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        message = str(current)
+        if message and message not in messages:
+            messages.append(message)
+        current = current.__cause__ or (None if current.__suppress_context__ else current.__context__)
+    return "; caused by: ".join(messages) or exc.__class__.__name__
+
+
 class Controller:
     """
     Controller that manages CAE visualization operators based on the USD stage.
@@ -428,19 +442,24 @@ class Controller:
                     # We don't log exc_info to avoid cluttering the output which makes it easier to miss the actual
                     # error. NotImplementedError is a reasonable exception since everything is not fully implemented in
                     # the sample.
-                    logger.exception(f"{operator_class.__name__}: {e}", exc_info=False)
+                    logger.error("%s: %s", operator_class.__name__, _format_exception_diagnostic(e))
                     # Don't continue with remaining contexts after error
                     break
 
                 except usd_utils.QuietableException as e:
                     # Log the original error as warning.
-                    logger.warning(f"{operator_class.__name__}: {e}")
+                    logger.warning("%s: %s", operator_class.__name__, _format_exception_diagnostic(e))
                     # Don't continue with remaining contexts after error
                     break
 
                 except Exception as e:
                     # Log the original error based on its type
-                    logger.exception(f"Error executing operator {operator_class.__name__}: {e}", exc_info=True)
+                    logger.exception(
+                        "Error executing operator %s: %s",
+                        operator_class.__name__,
+                        _format_exception_diagnostic(e),
+                        exc_info=True,
+                    )
                     # Don't continue with remaining contexts after error
                     break
 

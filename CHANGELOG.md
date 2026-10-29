@@ -2,6 +2,22 @@
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [3.0.1]
+
+### Added
+
+- Add Kit 110.4.1 support and make it the default SDK. Older Kit versions remain selectable.
+
+
+### Fixed
+
+- **Legacy SimData command dispatch** (`omni.cae.core` 1.1.1,
+  `omni.cae.viz` 2.6.2, `omni.cae.simdata.legacy` 1.0.1): Restored legacy
+  `CaeDataSet` visualization when the compatibility bundle is enabled by
+  removing an ambiguous duplicate mesh converter. Missing converter errors now
+  identify attempted schema commands and the required compatibility bundle
+  while preserving the original failure details in visualization logs.
+
 ## [3.0.0]
 
 ### Changed

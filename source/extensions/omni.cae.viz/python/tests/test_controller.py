@@ -20,6 +20,7 @@ from omni.cae.core import usd_utils
 from omni.cae.schema import viz as cae_viz
 from omni.cae.testing import get_test_data_path, wait_for_update
 from omni.cae.usd_plugins_importers import import_to_stage
+from omni.cae.viz.controller import _format_exception_diagnostic
 from omni.cae.viz.execution_context import ExecutionContext, ExecutionReason
 from omni.cae.viz.operator import operator, register_module_operators, unregister_module_operators
 from omni.timeline import get_timeline_interface
@@ -153,6 +154,16 @@ class Operators:
 
 class TestControllerOperatorExecution(omni.kit.test.AsyncTestCase):
     """Test suite for temporal execution functionality in the controller."""
+
+    def test_exception_diagnostic_preserves_chained_cause(self):
+        cause = RuntimeError("legacy converter is disabled")
+        error = usd_utils.QuietableException("dataset conversion failed")
+        error.__cause__ = cause
+
+        self.assertEqual(
+            _format_exception_diagnostic(error),
+            "dataset conversion failed; caused by: legacy converter is disabled",
+        )
 
     async def setUp(self):
         """Set up test environment before each test."""

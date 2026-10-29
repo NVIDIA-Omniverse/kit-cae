@@ -10,4 +10,5 @@
 
 from .test_array_utils import *
 from .test_cache import *
+from .test_commands import *
 from .test_usd_utils import *

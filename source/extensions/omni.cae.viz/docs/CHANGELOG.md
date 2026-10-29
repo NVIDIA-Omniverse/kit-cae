@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.6.2]
+
+### Fixed
+- Operator failure logs now preserve chained exception causes so actionable
+  converter and adapter diagnostics remain visible.
+
 ## [2.6.1]
 
 ### Fixed

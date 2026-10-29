@@ -21,7 +21,7 @@ from omni.cae.schema import openfoam as cae_openfoam
 from omni.cae.schema import sids as cae_sids
 from omni.cae.schema import vtk as cae_vtk
 from omni.cae.simdata.command_types import ConvertToSimDataSet, GetField
-from pxr import Gf, Usd, UsdGeom
+from pxr import Usd
 from warp_simdata.data_models.custom import surface_mesh
 from warp_simdata.data_models.openfoam import boundary_mesh as openfoam_boundary_mesh
 from warp_simdata.data_models.openfoam import polymesh as openfoam_polymesh
@@ -67,54 +67,6 @@ def _validate_ngon_cell_field_indices_kernel(
     if indices[idx] == missing_sentinel:
         wp.atomic_add(missing_info, 0, 1)
         wp.atomic_min(missing_info, 1, idx)
-
-
-class UsdGeomMeshConvertToSimDataSet(ConvertToSimDataSet):
-    """
-    Convert a UsdGeomMesh CAE dataset to a SimData DataSet.
-
-    This builds a SimData dataset using the surface_mesh data model, which follows
-    the UsdGeomMesh specification directly.
-    """
-
-    def _apply_xform(self, mesh: UsdGeom.Mesh, coords: np.ndarray, timeCode: Usd.TimeCode) -> np.ndarray:
-        _xform_cache = UsdGeom.XformCache(Usd.TimeCode.EarliestTime())
-        matrix: Gf.Matrix4d = _xform_cache.GetLocalTransformation(mesh.GetPrim())[0]
-        if matrix:
-            coords_h = np.hstack([coords, np.ones((coords.shape[0], 1))])
-            coords_h = coords_h @ matrix
-            coords = coords_h[:, :3]  # / coords_h[:, 3]
-        return coords
-
-    async def do(self) -> simdata.Dataset:
-        logger.info("executing %s.do()", self.__class__.__name__)
-
-        mesh = UsdGeom.Mesh(self.dataset)
-
-        # Surface mesh requires both points and topology
-        # Get points (required for surface_mesh)
-        np_coords = np.asarray(mesh.GetPointsAttr().Get(self.timeCode)).astype(np.float32, copy=False).reshape(-1, 3)
-        # FIXME: how to correctly deal with xform.
-        np_coords = self._apply_xform(mesh, np_coords, self.timeCode)
-        points = wp.array(np_coords, dtype=wp.vec3f, device=self.device, copy=False)
-        del np_coords
-
-        # Get topology (required for surface_mesh)
-        np_face_vertex_counts = np.asarray(mesh.GetFaceVertexCountsAttr().Get(self.timeCode)).astype(
-            np.int32, copy=False
-        )
-        np_face_vertex_indices = np.asarray(mesh.GetFaceVertexIndicesAttr().Get(self.timeCode)).astype(
-            np.int32, copy=False
-        )
-        face_vertex_counts = wp.array(np_face_vertex_counts, dtype=wp.int32, device=self.device, copy=False)
-        face_vertex_indices = wp.array(np_face_vertex_indices, dtype=wp.int32, device=self.device, copy=False)
-
-        # Create surface mesh handle
-        return surface_mesh.create_dataset(
-            points=points,
-            face_vertex_indices=face_vertex_indices,
-            face_vertex_counts=face_vertex_counts,
-        )
 
 
 class CaeMeshConvertToSimDataSet(ConvertToSimDataSet):

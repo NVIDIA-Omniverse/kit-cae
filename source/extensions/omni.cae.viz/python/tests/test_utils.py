@@ -578,48 +578,51 @@ class TestUtils(omni.kit.test.AsyncTestCase):
         field_selection_api_v = cae_viz.FieldSelectionAPI(operator_prim, "V")
         field_selection_api_v.CreateFieldNamesAttr().Set(["V"])
 
-        with self.assertRaises(RuntimeError, msg="Expected RuntimeError when getting input dataset on cpu"):
-            await utils.get_input_dataset(
-                operator_prim,
-                "source",
-                timeCode=Usd.TimeCode.EarliestTime(),
-                device="cpu",
-                required_fields={"Temp", "V"},
+        # Older Kit runtimes only allocate NanoVDB on CUDA; newer Warp builds
+        # support CPU volumes too. Validate both supported device paths.
+        for device in ("cpu", "cuda:0"):
+            try:
+                dataset = await utils.get_input_dataset(
+                    operator_prim,
+                    "source",
+                    timeCode=Usd.TimeCode.EarliestTime(),
+                    device=device,
+                    required_fields={"Temp", "V"},
+                )
+            except RuntimeError as exc:
+                if device != "cpu" or str(exc) != "Only CUDA devices are supported for allocate_by_tiles":
+                    raise
+                continue
+            self.assertEqual(dataset.device, device)
+            self.assertIsNotNone(dataset, "Dataset should not be None")
+            self.assertEqual(
+                len(dataset.get_field_names()),
+                3,
+                "Expected 3 fields in the dataset, got {len(dataset.get_field_names())}",
             )
-        dataset = await utils.get_input_dataset(
-            operator_prim,
-            "source",
-            timeCode=Usd.TimeCode.EarliestTime(),
-            device="cuda:0",
-            required_fields={"Temp", "V"},
-        )
-        self.assertIsNotNone(dataset, "Dataset should not be None")
-        self.assertEqual(
-            len(dataset.get_field_names()), 3, "Expected 3 fields in the dataset, got {len(dataset.get_field_names())}"
-        )
-        self.assertEqual(dataset.get_field_names()[0], "Temp", "Mismatch in field name")
-        self.assertEqual(dataset.get_field_names()[1], "cae_mask", "Mismatch in field name")
-        self.assertEqual(dataset.get_field_names()[2], "V", "Mismatch in field name")
+            self.assertEqual(dataset.get_field_names()[0], "Temp", "Mismatch in field name")
+            self.assertEqual(dataset.get_field_names()[1], "cae_mask", "Mismatch in field name")
+            self.assertEqual(dataset.get_field_names()[2], "V", "Mismatch in field name")
 
-        temp_field = dataset.get_field("Temp")
-        self.assertEqual(temp_field.dtype, wp.float32, "Mismatch in field dtype")
-        self.assertAlmostEqual(
-            temp_field.get_range()[0],
-            self.datasets["disk_out_ref_npz"]["field_ranges"]["Temp"][0],
-            3,
-            msg="Mismatch in field range min",
-        )
-        self.assertAlmostEqual(
-            temp_field.get_range()[1],
-            self.datasets["disk_out_ref_npz"]["field_ranges"]["Temp"][1],
-            3,
-            msg="Mismatch in field range max",
-        )
-        self.assertTrue(isinstance(temp_field.get_data(), wp.Volume), "Mismatch in field data type")
+            temp_field = dataset.get_field("Temp")
+            self.assertEqual(temp_field.dtype, wp.float32, "Mismatch in field dtype")
+            self.assertAlmostEqual(
+                temp_field.get_range()[0],
+                self.datasets["disk_out_ref_npz"]["field_ranges"]["Temp"][0],
+                3,
+                msg="Mismatch in field range min",
+            )
+            self.assertAlmostEqual(
+                temp_field.get_range()[1],
+                self.datasets["disk_out_ref_npz"]["field_ranges"]["Temp"][1],
+                3,
+                msg="Mismatch in field range max",
+            )
+            self.assertTrue(isinstance(temp_field.get_data(), wp.Volume), "Mismatch in field data type")
 
-        v_field = dataset.get_field("V")
-        self.assertEqual(v_field.dtype, wp.vec3f, "Mismatch in field dtype")
-        self.assertTrue(isinstance(v_field.get_data(), wp.Volume), "Mismatch in field data type")
+            v_field = dataset.get_field("V")
+            self.assertEqual(v_field.dtype, wp.vec3f, "Mismatch in field dtype")
+            self.assertTrue(isinstance(v_field.get_data(), wp.Volume), "Mismatch in field data type")
 
     async def test_utils_get_input_dataset_with_vox_voxel_size_mode(self):
         operator_prim = self.stage.DefinePrim("/World/OperatorTestInputDatasetWithVoxelization")

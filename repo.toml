@@ -144,10 +144,10 @@ apps = [
     "${root}/source/apps/kit_cae_streaming.kit"
 ]
 
-registries = [
-    { name = "kit/default", url = "https://ovextensionsprod.blob.core.windows.net/exts/kit/prod/${kit_version_major}/shared" },
-    { name = "kit/sdk", url = "https://ovextensionsprod.blob.core.windows.net/exts/kit/prod/sdk/${kit_version_short}/${kit_git_hash}" },
-]
+# Use the SDK's default registries, as packaged applications do. Newer SDKs
+# select a minor-version shared registry (for example, 110.4/shared); forcing
+# the major-version registry can generate locks unavailable to clean installs.
+registries = []
 
 ########################################################################################################################
 # Packaging
